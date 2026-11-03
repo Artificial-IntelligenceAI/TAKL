@@ -5,6 +5,15 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The shared form is bytecode: the interpreter runs it, Cranelift compiles from it (owner: "yes")
+
+The owner: "What's the diff between Bytecode and IR?" Design claude: an IR is any form between source and machine code,
+most often shaped for a compiler to reason over; bytecode is the kind shaped for running, a compact list an
+interpreter steps through, as Python's, the JVM's and Lua's are. JITs keep both (V8, the JVM, LuaJIT): bytecode run and
+counted, the hot parts taken into the compiler's own IR. So TAKL's one shared form is bytecode; the interpreter runs it,
+counting what is hot, Cranelift compiles from it with those counts, and every place in compiled code maps back to a
+place in the bytecode, which is how a loop is jumped into mid-way. The oracle still walks the parsed source.
+
 ### 2026-11-03 — No LLVM: the interpreter, then Cranelift for what gets hot; TAKL is written in Rust (owner: "Drop LLVM")
 
 The owner asked whether the interpreter should be C for portability and the tiers Rust and C++. Design claude
