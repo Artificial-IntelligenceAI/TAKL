@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Empty text and an empty table are written `empty`; `""` and `[]` are answered "did you mean `empty`" (owner: "yea")
+
+`decision.values.empty`
+
+```
+let name: text = empty
+let scores: table of small_whole = empty
+```
+
+The owner proposed `nothing` in place of `""`, "so it would look like it's deliberate". Design claude agreed it should
+look deliberate but proposed another word: empty text is a value, text of no letters, while `nothing` is no value at
+all, and one word for both lets `let x: text = greet "Sam"` look right. One name per concept gives `empty`, which serves
+tables too. The owner: "Are both words accurate?" Yes, `nothing` being grammar only. The owner: "yea".
+
 ### 2026-11-03 — `return nothing` leaves a procedure that gives nothing back; `nothing` is grammar, never a value (owner: "yea")
 
 `decision.procedures.return_nothing`
