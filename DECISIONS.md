@@ -5,6 +5,21 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A program can have `procedure start_running:` ... `end procedure start_running`, where running starts (owner)
+
+`decision.procedures.start_running`
+
+```
+procedure start_running:
+  show "Hello, World!"
+end procedure start_running
+```
+
+The owner asked whether TAKL should have `fn main`, then: "if we have it. What would it be called?" Design claude
+proposed `start`, other languages' `main` named in help. The owner wrote `start_running`, which pairs with the errors'
+`Stopped before running:` and `Stopped while running:`; a name, so glued. It gives nothing back. Not designed: whether
+it is required, or a program may also begin at its first line.
+
 ### 2026-11-03 — The compiler is built with its optimizations from the start, not added after a plain first version (owner)
 
 `decision.house.optimize_early`
