@@ -1,0 +1,6 @@
+# The owner's first program, inside the start_running every program now needs.
+procedure start_running just finishes:
+  let @x: small_whole, can't_change = 500 #it's an int16
+  show @x
+  finish
+end procedure start_running

@@ -1,0 +1,11 @@
+[package]
+name = "oracle"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+num-bigint = "0.5.1"
+num-integer = "0.1.47"
+num-traits = "0.2.19"
+rustc_apfloat = "0.2.3"
+unicode-segmentation = "1.13.3"
