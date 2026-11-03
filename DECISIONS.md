@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A line does not end with `;` (owner: "no")
+
+`decision.syntax.no_semicolons`
+
+The owner wrote `return nothing;`; asked whether the `;` was meant, the owner: "no". A line ends at the end of the line.
+
 ### 2026-11-03 — A procedure that gives nothing back ends with `return nothing`, `start_running` too (owner: "yes")
 
 `decision.procedures.return_nothing_required`
