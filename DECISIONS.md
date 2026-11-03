@@ -5,6 +5,16 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Code is named in TAKL's words: full words, one name per concept, `WholeSize::Small` not `I16`, Rust's casing, tests named after their decision (owner: "Yes")
+
+`decision.house.naming`
+
+The owner: "Where's naming?" Design claude proposed Radium's full words and one name per concept, and TAKL's words
+over textbook ones, so code, decisions and errors speak one language. The owner: "What about const, and stuff". Design
+claude proposed Rust's casing, which `clippy` enforces, a golden test named after its decision
+(`tests/tables/no_holes.takl`), and error kinds named for what a kid sees (`OutOfRange`, `NotDesignedYet`). The owner:
+"Yes". In `IMPLEMENTATION.md`.
+
 ### 2026-11-03 — Comments are traceable: `// trace: decision.tables.no_holes`, each decision named under its heading, a check in Rust (owner: "good")
 
 `decision.house.trace`
