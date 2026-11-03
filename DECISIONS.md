@@ -5,6 +5,14 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A grammar word never names a procedure: `procedure add` is refused, so `add 40 to scores` always means the built-in (owner: "yea")
+
+`decision.names.no_grammar_names`
+
+Design claude proposed it after `decision.procedures.nested_calls` left it open. The error says that `add` is one of
+TAKL's own words and to pick another name. The owner: "yea". Design claude reads it for any name a kid makes, a
+variable or a param too, since the reason is the same.
+
 ### 2026-11-03 — A call inside another line is bracketed, `show add_up(x, 2)`; a call standing alone is bare, `add_up x, 2` (owner: "yes")
 
 `decision.procedures.nested_calls`
@@ -21,8 +29,7 @@ another". Design claude: it also ends a real ambiguity, `show add x, 2` being `s
 since `show`'s pieces and a call's arguments are both split by commas; the bracket rule again, looking like maths
 class's f(x). Design claude proposed it for every call inside another line, one argument too, so there is one rule.
 The owner: "yes". The built-in `of` family keeps its own form, `show sum of scores`. Design claude noted that `add` is
-already grammar, `add 40 to scores`, so the example became `add_up`; whether a grammar word may name a procedure is not
-designed.
+already grammar, `add 40 to scores`, so the example became `add_up`; a grammar word as a name: the entry above.
 
 ### 2026-11-03 — `, fast` is `, fast_but_inexact`: `let speed: medium_decimal, fast_but_inexact = ~2.5` (owner: "yes")
 
