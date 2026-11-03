@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Text is written in double quotes: `show "Hi"` (owner: "yes")
+
+`'` already belongs to `can't_change` and `isn't`, so `"` is the one that clashes with nothing; autocorrect's `“ ”`
+are read as `"`, as decided. Design claude proposed it; the owner: "yes".
+
 ### 2026-11-03 — `remainder of (7 divided by 2)` is 1, in the `of` family (owner: "yes")
 
 Read as maths class says it, "the remainder of 7 divided by 2"; the division is bracketed by the bracket rule. Design
