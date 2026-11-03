@@ -472,6 +472,8 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Holes, as design claude proposed: setting past a table's end refused.
-- A loop while something holds; `if`.
+- `repeat forever:` with `stop` for leaving a loop early (Easium D41).
+- Whether a param is handed a copy unless it says `share`, `reset share scores` at the call; design claude proposed it.
+- How many errors are shown at once; design claude proposed the first only.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
