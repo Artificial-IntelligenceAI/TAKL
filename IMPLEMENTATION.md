@@ -30,3 +30,17 @@ before contributing code. When a rule changes, `DECISIONS.md` gets a new entry a
    `fix`, `test`, `house`. Each commit ends with its session's trailer: `Co-Authored-By: design claude
    <noreply@anthropic.com>` or `Co-Authored-By: compiler claude <noreply@anthropic.com>`.
 9. **Cores.** No limit.
+
+## Tracing
+
+Every decision has a name: its commit's subject up to the colon, such as `decision.tables.no_holes`. The name is also
+written under the decision's heading in `DECISIONS.md`. Code that carries out a decision says so with a comment:
+
+```rust
+// trace: decision.tables.no_holes
+fn add_at(...) {
+```
+
+The oracle is tagged as the compiler is, so a decision can be followed from the log to the oracle to the compiler. A
+check, written in Rust with the oracle, fails on a tag that names no decision, and lists the decisions nothing traces
+yet.

@@ -5,7 +5,19 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Comments are traceable: `// trace: decision.tables.no_holes`, each decision named under its heading, a check in Rust (owner: "good")
+
+`decision.house.trace`
+
+The owner: "But should comments be tracable too?" Radium tags code `trace D<n>`; TAKL's decisions have no numbers but
+each has a name, its commit's subject up to the colon. Design claude proposed that name under each heading here, so a
+tag is found by a plain search; the oracle tagged as the compiler is; and a check that fails on a tag naming no
+decision and lists the decisions nothing traces yet, a list of what is left to build. The owner: "good". The check is
+written in Rust with the oracle, by the language rule.
+
 ### 2026-11-03 — The implementation rules: design claude builds the oracle, compiler claude the compiler, in Rust and Cranelift alone, never reading `oracle/src` (owner: "Yes to all, no core limits")
+
+`decision.house.impl_rules`
 
 Design claude offered to start a session for the oracle. The owner: "`impl` usually does the harder ones, like the real
 compiler itself. The oracle is usually done by the design session, because they know it best. Let's define the impl
@@ -17,6 +29,8 @@ program never crashing TAKL, which says "TAKL broke, not you"; `rustfmt`, `clipp
 style; cores. The owner: "Yes to all, no core limits". They are in `IMPLEMENTATION.md`, and `CLAUDE.md` points to it.
 
 ### 2026-11-03 — `add 40 to scores` puts it on the end; `add 40 to scores at position 2` puts it there, the rest moving up (owner: "yes")
+
+`decision.tables.add`
 
 ```
 add 40 to scores                    # [10, 20, 30, 40]
@@ -30,10 +44,14 @@ things were put in. `at position` and `at offset` count as they do everywhere. D
 
 ### 2026-11-03 — A decimal prints as it is held: an exact `2.50` as `2.50`, a fast `~0.1` as `0.1000000000000000055511151231257827021181583404541015625` (owner: "correct")
 
+`decision.show.decimals`
+
 Design claude proposed exact decimals as written and fast ones in the shortest form that reads back the same. The
 owner: "print like how it's stored". So a fast decimal prints its whole held value, long, every digit true.
 
 ### 2026-11-03 — A `, fast` decimal refuses a number it cannot hold exactly; `~0.1` asks for the nearest, on written numbers only (owner: "correct")
+
+`decision.types.approx`
 
 ```
 let a: medium_decimal, fast = 0.5     # fine, held exactly
@@ -49,16 +67,22 @@ owner meant; the owner: "correct".
 
 ### 2026-11-03 — A fraction is written `1 over 3`, and `show` prints it so: `1 over 3` (owner: "yes")
 
+`decision.types.over`
+
 With `/` answered "did you mean", `over` is one word and how a fraction is read aloud; what `show` prints can be typed
 back in. Design claude proposed it; the owner: "yes". Not designed: whether `2 over 4` is shown as `1 over 2`.
 
 ### 2026-11-03 — `show` prints every number too: `show x` prints `500` (owner)
+
+`decision.show.numbers`
 
 The owner's first program shows a `small_whole`. Asked whether `show` prints whole numbers, the owner: "can also print
 all numbers": wholes, decimals of both kinds and fractions. A whole number prints as its digits, a fraction as `1 over 3`, a decimal as it is
 held (the entries above).
 
 ### 2026-11-03 — `show` prints its pieces one after another, commas between them: `show "Hello, ", name` (owner)
+
+`decision.show.pieces`
 
 ```
 show "Hello, World!"
@@ -71,15 +95,21 @@ above. Not designed: how a table or `true` prints, and whether `show` ends its l
 
 ### 2026-11-03 — Text is written in double quotes: `show "Hi"` (owner: "yes")
 
+`decision.text.quotes`
+
 `'` already belongs to `can't_change` and `isn't`, so `"` is the one that clashes with nothing; autocorrect's `“ ”`
 are read as `"`, as decided. Design claude proposed it; the owner: "yes".
 
 ### 2026-11-03 — `remainder of (7 divided by 2)` is 1, in the `of` family (owner: "yes")
 
+`decision.maths.remainder`
+
 Read as maths class says it, "the remainder of 7 divided by 2"; the division is bracketed by the bracket rule. Design
 claude proposed it; the owner: "yes".
 
 ### 2026-11-03 — `7 divided by 2` on whole numbers is an error unless it divides evenly or is rounded on purpose; a `remainder` word for what is left (owner: "yup")
+
+`decision.maths.whole_divide`
 
 Design claude set out three: 3 with the rest dropped, as C and Java do, 7 ÷ 2 not being 3; an error; 3.5, a whole number
 turning into a decimal under the types. Design claude proposed the error, as `1 / 3` is for an exact decimal:
@@ -88,11 +118,15 @@ class, for what is left over. The owner: "yup". How `remainder` is written: the 
 
 ### 2026-11-03 — `times` and `divided by` go before `plus` and `minus`, as in maths class; brackets when unsure (owner)
 
+`decision.maths.order`
+
 `a plus b times c` is `a plus (b times c)`. Design claude asked whether to follow maths or refuse the mix as `and` with
 `or` is. The owner: "Follow maths, and `()` when unsure": brackets are always allowed, never required here. Earlier
 entries' `+` is read as `plus`.
 
 ### 2026-11-03 — Maths is words: `plus`, `minus`, `times`, `divided by`; `+ - * /` are answered "did you mean" (owner: "yes")
+
+`decision.maths.words`
 
 ```
 score = score plus 10
@@ -109,6 +143,8 @@ above.
 
 ### 2026-11-03 — Every compile error is shown, those caused by an earlier one hidden, then a last line pointing at the first (owner: "yes")
 
+`decision.errors.all`
+
 ```
 3 mistakes found. Start with the first one: game.takl:2:5, line 2 column 5.
 ```
@@ -122,10 +158,14 @@ is only ever one. The owner: "yes".
 
 ### 2026-11-03 — `= 5` on a param is its default: `move` alone is `move 5` (owner: "Yes")
 
+`decision.procedures.defaults`
+
 It falls out of the param being written as a `let` is. Design claude proposed it; the owner: "Yes to all, except
 errors".
 
 ### 2026-11-03 — A param is handed a copy unless it says `share`, and then the call says it too: `reset share scores` (owner: "Yes")
+
+`decision.procedures.share`
 
 ```
 procedure reset (board: table of small_whole, share):
@@ -140,15 +180,21 @@ changed without a word at the call. Design claude proposed it; the owner: "Yes t
 
 ### 2026-11-03 — `repeat forever:` ... `end repeat`; `stop`, or `stop if ...`, leaves the innermost loop (owner: "Yes")
 
+`decision.loops.forever`
+
 As Easium's D41, with TAKL's `end`; `stop if` is the line ending in `if`. Design claude proposed it; the owner:
 "Yes to all, except errors".
 
 ### 2026-11-03 — No holes: setting past a table's end is refused, "xs has 3 items, use `add` to put one on the end" (owner: "Yes")
 
+`decision.tables.no_holes`
+
 Design claude proposed it against Lua's holes, where a table's length stops being true. The owner, of a quick round:
 "Yes to all, except errors". Putting an item on the end: `add`, the entry above.
 
 ### 2026-11-03 — `and` and `or` short-circuit; `and also` and `or also` always check both sides (owner: "yes", "good")
+
+`decision.conditions.short_circuit`
 
 ```
 if i is at most length of xs and position i of xs is 0:     # the second half only when i is in range
@@ -163,10 +209,14 @@ brackets.
 
 ### 2026-11-03 — `not` goes in front of one name or a bracketed test: `if not done:`, `not (lives is 0 and score is 0)` (owner: "yes")
 
+`decision.conditions.not`
+
 With `isn't` there, `not` is mostly for a `true_or_false`. Design claude proposed it under the bracket rule; the owner:
 "yes".
 
 ### 2026-11-03 — Tests join with `and` and `or`; mixing the two needs brackets (owner: "yes")
+
+`decision.conditions.and_or`
 
 ```
 if (lives is 0 and score is 0) or time is 0:     # fine
@@ -177,6 +227,8 @@ Whether `a and b or c` is `(a and b) or c` or `a and (b or c)` is refused rather
 `position i + 1 of xs` is; Easium had left it open. Design claude proposed it; the owner: "yes". `not`: the entry above.
 
 ### 2026-11-03 — `if lives is 0:` ... `else if lives is 1:` ... `else:` ... `end if` (owner: "yup")
+
+`decision.conditions.if`
 
 ```
 if lives is 0:
@@ -193,12 +245,16 @@ words as `at least` is. Design claude proposed it; the owner: "yup".
 
 ### 2026-11-03 — `lives is more than 5`, `less than 5`, `at least 5`, `at most 5` (owner: "yes")
 
+`decision.conditions.compare`
+
 Design claude proposed `above`, `below`, `5 or more` and `5 or less`, worried that `or` would also join tests. The
 owner: "Why not `at least`?" Design claude had been inconsistent: `at least` is two grammar words, as `for each` and
 `repeat until` are, and the rule refuses only gluing grammar, not grammar of two words. The owner: "Why not `more
 than`?" It is maths class's word, `above` and `below` being about places. The owner: "yes".
 
 ### 2026-11-03 — `lives is 0`, `lives isn't 0`; `is not` is answered "did you mean `isn't`?" (owner: "yea")
+
+`decision.conditions.isnt`
 
 Easium's `is_not` would be grammar of two pieces, which TAKL's rule refuses. The owner: "Why is there no `_`?" Design
 claude: `_` is for names alone, and gluing grammar would bring back the exception `end_of` was. The owner: "Why not
@@ -207,10 +263,14 @@ Design claude proposed it as the only form; the owner: "yea".
 
 ### 2026-11-03 — A line can end in `if`: `show "hi" if lives is 0` (owner)
 
+`decision.conditions.trailing_if`
+
 The owner: "Also, `show \"hi\" if...` is legal". A line runs only when the test after its `if` holds. Design claude
 reads it as any line, `stop if lives is 0` among them. `if` as a block: the entry above.
 
 ### 2026-11-03 — `repeat until lives is 0:` ... `end repeat`, checked before each round; no `while` (owner: "yes")
+
+`decision.loops.until`
 
 ```
 repeat until lives is 0:
@@ -225,6 +285,8 @@ early (Easium D41), and the words a test is written with, since Easium's `is_not
 of several pieces, which TAKL's rule refuses.
 
 ### 2026-11-03 — `= a` copies, `= share a` is the same table; memory is reference counting, copy-on-write, and a cycle collector (owner: "yes")
+
+`decision.memory.share`
 
 ```
 let b: table of small_whole = a          # a copy, as a number is
@@ -242,6 +304,8 @@ leaks, so a cycle collector runs beneath, as Python's does; a kid never sees it.
 
 ### 2026-11-03 — Error messages take Radium's layout, made for kids: `Stopped before running:` or `Stopped while running:`, the place, the code and a `^`, then `what:`, `why:`, `when:`, `because:` (owner: "yes")
 
+`decision.errors.layout`
+
 The owner had design claude ask Radium's design claude, whose decisions are Radium's D114, D116 to D119, D122 and D123:
 a first line of the kind and the place twice, `file:line:column` for editors (the column in UTF-8 bytes) then
 `line N column M` for people (in grapheme clusters); the code line with a `^` run under exactly the part, counted in
@@ -258,6 +322,8 @@ the entry above.
 
 ### 2026-11-03 — One IR between bytecode and Cranelift, at two strengths: warm code gets few passes and Cranelift's quick mode, very hot code every pass and its speed mode (owner: "yes")
 
+`decision.backend.two_strengths`
+
 ```
 bytecode → TAKL's IR → Cranelift
 ```
@@ -270,6 +336,8 @@ LLVM gave in very hot code, and two IRs would write each optimization twice, the
 
 ### 2026-11-03 — The shared form is bytecode: the interpreter runs it, Cranelift compiles from it (owner: "yes")
 
+`decision.backend.bytecode`
+
 The owner: "What's the diff between Bytecode and IR?" Design claude: an IR is any form between source and machine code,
 most often shaped for a compiler to reason over; bytecode is the kind shaped for running, a compact list an
 interpreter steps through, as Python's, the JVM's and Lua's are. JITs keep both (V8, the JVM, LuaJIT): bytecode run and
@@ -278,6 +346,8 @@ counting what is hot, Cranelift compiles from it with those counts, and every pl
 place in the bytecode, which is how a loop is jumped into mid-way. The oracle still walks the parsed source.
 
 ### 2026-11-03 — No LLVM: the interpreter, then Cranelift for what gets hot; TAKL is written in Rust (owner: "Drop LLVM")
+
+`decision.backend.no_llvm`
 
 The owner asked whether the interpreter should be C for portability and the tiers Rust and C++. Design claude
 recommended Rust throughout: Rust already reaches where kids are, Windows, Mac, Linux, Chromebooks, iPads and the
@@ -292,6 +362,8 @@ become an app. The owner: "Drop LLVM". With it goes C++. This narrows the tiers 
 asked about is not decided.
 
 ### 2026-11-03 — Three tiers: an interpreter first, Cranelift for what gets hot, LLVM for what gets very hot, compiled in the background on other cores (owner)
+
+`decision.backend.tiers`
 
 LLVM dropped the same day: the entry "No LLVM" above.
 
@@ -311,6 +383,8 @@ the backend entry below.
 
 ### 2026-11-03 — Testing: golden tests, a reference interpreter as oracle, a forced second tier, and fuzzing, all of them (owner: "All of them.")
 
+`decision.tests.plan`
+
 The owner: "How should we test? Like the impl". Design claude proposed four, and asked about the reference interpreter
 first, the most work up front. The owner: "All of them."
 
@@ -325,6 +399,8 @@ first, the most work up front. The owner: "All of them."
 
 ### 2026-11-03 — A block ends with `end` and what it closes: `end procedure move`, `end repeat`, `end for`, `end table level`; `end_of` is gone (owner: "yes")
 
+`decision.blocks.end`
+
 ```
 procedure move (speed: small_whole):
   show speed
@@ -336,6 +412,8 @@ family. Design claude proposed dropping the `of`: `end` is one grammar word, nev
 what it closes, at the cost of a little English. The owner: "yes". It replaces `end_of` in every entry below.
 
 ### 2026-11-03 — A name is glued with `_`; a grammar word stands alone: `small_whole`, `middle_of`, but `sum of scores` (owner: "yes")
+
+`decision.names.underscore`
 
 Names are what is declared, used or looked up: types, modifiers, variables, procedures, `small_whole`, `true_or_false`,
 `can't_change`, `never_negative`, `first_name`, `middle_of`. Grammar words are TAKL's own fixed words, each one word:
@@ -350,6 +428,8 @@ owner: "Then, why is it not `end of`?", and the exception went (the entry above)
 
 ### 2026-11-03 — A kid's own `of` is only a name, `procedure middle_of (xs: table of small_whole)`, called `middle_of scores`; a bare `of` is the built-in family's alone (owner)
 
+`decision.procedures.own_of`
+
 Design claude proposed `procedure middle of (...)`. The owner: "Is that a space in a fn name?" Design claude offered any
 one-param procedure called with `of`, or `of` before the param, `(of xs: ...)`. The owner: "Or just no `of` at all", then
 "They could just name it `middle_of`". So a kid's own `of` is no new form, only a name with `_of` in it; the built-in
@@ -358,6 +438,8 @@ This replaces "kids can write their own `of`" in the `of` family entry below.
 
 ### 2026-11-03 — `end_of` stays one word, so it is never read as the `of` family (owner: "keep")
 
+`decision.blocks.end_of`
+
 Replaced the same day by `end`, the entry above.
 
 Shown a kid's own `procedure middle of (...)`, the owner: "Wait, if that one uses a bare `of`, why not the `end`?" Design
@@ -365,6 +447,8 @@ claude: `end of procedure middle` would read as the `of` family, `end of scores`
 writing `procedure end of (...)` would leave the compiler unable to tell the two apart. The owner: "keep".
 
 ### 2026-11-03 — The `of` family, `length of`, `sum of`, `biggest of`, `smallest of`, `average of`, beside one in-order `for each` loop; kids can write their own `of` (owner: "yea")
+
+`decision.tables.of_family`
 
 ```
 show sum of scores
@@ -387,6 +471,8 @@ own `of` is written.
 
 ### 2026-11-03 — `repeat 50 times:` ... `end_of repeat`; a count from a variable is `repeat lives times:` (owner: "good")
 
+`decision.loops.repeat`
+
 ```
 repeat 50 times:
   show "Hi"
@@ -398,17 +484,23 @@ plainly as a number. The owner: "good". Not designed: a loop over a table, a loo
 
 ### 2026-11-03 — No `show "Hi" 50x` shortcut (owner: "drop shortcut")
 
+`decision.loops.no_shortcut`
+
 The owner proposed `show "Hi" 50x` printing it 50 times, a shortcut before general loops. Design claude raised a count
 from a variable (`show "Hi" lives x`, or `(lives)x` by the bracket rule) and `x` clashing with multiplying, CyborgPL's
 `'price' x 'tax'`. The owner: "Nvm", then, asked whether all of it or the count only: "drop shortcut".
 
 ### 2026-11-03 — The type of true and false is `true_or_false`: `let done: true_or_false = false` (owner)
 
+`decision.types.true_or_false`
+
 Design claude proposed `yes_or_no`, keeping `true` and `false` as the values since they carry over everywhere, with an
 error still able to say "other languages call this a boolean". The owner wrote `let done: true_or_false = false`: the
 name says the very values it holds.
 
 ### 2026-11-03 — An exact decimal never rounds on its own: `1 / 3` is an error, `round (1 / 3)` rounds on purpose, as in CyborgPL (owner: "copy")
+
+`decision.decimals.rounding`
 
 ```
 let slice: small_decimal = round (1 / 3)    # fine
@@ -424,10 +516,14 @@ at compile time, run time or both.
 
 ### 2026-11-03 — A bare `small_decimal` is exact; `, fast` is the only kind ever written, `normal` is not a word (owner: "yup")
 
+`decision.types.exact_bare`
+
 Design claude proposed that a decimal with nothing after it be exact, as maths class is, so a kid never types `normal`;
 the owner: "yup".
 
 ### 2026-11-03 — Decimals and fractions take the whole numbers' sizes: `medium_decimal, fast` is a float64, `small_decimal` exact, `small_fraction` two small_wholes; no 8-bit float (owner: "yes")
+
+`decision.types.decimals`
 
 | size | `, fast` (a float) | exact | `_fraction`, top and bottom each a |
 |---|---|---|---|
@@ -447,15 +543,21 @@ are OCP FP8's two and IEEE P3109's several, about 2 digits, run by no CPU. Desig
 
 ### 2026-11-03 — TAKL takes inspiration from Ruby, and that is all (owner)
 
+`decision.house.ruby`
+
 Design claude asked what TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons. The owner:
 "TAKL takes inpirsation from Ruby, that's all." Nothing is to be carried over from Ruby for being Ruby's.
 
 ### 2026-11-03 — The text type is `text`, never `string` (owner: "yes")
 
+`decision.text.name`
+
 Design claude proposed `text` over `string`: "string" means nothing to a kid, `text` is what it is, and an error can
 still say "other languages call this a string". The owner: "yes".
 
 ### 2026-11-03 — Text is always valid UTF-8, counted in grapheme clusters, letters as a kid sees them: `"👍🏽"` is 1 long (owner: "yes")
+
+`decision.text.letters`
 
 Design claude proposed that a position into text and its length count letters as seen, never bytes or code points, which
 are reached only by an explicit step. The owner: "So, we would normally do grapheme clusters?" Design claude: yes, at two
@@ -464,6 +566,8 @@ compiler and updated with each Unicode version (CyborgPL generates the same tabl
 speed is fine, the owner: "yes". The words for code points and for turning text into bytes are not designed.
 
 ### 2026-11-03 — A table's item type with modifiers is bracketed: `table of (tiny_whole, never_negative)`; a modifier outside is the variable's (owner: "yes")
+
+`decision.tables.item_modifiers`
 
 ```
 let data: table of (tiny_whole, never_negative) = [72, 105]
@@ -478,6 +582,8 @@ is and outside what the variable is; `table of tiny_whole, never_negative` bare 
 "did you mean `table of (tiny_whole, never_negative)`?". The owner: "yes".
 
 ### 2026-11-03 — Tables, as Lua's: `table of small_whole` keyed 1, 2, 3, `table of text to small_whole` by name; `[10, 20, 30]` on one line, a block past it (owner: "yes")
+
+`decision.tables.shape`
 
 ```
 let scores: table of small_whole = [10, 20, 30]
@@ -502,11 +608,15 @@ no commas, the two making the same table. The owner: "yes".
 
 ### 2026-11-03 — `return a + b` gives a procedure's value back; the last line is never returned on its own (owner)
 
+`decision.procedures.return`
+
 Design claude proposed a word you can see over Ruby's returning the last line, offering `give_back` or `return`. The
 owner: "Just `return` with no `s`? I mean, above already says `returns`". It pairs with `returns` in the first line and is
 the word other languages use.
 
 ### 2026-11-03 — `procedure add (a: small_whole | b: small_whole) returns small_whole:` ... `end_of procedure add`; called as `add 1, 2` (owner: "yes")
+
+`decision.procedures.shape`
 
 ```
 procedure move (speed: small_whole, never_negative | height: tiny_whole):
@@ -525,6 +635,8 @@ back. The `:` replaced the owner's first `has_body`; design claude called it red
 
 ### 2026-11-03 — A bare index is one number or one name; anything more is bracketed, `position (i + 1) of xs` (owner: "yes")
 
+`decision.lists.index_bare`
+
 Design claude first proposed reading everything between `position` and `of` as the index. The owner, of
 `position i + 1 of xs`: "What the fuck in the stroking shit did I just fucking witnessed". Design claude then proposed
 refusing it: `position 1 of xs` and `position i of xs` stand bare, anything more needs brackets, and
@@ -533,12 +645,16 @@ The owner: "yes".
 
 ### 2026-11-03 — A number past its type's range is a compile error when it can be known, a stopping error at run time, unless an `otherwise` beside it handles it (owner)
 
+`decision.numbers.range`
+
 Design claude proposed catching it at compile time when the numbers are known and stopping the program at the line where
 it happens otherwise, with the same message both times. The owner: "spot at compile time, err. runtime default to
 error, unless there's a `otherwise` sitting beside, which is err handling". So `otherwise` is TAKL's error handling.
 Not designed: how `otherwise` is written, and whether it handles more than numbers out of range.
 
 ### 2026-11-03 — `position 1 of xs` is the first item, counting from 1; `offset 0 of xs` is the same item, counting from 0 (owner)
+
+`decision.lists.index`
 
 The owner proposed `total = x + position 1 of xs`, and `offset` beside `position`. Design claude read it as two words, each
 with one start: `position` counts from 1 as a person does, `offset` from 0 as other languages do, so a kid starts with
@@ -547,6 +663,8 @@ its own start. How an index longer than one number or name is written: the entry
 
 ### 2026-11-03 — `, never_negative` after a whole number's type makes it unsigned: `small_whole, never_negative` is a uint16, 0 to 65535 (owner)
 
+`decision.types.never_negative`
+
 The owner proposed `let score: small_whole, never_negative`. Asked whether it doubles the top end or only refuses
 negatives, the owner: "It's `uint`, without saying `unsigned_small_whole`, and I think stacking it to `small_whole` is too
 long". So it is a true unsigned number, written as a word after the comma as `can't_change` is, and never as a longer type
@@ -554,11 +672,15 @@ name.
 
 ### 2026-11-03 — A `let` can change unless it says `can't_change`; `score = score + 10` changes it (owner: "yes")
 
+`decision.lets.change`
+
 Design claude proposed that a `let` without `can't_change` can change, written `score = score + 10`, since the owner's
 first program implies it and `can't_change` is then a choice a kid makes. The owner: "yes, because not many kids would
 fucking go 'Oh this is bad, it's not accurate to maths'".
 
 ### 2026-11-03 — The whole numbers are tiny_whole, small_whole, medium_whole and big_whole: int8, int16, int32, int64 (owner)
+
+`decision.types.whole`
 
 Design claude proposed `tiny_whole`, `small_whole`, a bare `whole` for int32 as the one kids reach for, and `big_whole`.
 The owner: "why not fucking `medium_whole`. I mean, they'll have to learn about those eventually. We just don't fuvking say
@@ -567,16 +689,22 @@ in bits. Unsigned whole numbers are not designed; design claude suggested waitin
 
 ### 2026-11-03 — Artificial-IntelligenceAI/TAKL is public, with its full history (owner: "Public")
 
+`decision.house.public`
+
 The repository was made private on the owner's account, not Soclets, when it was created, design claude choosing private
 since the owner had not said. The owner: "Public".
 
 ### 2026-11-03 — The code is Apache 2.0 with the LLVM exception; the docs are CC BY 4.0 (owner)
+
+`decision.house.license`
 
 The owner: "Apache 2.0 with LLVM, and CC BY 4.0 for docs". The code, the compiler and anything a program is built with, is
 under the Apache License 2.0 with the LLVM exception (LICENSE); the docs, this log among them, under Creative Commons
 Attribution 4.0 International (LICENSE-CC-BY-4.0). Both texts as CyborgPL has them, unchanged.
 
 ### 2026-11-03 — Cranelift now; one IR that both backends read; LLVM later as a second tier (owner: "Yeah, seems good")
+
+`decision.backend.cranelift`
 
 LLVM dropped the same day: the entry "No LLVM" above.
 
@@ -587,6 +715,8 @@ exception: a program that behaves differently once it warms up is a bug no kid c
 
 ### 2026-11-03 — A real typo stops the program, with a "did you mean" (owner: "stop, obviously")
 
+`decision.spelling.typos`
+
 Narrowed the same day by the error-message entry above: "did you mean" only when one near match is certain.
 
 Design claude proposed that `cant_chang` be answered with "did you mean `can't_change`?" and never guessed and run, since
@@ -595,12 +725,16 @@ obviously".
 
 ### 2026-11-03 — `can't_change` and `cant_change` are both read; what autocorrect changes is read as typed (owner: "accept both seems like a good idea", "some autocorrect protection")
 
+`decision.spelling.cant_change`
+
 Design claude raised that kids will type `cant_change`, and that text pasted from a document or a chat carries a curly
 `’`. The owner: "accept both seems like a good idea, and maybe we should have some autocorrect protection". Design claude
 proposed reading autocorrect's changes as what was meant, with no message: `’` as `'`, `“ ”` as `"`, `—` as `-`, because
 that was autocorrect's doing and not the kid's; a real typo is the next entry. The owner did not object.
 
 ### 2026-11-03 — `let` names a type before its value; `small_whole` is an int16; `show` prints; `#` starts a comment (owner)
+
+`decision.syntax.let`
 
 The owner's first program:
 
