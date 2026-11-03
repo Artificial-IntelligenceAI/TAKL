@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `repeat until lives is 0:` ... `end repeat`, checked before each round; no `while` (owner: "yes")
+
+```
+repeat until lives is 0:
+  ...
+end repeat
+```
+
+The owner had design claude ask Easium's design claude: Easium's D39 is `repeat until lives is 0:`, checked before each
+round, so the body may run no times, and no `while`, since `until` with the opposite test is the same loop. Design
+claude proposed it for TAKL with TAKL's `end`. The owner: "yes". Not designed: `repeat forever:` with `stop` for leaving
+early (Easium D41), and the words a test is written with, since Easium's `is_not`, `at_least`, `greater_than` are grammar
+of several pieces, which TAKL's rule refuses.
+
 ### 2026-11-03 — `= a` copies, `= share a` is the same table; memory is reference counting, copy-on-write, and a cycle collector (owner: "yes")
 
 ```
