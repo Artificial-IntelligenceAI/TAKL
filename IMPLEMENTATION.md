@@ -33,6 +33,8 @@ before contributing code. When a rule changes, `DECISIONS.md` gets a new entry a
 10. **Optimizations from the start.** The compiler is built with its optimizations as it goes, never as a plain
     version sped up later. Each one is held to the oracle on the golden tests and the fuzzer from the day it lands.
     The oracle stays plain.
+11. **Prompting.** Before writing a prompt for a subagent or another session, a session reads the current Anthropic
+    prompting guide for the model it prompts, in full and itself, never through a summary. A prompt is written to it.
 
 ## Tracing
 

@@ -5,6 +5,15 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A session reads the current Anthropic prompting guide, in full and itself, before prompting a subagent or another session (owner: "yea")
+
+`decision.house.prompting`
+
+Of compiler claude, an hour and forty minutes into its run, the owner: "Mf didn't read the prompting guide before
+prompting a subagent". Design claude proposed a rule for every session: before writing a prompt for a subagent or
+another session, read the current guide for the model it prompts, the whole of it, directly and not through a summary,
+and write the prompt to it. The owner: "yea". It is rule 11 in `IMPLEMENTATION.md`.
+
 ### 2026-11-03 — A pure procedure over a small bounded input is made a table of its answers, built on another core (owner: "yeah")
 
 `decision.compiler.precompute`
