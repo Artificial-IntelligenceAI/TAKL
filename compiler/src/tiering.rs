@@ -387,7 +387,8 @@ pub fn start_with(program: &Arc<Program>, mode: crate::Mode, in_place: bool) -> 
         crate::Mode::Interpret => return None,
         crate::Mode::Quick => (Some(Strength::Quick), in_place, (WARM, HOT)),
         crate::Mode::Speed => (Some(Strength::Speed), in_place, (WARM, HOT)),
-        crate::Mode::Tiered => (None, in_place, (WARM, HOT)),
+        // `TAKL_WARM` and `TAKL_HOT` override the thresholds, for measuring them.
+        crate::Mode::Tiered => (None, in_place, (measured("TAKL_WARM", WARM), measured("TAKL_HOT", HOT))),
         // Every move between tiers, on every program: compiled in place so it happens at the same round each run.
         crate::Mode::TieredEager => (None, true, (2, 4)),
     };
@@ -405,4 +406,8 @@ pub fn start_with(program: &Arc<Program>, mode: crate::Mode, in_place: bool) -> 
         }
     }
     Some(tiers)
+}
+
+fn measured(name: &str, default: u32) -> u32 {
+    std::env::var(name).ok().and_then(|value| value.parse().ok()).filter(|value| *value > 0).unwrap_or(default)
 }

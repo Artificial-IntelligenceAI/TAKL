@@ -604,6 +604,13 @@ impl<'a, 'b> Lowering<'a, 'b> {
     fn op(&mut self, op: &Op) -> Option<clir::Value> {
         Some(match op {
             Op::Constant(value) => self.constant(*value),
+            Op::Stamp(site) => {
+                let clock = self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.machine, 8);
+                let later = self.builder.ins().iadd_imm_s(clock, 1);
+                self.builder.ins().store(MemFlagsData::trusted(), later, self.machine, 8);
+                let shifted = self.builder.ins().ishl_imm_s(later, crate::interpreter::SITE_BITS as i64);
+                self.builder.ins().bor_imm_s(shifted, *site as i64)
+            }
             Op::Load(register) => {
                 self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.frame, *register as i32 * 8)
             }

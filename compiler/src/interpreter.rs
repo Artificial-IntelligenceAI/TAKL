@@ -23,6 +23,9 @@ use num_integer::Integer;
 use num_traits::{One, Zero};
 use std::sync::Arc;
 
+/// A site register holds the clock when the variable was set, above this many bits of where.
+pub const SITE_BITS: u32 = 20;
+
 /// How many procedures may be running at once, `start_running` among them; one more isn't designed.
 pub const MOST_CALLS: u64 = 10_000;
 
@@ -44,6 +47,8 @@ pub enum Detail {
 #[repr(C)]
 pub struct Machine {
     pub depth: u64,
+    /// Counts every time a variable is set, so `because:` can tell them oldest set first; at offset 8.
+    pub clock: u64,
     pub program: Arc<Program>,
     stack: Vec<u64>,
     top: usize,
@@ -71,6 +76,7 @@ impl Machine {
         let stack = vec![0u64; widest * (MOST_CALLS as usize + 2)];
         Machine {
             depth: 0,
+            clock: 0,
             program,
             stack,
             top: 0,
@@ -252,7 +258,10 @@ impl Machine {
                         let value = runtime::copy_table(reg!(source));
                         set_heap!(dest, value);
                     }
-                    Instruction::SetSite { dest, site } => reg!(dest) = site as u64,
+                    Instruction::SetSite { dest, site } => {
+                        self.clock += 1;
+                        reg!(dest) = (self.clock << SITE_BITS) | site as u64;
+                    }
                     Instruction::WholeMaths { operator, kind, dest, a, b, failure } => {
                         let (x, y) = (reg!(a), reg!(b));
                         match whole_maths(operator, kind, x, y) {
@@ -723,18 +732,32 @@ impl Machine {
             _ => crate::broke(span, "a stop with nothing to say"),
         };
         // trace: decision.errors.layout
-        if matches!(info.kind, FailureKind::Maths { .. }) {
+        // A maths step that stops names where each of its variables got its value, oldest set first. An empty
+        // table has no values to tell of.
+        let tells = matches!(info.kind, FailureKind::Maths { .. })
+            || (matches!(info.kind, FailureKind::Family { .. }) && !made.head_says("the table is empty"));
+        if tells {
+            let mut told = Vec::new();
             for entry in &info.because {
                 // SAFETY: `verify` checked these registers are inside the frame.
                 let value = unsafe { *frame.add(entry.register as usize) };
-                let site = match entry.site {
-                    Site::Fixed(span) => span,
+                let (stamp, site) = match entry.site {
+                    Site::Fixed(span) => (0, span),
                     Site::Register(register) => {
-                        let index = unsafe { *frame.add(register as usize) } as usize;
-                        procedure.sites.get(index).copied().unwrap_or_default()
+                        let held = unsafe { *frame.add(register as usize) };
+                        let index = (held & ((1 << SITE_BITS) - 1)) as usize;
+                        (held >> SITE_BITS, procedure.sites.get(index).copied().unwrap_or_default())
                     }
                 };
-                made = made.because(format!("@{} was {}", entry.name, runtime::show(&entry.ty, value)), site);
+                let text = match &entry.ty {
+                    Type::Table { .. } => format!("@{} was last set here", entry.name),
+                    ty => format!("@{} was {}", entry.name, runtime::show(ty, value)),
+                };
+                told.push((stamp, text, site));
+            }
+            told.sort_by_key(|(stamp, _, _)| *stamp);
+            for (_, text, site) in told {
+                made = made.because(text, site);
             }
         }
         self.line.clear();

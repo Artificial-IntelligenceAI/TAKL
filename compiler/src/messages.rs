@@ -114,7 +114,7 @@ pub fn grammar_word_as_name(span: Span, name: &str) -> Failure {
     Failure::what(
         span,
         format!("`{}` is one of TAKL's own words, so it can't be a name", name),
-        "Pick another name, like `add_up`.",
+        format!("Each of TAKL's words keeps one meaning. Pick another name, like `{}_it`.", name),
     )
 }
 
@@ -397,10 +397,10 @@ pub fn fraction_too_big(span: Span, value: &str, type_name: &str, whole_name: &s
 }
 
 // trace: decision.types.whole
-pub fn no_int(span: Span) -> Failure {
+pub fn no_int(span: Span, word: &str) -> Failure {
     Failure::what(
         span,
-        "TAKL has no `int`",
+        format!("TAKL has no `{}`", word),
         "TAKL names whole numbers by size: tiny_whole, small_whole, medium_whole, big_whole.\nAdd `, never_negative` for one that's never below zero.",
     )
 }
@@ -505,4 +505,81 @@ pub fn problem(problem: crate::numbers::Problem, span: Span, ty: &crate::types::
         Problem::FastTooBig => fast_too_big(span, &ty.name()),
         Problem::NegativeRemainder => not_designed_yet(span, "the remainder when a number is below zero"),
     }
+}
+
+// trace: decision.blocks.end
+pub fn no_end(span: Span, closer: &str) -> Failure {
+    Failure::what(
+        span,
+        format!("this block never ends: `{}` is missing", closer),
+        "Every block ends with `end` and what it closes.",
+    )
+}
+
+pub fn wrong_end(span: Span, fix: String) -> Failure {
+    Failure::fix(span, fix, "Each block ends by naming what it closes.")
+}
+
+pub fn bracket_not_closed(span: Span) -> Failure {
+    Failure::what(span, "this `(` is never closed", "Every `(` needs a `)` on the same line.")
+}
+
+// trace: decision.show.pieces
+pub fn show_nothing(span: Span) -> Failure {
+    Failure::what(span, "`show` needs something to show", "Like `show \"Hello, World!\"`.")
+}
+
+// trace: decision.text.quotes
+pub fn text_not_closed(span: Span) -> Failure {
+    Failure::what(span, "this text has no closing `\"`", "Text starts with `\"` and ends with `\"` on the same line.")
+}
+
+// trace: decision.names.at_mark
+pub fn bare_unknown(span: Span, name: &str) -> Failure {
+    Failure::what(
+        span,
+        format!("there's no `{}`", name),
+        "Variables start with `@`. Procedures are made with `procedure`.",
+    )
+}
+
+// trace: decision.decimals.rounding
+pub fn round_needs_brackets(span: Span) -> Failure {
+    Failure::what(
+        span,
+        "`round` needs what it rounds in brackets, like `round (7 divided by 2)`",
+        "Brackets show exactly what gets rounded.",
+    )
+}
+
+// trace: decision.maths.remainder
+pub fn remainder_needs_division(span: Span) -> Failure {
+    Failure::what(
+        span,
+        "`remainder of` needs a division in brackets, like `remainder of (7 divided by 2)`",
+        "The remainder is what's left over after dividing.",
+    )
+}
+
+// trace: decision.values.empty
+pub fn empty_no_type(span: Span) -> Failure {
+    Failure::what(
+        span,
+        "`empty` doesn't know what it's empty of here",
+        "`empty` works where the type is known, like `let @name: text = empty`.",
+    )
+}
+
+// trace: decision.types.decimals
+pub fn no_float(span: Span, word: &str) -> Failure {
+    Failure::what(
+        span,
+        format!("TAKL has no `{}`", word),
+        "TAKL's decimals have sizes: tiny_decimal, small_decimal, medium_decimal, big_decimal.\nThey're exact. Add `, fast_but_inexact` for what other languages call a float.",
+    )
+}
+
+// trace: decision.types.true_or_false
+pub fn bool_is_true_or_false(span: Span) -> Failure {
+    Failure::fix(span, "true_or_false", "Other languages call this a boolean.")
 }

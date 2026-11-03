@@ -37,6 +37,11 @@ impl Failure {
         Failure { span, head: Head::Fix(fix.into()), why: why.into(), because: Vec::new() }
     }
 
+    /// Whether the first line starts with this.
+    pub fn head_says(&self, start: &str) -> bool {
+        matches!(&self.head, Head::What(what) | Head::Fix(what) if what.starts_with(start))
+    }
+
     pub fn because(mut self, text: impl Into<String>, span: Span) -> Failure {
         self.because.push(Because { text: text.into(), span });
         self

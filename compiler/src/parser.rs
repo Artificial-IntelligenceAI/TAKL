@@ -148,6 +148,8 @@ pub struct Parser<'s> {
     lines: Vec<Line>,
     at: usize,
     pub failures: Vec<Failure>,
+    /// The blocks open around the line being read, by the word their `end` names.
+    open: Vec<String>,
 }
 
 /// What a block's closing line was.
@@ -195,9 +197,7 @@ impl<'s> Parser<'s> {
             for problem in problems {
                 failures.push(match problem {
                     LexProblem::Backslash(span) => messages::not_designed_yet(span, "what `\\` does inside text"),
-                    LexProblem::TextNotClosed(span) => {
-                        messages::not_designed_yet(span, "this text has no closing `\"`")
-                    }
+                    LexProblem::TextNotClosed(span) => messages::text_not_closed(span),
                 });
             }
             if let (Some(first), Some(last)) = (tokens.first(), tokens.last()) {
@@ -205,7 +205,7 @@ impl<'s> Parser<'s> {
                 lines.push(Line { tokens, span });
             }
         }
-        Parser { source, lines, at: 0, failures }
+        Parser { source, lines, at: 0, failures, open: Vec::new() }
     }
 
     fn fail(&mut self, failure: Failure) {
@@ -252,11 +252,7 @@ impl<'s> Parser<'s> {
             }
         };
         if is_grammar_word(&name) {
-            if name == "add" {
-                self.fail(messages::grammar_word_as_name(name_span, &name));
-            } else {
-                self.fail(messages::not_designed_yet(name_span, format!("`{}` as a procedure's name", name)));
-            }
+            self.fail(messages::grammar_word_as_name(name_span, &name));
         }
         let mut params = Vec::new();
         if cursor.at_symbol('(') {
@@ -302,7 +298,9 @@ impl<'s> Parser<'s> {
         if !cursor.broken && !cursor.done() {
             self.unreadable(&mut cursor);
         }
+        self.open.push("procedure".to_string());
         let (body, closing) = self.block();
+        self.open.pop();
         let mut end_span = None;
         match closing {
             Closing::End { word, line } => {
@@ -314,28 +312,21 @@ impl<'s> Parser<'s> {
                     _ => None,
                 });
                 if word.as_deref() != Some("procedure") {
-                    let failure = messages::not_designed_yet(span, "a block closed with the wrong `end`");
-                    self.fail(failure);
+                    self.fail(messages::wrong_end(span, format!("end procedure {}", name)));
                 } else if named.as_deref() != Some(name.as_str()) || tokens.len() != 3 {
                     self.fail(messages::end_names(span, &name));
                 }
                 self.at = line + 1;
             }
             Closing::Procedure { line } | Closing::ElseIf { line } | Closing::Else { line } => {
-                self.fail(messages::not_designed_yet(
-                    header_span,
-                    format!("this block never ends: `end procedure {}` is missing", name),
-                ));
+                self.fail(messages::no_end(header_span, &format!("end procedure {}", name)));
                 self.at = line;
                 if !self.lines[line].tokens.first().is_some_and(|token| token.is_word("procedure")) {
                     self.at = line + 1;
                 }
             }
             Closing::EndOfFile => {
-                self.fail(messages::not_designed_yet(
-                    header_span,
-                    format!("this block never ends: `end procedure {}` is missing", name),
-                ));
+                self.fail(messages::no_end(header_span, &format!("end procedure {}", name)));
             }
         }
         self.lines[line_index].tokens = tokens;
@@ -538,8 +529,11 @@ impl<'s> Parser<'s> {
         (statements, Closing::EndOfFile)
     }
 
-    /// Checks that a block closed with `end <word>`, and moves past the closing line.
-    fn close(&mut self, closing: Closing, word: &str) {
+    // trace: decision.blocks.end
+    /// Checks that a block closed with `end <word>`, and moves past the closing line. A block whose `end` is missing
+    /// is reported at its first line, and the `end` it met is left for the block around it; it gives back false, and
+    /// the block is a line already reported.
+    fn close(&mut self, closing: Closing, word: &str, header: Span) -> bool {
         match closing {
             Closing::End { word: Some(found), line } if found == word => {
                 if self.lines[line].tokens.len() > 2 && word != "table" {
@@ -550,20 +544,32 @@ impl<'s> Parser<'s> {
                     }
                 }
                 self.at = line + 1;
+                true
             }
-            Closing::End { line, .. } | Closing::ElseIf { line } | Closing::Else { line } => {
+            Closing::End { word: Some(found), line } if self.open.iter().rev().skip(1).any(|open| *open == found) => {
+                let _ = line;
+                self.fail(messages::no_end(header, &format!("end {}", word)));
+                false
+            }
+            Closing::End { line, .. } => {
+                let span = self.lines[line].span;
+                self.fail(messages::wrong_end(span, format!("end {}", word)));
+                self.at = line + 1;
+                true
+            }
+            Closing::ElseIf { line } | Closing::Else { line } => {
                 let span = self.lines[line].span;
                 self.fail(messages::not_designed_yet(
                     span,
-                    format!("a block closed with something other than `end {}`", word),
+                    format!("an `else` closing a block other than `if`, not `end {}`", word),
                 ));
                 self.at = line + 1;
+                true
             }
-            Closing::Procedure { line } => {
-                let span = self.lines[line].span;
-                self.fail(messages::not_designed_yet(span, format!("a block with no `end {}`", word)));
+            Closing::Procedure { .. } | Closing::EndOfFile => {
+                self.fail(messages::no_end(header, &format!("end {}", word)));
+                false
             }
-            Closing::EndOfFile => {}
         }
     }
 
@@ -588,7 +594,7 @@ impl<'s> Parser<'s> {
                     // trace: decision.show.pieces
                     let mut pieces = Vec::new();
                     if cursor.done() || cursor.at_word("if") {
-                        self.fail(messages::not_designed_yet(first.span, "a `show` with nothing to show"));
+                        self.fail(messages::show_nothing(first.span));
                     } else {
                         loop {
                             pieces.push(self.test(cursor));
@@ -703,10 +709,7 @@ impl<'s> Parser<'s> {
         let mut items = Vec::new();
         loop {
             if self.at >= self.lines.len() {
-                self.fail(messages::not_designed_yet(
-                    span,
-                    format!("this block never ends: `end table @{}` is missing", name),
-                ));
+                self.fail(messages::no_end(span, &format!("end table @{}", name)));
                 break;
             }
             let tokens = std::mem::take(&mut self.lines[self.at].tokens);
@@ -761,6 +764,8 @@ impl<'s> Parser<'s> {
         self.header_end(cursor);
         let mut branches = Vec::new();
         let mut otherwise = None;
+        let ended;
+        self.open.push("if".to_string());
         let (body, mut closing) = self.block();
         branches.push((test, body));
         loop {
@@ -787,10 +792,14 @@ impl<'s> Parser<'s> {
                     closing = next;
                 }
                 other => {
-                    self.close(other, "if");
+                    ended = self.close(other, "if", span);
                     break;
                 }
             }
+        }
+        self.open.pop();
+        if !ended {
+            return Statement { kind: StatementKind::Broken, span, only_if: None };
         }
         Statement { kind: StatementKind::If { branches, otherwise }, span, only_if: None }
     }
@@ -818,8 +827,13 @@ impl<'s> Parser<'s> {
             self.unreadable(cursor);
         }
         self.header_end(cursor);
+        self.open.push("repeat".to_string());
         let (body, closing) = self.block();
-        self.close(closing, "repeat");
+        let ended = self.close(closing, "repeat", span);
+        self.open.pop();
+        if !ended {
+            return Statement { kind: StatementKind::Broken, span, only_if: None };
+        }
         let kind = match kind_of {
             0 => StatementKind::RepeatForever { body },
             1 => StatementKind::RepeatUntil { test: test.unwrap_or_else(|| Expression::broken(span)), body },
@@ -910,8 +924,13 @@ impl<'s> Parser<'s> {
             Expression::broken(span)
         };
         self.header_end(cursor);
+        self.open.push("for".to_string());
         let (body, closing) = self.block();
-        self.close(closing, "for");
+        let ended = self.close(closing, "for", span);
+        self.open.pop();
+        if !ended {
+            return Statement { kind: StatementKind::Broken, span, only_if: None };
+        }
         Statement { kind: StatementKind::ForEach { names, table, body }, span, only_if: None }
     }
 
@@ -1021,7 +1040,7 @@ impl<'s> Parser<'s> {
                 return arguments;
             }
             if cursor.done() {
-                self.fail(messages::not_designed_yet(open, "this `(` is never closed"));
+                self.fail(messages::bracket_not_closed(open));
                 cursor.broken = true;
             } else {
                 self.unreadable(cursor);
@@ -1250,10 +1269,7 @@ impl<'s> Parser<'s> {
                     let is_division = matches!(&operand.kind, ExpressionKind::Bracketed(inner)
                         if matches!(inner.unbracketed().kind, ExpressionKind::Maths { operator: Maths::DividedBy, .. }));
                     if !is_division && !matches!(operand.kind, ExpressionKind::Broken) {
-                        self.fail(messages::not_designed_yet(
-                            operand.span,
-                            "`remainder of` without a division in brackets",
-                        ));
+                        self.fail(messages::remainder_needs_division(operand.span));
                         return Expression::broken(span);
                     }
                     return Expression { kind: ExpressionKind::Remainder(Box::new(operand)), span };
@@ -1280,7 +1296,7 @@ impl<'s> Parser<'s> {
                     if !cursor.at_symbol('(') {
                         let operand = self.unary(cursor);
                         let span = start.to(operand.span);
-                        self.fail(messages::not_designed_yet(span, "`round` without brackets around what it rounds"));
+                        self.fail(messages::round_needs_brackets(start));
                         return Expression::broken(span);
                     }
                     let operand = self.primary(cursor);
@@ -1373,7 +1389,7 @@ impl<'s> Parser<'s> {
             }
             TokenKind::Symbol('(') => {
                 if cursor.done() {
-                    self.fail(messages::not_designed_yet(span, "this `(` is never closed"));
+                    self.fail(messages::bracket_not_closed(span));
                     cursor.broken = true;
                     return Expression::broken(span);
                 }
@@ -1383,7 +1399,7 @@ impl<'s> Parser<'s> {
                 }
                 if !cursor.eat_symbol(')') {
                     if cursor.done() {
-                        self.fail(messages::not_designed_yet(span, "this `(` is never closed"));
+                        self.fail(messages::bracket_not_closed(span));
                         cursor.broken = true;
                     } else {
                         self.unreadable(cursor);

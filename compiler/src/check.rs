@@ -185,10 +185,23 @@ impl<'s> Checker<'s> {
             return Type::Broken;
         }
         match word {
-            "int" => self.fail(messages::no_int(span)),
+            "int" | "long" => self.fail(messages::no_int(span, word)),
+            "float" => self.fail(messages::no_float(span, word)),
+            "bool" => self.fail(messages::bool_is_true_or_false(span)),
+            "u8" | "u16" | "u32" | "u64" | "uint8" | "uint16" | "uint32" | "uint64" => {
+                let bits: u32 = word.trim_start_matches("uint").trim_start_matches('u').parse().unwrap_or(32);
+                let size = match bits {
+                    8 => Size::Tiny,
+                    16 => Size::Small,
+                    32 => Size::Medium,
+                    _ => Size::Big,
+                };
+                let fix = format!("{}_whole, never_negative", size.word());
+                self.fail(messages::bits_name(span, &fix, &format!("a uint{}", bits)));
+            }
             "string" => self.fail(messages::string_is_text(span)),
-            "i8" | "i16" | "i32" | "i64" => {
-                let bits: u32 = word[1..].parse().unwrap_or(32);
+            "i8" | "i16" | "i32" | "i64" | "int8" | "int16" | "int32" | "int64" => {
+                let bits: u32 = word.trim_start_matches("int").trim_start_matches('i').parse().unwrap_or(32);
                 let size = match bits {
                     8 => Size::Tiny,
                     16 => Size::Small,
@@ -281,19 +294,59 @@ impl<'s> Checker<'s> {
         CheckedExpression { kind: CheckedKind::Constant(Constant::TrueOrFalse(false)), ty: Type::Broken, span }
     }
 
+    /// Every variable read inside an expression, each once.
+    fn variables_in(expression: &CheckedExpression, found: &mut Vec<VariableId>) {
+        let add = |id: VariableId, found: &mut Vec<VariableId>| {
+            if !found.contains(&id) {
+                found.push(id);
+            }
+        };
+        match &expression.kind {
+            CheckedKind::Variable(id) | CheckedKind::Share(id) => add(*id, found),
+            CheckedKind::Maths { left, right, .. }
+            | CheckedKind::Compare { left, right, .. }
+            | CheckedKind::Logic { left, right, .. } => {
+                Self::variables_in(left, found);
+                Self::variables_in(right, found);
+            }
+            CheckedKind::Remainder { top, bottom, .. } | CheckedKind::RoundedDivide { top, bottom, .. } => {
+                Self::variables_in(top, found);
+                Self::variables_in(bottom, found);
+            }
+            CheckedKind::Not(inner) | CheckedKind::Resize(inner) => Self::variables_in(inner, found),
+            CheckedKind::Family { operand, .. } => Self::variables_in(operand, found),
+            CheckedKind::Index { index, table, .. } => {
+                Self::variables_in(index, found);
+                Self::variables_in(table, found);
+            }
+            CheckedKind::Call(call) => {
+                for argument in &call.arguments {
+                    match argument {
+                        CheckedArgument::Value(value) => Self::variables_in(value, found),
+                        CheckedArgument::Share(id) => add(*id, found),
+                        CheckedArgument::Default => {}
+                    }
+                }
+            }
+            CheckedKind::Table(items) => items.iter().for_each(|item| Self::variables_in(item, found)),
+            CheckedKind::KeyedTable(pairs) => pairs.iter().for_each(|(key, value)| {
+                Self::variables_in(key, found);
+                Self::variables_in(value, found);
+            }),
+            _ => {}
+        }
+    }
+
     // trace: decision.errors.layout
-    /// The variables a maths step works on, each once, in the order they are written, for `because:`: its own
-    /// operands that are variables, not variables inside a bracket, a call or `round`, which are steps of their own.
+    /// The variables inside a maths step, for `because:`: every one, nested in brackets, `round`, `of`, a position
+    /// or a call's arguments, each once. While running they are told oldest set first. A true_or_false has no way
+    /// to be shown yet, so it isn't told.
     fn because_of(&self, operands: &[&CheckedExpression]) -> Vec<VariableId> {
         let mut found = Vec::new();
         for operand in operands {
-            if let CheckedKind::Variable(id) = operand.kind
-                && !found.contains(&id)
-                && self.variables[id].ty.is_number()
-            {
-                found.push(id);
-            }
+            Self::variables_in(operand, &mut found);
         }
+        found.retain(|id| !matches!(self.variables[*id].ty, Type::TrueOrFalse | Type::Broken));
         found
     }
 
@@ -321,7 +374,7 @@ impl<'s> Checker<'s> {
                 }
                 Type::Broken => Self::broken(span),
                 _ => {
-                    self.fail(messages::not_designed_yet(span, "`empty` where it isn't text or a table"));
+                    self.fail(messages::empty_no_type(span));
                     Self::broken(span)
                 }
             };
@@ -345,7 +398,7 @@ impl<'s> Checker<'s> {
                     CheckedExpression { kind: CheckedKind::Constant(Constant::Fast(bits)), ty: expected.clone(), span }
                 }
                 fast::Written::TooBig => {
-                    self.fail(messages::fast_too_big_written(span, &written, &expected.name()));
+                    self.fail(messages::fast_too_big_written(span, &format!("~{}", written), &expected.name()));
                     Self::broken(span)
                 }
             },
@@ -552,7 +605,7 @@ impl<'s> Checker<'s> {
                 } else if self.by_name.contains_key(name) {
                     self.fail(messages::call_needs_brackets(span, format!("{}()", name)));
                 } else {
-                    self.fail(messages::not_designed_yet(span, format!("there's no `{}`", name)));
+                    self.fail(messages::bare_unknown(span, name));
                 }
                 Self::broken(span)
             }
@@ -1006,7 +1059,7 @@ impl<'s> Checker<'s> {
                         };
                     }
                     CheckedExpression {
-                        kind: CheckedKind::Family { family, operand: Box::new(operand) },
+                        kind: CheckedKind::Family { family, operand: Box::new(operand), because: Vec::new() },
                         ty: Type::WrittenWhole,
                         span,
                     }
@@ -1038,7 +1091,8 @@ impl<'s> Checker<'s> {
             self.fail(messages::not_designed_yet(span, "a table whose items have no type"));
             return Self::broken(span);
         }
-        CheckedExpression { kind: CheckedKind::Family { family, operand: Box::new(operand) }, ty: item, span }
+        let because = self.because_of(&[&operand]);
+        CheckedExpression { kind: CheckedKind::Family { family, operand: Box::new(operand), because }, ty: item, span }
     }
 
     fn written_family(
@@ -1296,9 +1350,7 @@ impl<'s> Checker<'s> {
                         Type::Table { .. } => {
                             self.fail(messages::not_designed_yet(value.span, "how `show` prints a table"))
                         }
-                        Type::WrittenEmpty => {
-                            self.fail(messages::not_designed_yet(value.span, "what `show empty` prints"))
-                        }
+                        Type::WrittenEmpty => self.fail(messages::empty_no_type(value.span)),
                         Type::Nothing => {}
                         _ => {}
                     }
@@ -1559,9 +1611,12 @@ impl<'s> Checker<'s> {
         };
         let last = procedure.body.iter().find(leaves).or(procedure.body.last());
         let last = last.filter(|statement| statement.only_if.is_none()).map(|statement| &statement.kind);
+        // A last line already reported says nothing about how the procedure ends.
+        let last_broken = matches!(last, Some(StatementKind::Broken));
         match &self.returns {
             None => {
                 if !matches!(procedure.ending, Ending::Missing(_))
+                    && !last_broken
                     && !matches!(last, Some(StatementKind::Finish | StatementKind::Return(_)))
                 {
                     let failure = messages::must_finish(end, &procedure.name);
@@ -1569,7 +1624,7 @@ impl<'s> Checker<'s> {
                 }
             }
             Some(returns) => {
-                if !matches!(last, Some(StatementKind::Return(_) | StatementKind::Finish)) {
+                if !last_broken && !matches!(last, Some(StatementKind::Return(_) | StatementKind::Finish)) {
                     let failure = messages::needs_return(end, &procedure.name, &returns.name());
                     self.fail(failure);
                 }

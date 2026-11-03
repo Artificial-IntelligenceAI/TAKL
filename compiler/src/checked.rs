@@ -185,6 +185,7 @@ pub enum CheckedKind {
     Family {
         family: Family,
         operand: Box<CheckedExpression>,
+        because: Vec<VariableId>,
     },
     Remainder {
         top: Box<CheckedExpression>,

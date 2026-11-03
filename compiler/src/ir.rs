@@ -39,6 +39,8 @@ pub enum Op {
     Load(Register),
     /// `a + by`, which can't overflow (a loop's step below its limit).
     Step1(Value),
+    /// The machine's clock, one later, with a site: where and when a variable was set.
+    Stamp(u32),
     /// Whole-number maths proven never to fail, so it needs no check.
     Arith {
         operator: Maths,
@@ -141,7 +143,7 @@ impl Op {
         let fail_values =
             |fail: &FailPoint, found: &mut Vec<Value>| found.extend(fail.because.iter().map(|(_, value)| *value));
         match self {
-            Op::Constant(_) | Op::Load(_) | Op::DepthLeave => {}
+            Op::Constant(_) | Op::Load(_) | Op::DepthLeave | Op::Stamp(_) => {}
             Op::Step1(a) | Op::Not(a) => found.push(*a),
             Op::WholeMaths { a, b, fail, .. }
             | Op::WholeRemainder { a, b, fail, .. }
@@ -178,7 +180,7 @@ impl Op {
             }
         };
         match self {
-            Op::Constant(_) | Op::Load(_) | Op::DepthLeave => {}
+            Op::Constant(_) | Op::Load(_) | Op::DepthLeave | Op::Stamp(_) => {}
             Op::Step1(a) | Op::Not(a) => *a = map(*a),
             Op::WholeMaths { a, b, fail, .. }
             | Op::WholeRemainder { a, b, fail, .. }
@@ -589,7 +591,7 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                     current.insert(dest, made);
                 }
                 SetSite { dest, site } => {
-                    let made = emit(Op::Constant(site as i64), &mut function, &mut instrs);
+                    let made = emit(Op::Stamp(site), &mut function, &mut instrs);
                     current.insert(dest, made);
                 }
                 Move { dest, source } if procedure.kinds[source as usize] != RegisterKind::Heap => {

@@ -13,7 +13,92 @@ use crate::runtime::{self, HeapValue};
 use crate::source::Span;
 use crate::syntax::{Compare, Counting, Family, Logic};
 use crate::types::Type;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+/// The variables any `because:` line in these statements can name.
+fn told_in_statements(statements: &[CheckedStatement], told: &mut HashSet<VariableId>) {
+    fn in_expression(expression: &CheckedExpression, told: &mut HashSet<VariableId>) {
+        match &expression.kind {
+            CheckedKind::Maths { left, right, because, .. } => {
+                told.extend(because);
+                in_expression(left, told);
+                in_expression(right, told);
+            }
+            CheckedKind::Remainder { top, bottom, because } | CheckedKind::RoundedDivide { top, bottom, because } => {
+                told.extend(because);
+                in_expression(top, told);
+                in_expression(bottom, told);
+            }
+            CheckedKind::Family { operand, because, .. } => {
+                told.extend(because);
+                in_expression(operand, told);
+            }
+            CheckedKind::Compare { left, right, .. } | CheckedKind::Logic { left, right, .. } => {
+                in_expression(left, told);
+                in_expression(right, told);
+            }
+            CheckedKind::Not(inner) | CheckedKind::Resize(inner) => in_expression(inner, told),
+            CheckedKind::Index { index, table, .. } => {
+                in_expression(index, told);
+                in_expression(table, told);
+            }
+            CheckedKind::Call(call) => {
+                for argument in &call.arguments {
+                    if let CheckedArgument::Value(value) = argument {
+                        in_expression(value, told);
+                    }
+                }
+            }
+            CheckedKind::Table(items) => items.iter().for_each(|item| in_expression(item, told)),
+            CheckedKind::KeyedTable(pairs) => pairs.iter().for_each(|(key, value)| {
+                in_expression(key, told);
+                in_expression(value, told);
+            }),
+            _ => {}
+        }
+    }
+    for statement in statements {
+        match statement {
+            CheckedStatement::Set { value, .. } | CheckedStatement::Return(value) => in_expression(value, told),
+            CheckedStatement::Show(pieces) => pieces.iter().for_each(|piece| in_expression(piece, told)),
+            CheckedStatement::If { branches, otherwise } => {
+                for (test, body) in branches {
+                    in_expression(test, told);
+                    told_in_statements(body, told);
+                }
+                told_in_statements(otherwise, told);
+            }
+            CheckedStatement::RepeatTimes { count: value, body, .. }
+            | CheckedStatement::RepeatUntil { test: value, body }
+            | CheckedStatement::ForEach { table: value, body, .. } => {
+                in_expression(value, told);
+                told_in_statements(body, told);
+            }
+            CheckedStatement::RepeatForever { body } => told_in_statements(body, told),
+            CheckedStatement::Add { key, item, at, .. } => {
+                if let Some(key) = key {
+                    in_expression(key, told);
+                }
+                in_expression(item, told);
+                if let Some((_, index)) = at {
+                    in_expression(index, told);
+                }
+            }
+            CheckedStatement::Call(call) => {
+                for argument in &call.arguments {
+                    if let CheckedArgument::Value(value) = argument {
+                        in_expression(value, told);
+                    }
+                }
+            }
+            CheckedStatement::OnlyIf { test, statement } => {
+                in_expression(test, told);
+                told_in_statements(std::slice::from_ref(statement), told);
+            }
+            CheckedStatement::Stop | CheckedStatement::Finish => {}
+        }
+    }
+}
 
 /// Heap scratch registers are numbered from here while a procedure is made, then moved after the number ones.
 const HEAP_TEMP: u16 = 0x8000;
@@ -262,7 +347,7 @@ impl<'p> Lowerer<'p> {
                 self.test_value(expression, dest);
                 dest
             }
-            CheckedKind::Family { family, operand } => {
+            CheckedKind::Family { family, operand, because } => {
                 let table = self.value(operand, None);
                 if *family == Family::Length {
                     let dest = dest.unwrap_or_else(|| self.number_temp());
@@ -271,7 +356,7 @@ impl<'p> Lowerer<'p> {
                     return dest;
                 }
                 let failure =
-                    self.failure(expression.span, FailureKind::Family { family: *family, ty: ty.clone() }, &[]);
+                    self.failure(expression.span, FailureKind::Family { family: *family, ty: ty.clone() }, because);
                 let type_id = self.type_id(ty);
                 let dest = dest.unwrap_or_else(|| self.temp_for(ty));
                 self.emit(Instruction::OfFamily { family: *family, type_id, dest, table, failure });
@@ -764,6 +849,7 @@ impl<'p> Lowerer<'p> {
                 // trace: decision.tables.add
                 let table_register = *table as Register;
                 let source = self.owned(item);
+                let site = *span;
                 match (key, at) {
                     (Some(key), _) => {
                         let key = self.value(key, None);
@@ -787,6 +873,8 @@ impl<'p> Lowerer<'p> {
                         self.emit(Instruction::Add { table: table_register, source });
                     }
                 }
+                // `add` sets a table too, for "was last set here".
+                self.set_site(*table, site);
             }
             CheckedStatement::Call(call) => {
                 self.call(call, None);
@@ -1033,19 +1121,18 @@ pub fn lower(program: &CheckedProgram) -> Program {
         }
         definition_sites(&procedure.body, &mut sites);
         let variable_count = procedure.variables.len() as u16;
+        // Every variable a `because:` line can name gets a register for when and where it was last set.
+        let mut told = HashSet::new();
+        told_in_statements(&procedure.body, &mut told);
+        let _ = &sites;
+        let fixed_sites = HashMap::new();
         let mut site_registers = HashMap::new();
-        let mut fixed_sites = HashMap::new();
         let mut next = variable_count;
-        let mut ids: Vec<&VariableId> = sites.keys().collect();
+        let mut ids: Vec<&VariableId> = told.iter().collect();
         ids.sort();
         for id in ids {
-            let spans = &sites[id];
-            if spans.len() == 1 {
-                fixed_sites.insert(*id, spans[0]);
-            } else if procedure.variables[*id].ty.is_number() {
-                site_registers.insert(*id, next);
-                next += 1;
-            }
+            site_registers.insert(*id, next);
+            next += 1;
         }
         let mut lowerer = Lowerer {
             program,
