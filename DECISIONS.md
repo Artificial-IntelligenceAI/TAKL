@@ -5,6 +5,15 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Three errors guard `return nothing`: a line after it never runs, it at the end of a loop asks "did you mean `stop`?", and a procedure that `returns` a value must give one (owner: "yes")
+
+`decision.errors.return_nothing`
+
+Asked whether `return nothing` can confuse, design claude found it fine as a word, `nothing` being unstorable, and three
+places it goes wrong: a line between it and `end procedure`, which never runs ("this line never runs: `return nothing`
+already left the procedure"); it at the end of a loop's body, where `stop` was likely meant; and it in a procedure that
+says `returns small_whole` ("you said this gives back a small_whole, so return one"). The owner: "yes".
+
 ### 2026-11-03 — A line does not end with `;` (owner: "no")
 
 `decision.syntax.no_semicolons`
