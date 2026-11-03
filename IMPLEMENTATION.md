@@ -30,6 +30,9 @@ before contributing code. When a rule changes, `DECISIONS.md` gets a new entry a
    `fix`, `test`, `house`. Each commit ends with its session's trailer: `Co-Authored-By: design claude
    <noreply@anthropic.com>` or `Co-Authored-By: compiler claude <noreply@anthropic.com>`.
 9. **Cores.** No limit.
+10. **Optimizations from the start.** The compiler is built with its optimizations as it goes, never as a plain
+    version sped up later. Each one is held to the oracle on the golden tests and the fuzzer from the day it lands.
+    The oracle stays plain.
 
 ## Tracing
 

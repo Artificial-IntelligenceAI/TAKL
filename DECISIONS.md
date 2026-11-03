@@ -5,6 +5,15 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The compiler is built with its optimizations from the start, not added after a plain first version (owner)
+
+`decision.house.optimize_early`
+
+The owner: "Oh btw, the real product would have optimizations from start". The oracle stays plain; compiler claude
+builds TAKL's IR passes and Cranelift's two strengths as it goes, never a slow version to be sped up later. Each
+optimization is held to the oracle on the golden tests and the fuzzer from the day it lands, since an optimization is
+where tiers drift apart.
+
 ### 2026-11-03 — Code is named in TAKL's words: full words, one name per concept, `WholeSize::Small` not `I16`, Rust's casing, tests named after their decision (owner: "Yes")
 
 `decision.house.naming`
