@@ -84,6 +84,7 @@ what a `let` without `can't_change` may do.
 
 ## Open
 
+- How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether a parameter is written exactly as a `let` is (`n: small_whole`); design claude proposed it, the owner has not said.
 - The types that are not whole numbers.
 - What TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons.
