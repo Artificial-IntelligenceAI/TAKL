@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `times` and `divided by` go before `plus` and `minus`, as in maths class; brackets when unsure (owner)
+
+`a plus b times c` is `a plus (b times c)`. Design claude asked whether to follow maths or refuse the mix as `and` with
+`or` is. The owner: "Follow maths, and `()` when unsure": brackets are always allowed, never required here. Earlier
+entries' `+` is read as `plus`.
+
 ### 2026-11-03 — Maths is words: `plus`, `minus`, `times`, `divided by`; `+ - * /` are answered "did you mean" (owner: "yes")
 
 ```
@@ -17,8 +23,8 @@ repeat (2 times 3) times:
 Design claude proposed `+ - * /`, symbols where kids already read them and words for comparisons, where `<` and `>`
 are mixed up. The owner: "Adding `*`, and `/` (which normally means fucking `or`), and not adding `<`/`>` is pretty
 diabolical". So TAKL is words throughout, as its comparisons are, nothing in it reading as "or". `times` in a
-`repeat`'s count needs brackets, `repeat (2 times 3) times:`, by the bracket rule. The owner: "yes". Not designed: which
-of the four goes first in `a plus b times c`.
+`repeat`'s count needs brackets, `repeat (2 times 3) times:`, by the bracket rule. The owner: "yes". Which goes first: the entry
+above.
 
 ### 2026-11-03 — Every compile error is shown, those caused by an earlier one hidden, then a last line pointing at the first (owner: "yes")
 
