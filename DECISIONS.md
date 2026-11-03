@@ -5,6 +5,19 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `and` and `or` short-circuit; `and also` and `or also` always check both sides (owner: "yes", "good")
+
+```
+if i is at most length of xs and position i of xs is 0:     # the second half only when i is in range
+if ask_number is 0 or also ask_number is 1:                 # always asks twice
+```
+
+Asked whether they short-circuit, design claude proposed yes, which a guard like the first line needs and every
+mainstream language does, a skipped half not running. The owner: "yes, and there should be a no sc ver". Design claude
+proposed `and also` and `or also`, two grammar words each, "also" telling a kid the second half runs whatever happens;
+Ada has the reverse, its `and then` the short-circuit one. The owner: "good". Mixing any `and` with any `or` still needs
+brackets.
+
 ### 2026-11-03 — `not` goes in front of one name or a bracketed test: `if not done:`, `not (lives is 0 and score is 0)` (owner: "yes")
 
 With `isn't` there, `not` is mostly for a `true_or_false`. Design claude proposed it under the bracket rule; the owner:
