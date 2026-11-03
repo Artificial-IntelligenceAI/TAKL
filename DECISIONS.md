@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A number past its type's range is a compile error when it can be known, a stopping error at run time, unless an `otherwise` beside it handles it (owner)
+
+Design claude proposed catching it at compile time when the numbers are known and stopping the program at the line where
+it happens otherwise, with the same message both times. The owner: "spot at compile time, err. runtime default to
+error, unless there's a `otherwise` sitting beside, which is err handling". So `otherwise` is TAKL's error handling.
+Not designed: how `otherwise` is written, and whether it handles more than numbers out of range.
+
 ### 2026-11-03 — `position 1 of xs` is the first item, counting from 1; `offset 0 of xs` is the same item, counting from 0 (owner)
 
 The owner proposed `total = x + position 1 of xs`, and `offset` beside `position`. Design claude read it as two words, each
@@ -79,5 +86,4 @@ what a `let` without `can't_change` may do.
 
 - Whether a parameter is written exactly as a `let` is (`n: small_whole`); design claude proposed it, the owner has not said.
 - The types that are not whole numbers.
-- What a number too big for its type does.
 - What TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons.
