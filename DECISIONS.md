@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The whole numbers are tiny_whole, small_whole, medium_whole and big_whole: int8, int16, int32, int64 (owner)
+
+Design claude proposed `tiny_whole`, `small_whole`, a bare `whole` for int32 as the one kids reach for, and `big_whole`.
+The owner: "why not fucking `medium_whole`. I mean, they'll have to learn about those eventually. We just don't fuvking say
+`int32`, or even more diabolical `i32`". So there is no bare `whole`: every whole number says its size, in words and never
+in bits. Unsigned whole numbers are not designed; design claude suggested waiting until bytes or colours need them.
+
 ### 2026-11-03 — Artificial-IntelligenceAI/TAKL is public, with its full history (owner: "Public")
 
 The repository was made private on the owner's account, not Soclets, when it was created, design claude choosing private
@@ -51,7 +58,7 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Whether a parameter is written exactly as a `let` is (`n: small_whole`); design claude proposed it, the owner has not said.
-- The other type names, beside `small_whole`.
+- The types that are not whole numbers, and whether unsigned whole numbers exist.
 - Whether a `let` without `can't_change` can change.
 - What a number too big for its type does.
 - What TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons.
