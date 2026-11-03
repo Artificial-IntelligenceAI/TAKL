@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A bare `small_decimal` is exact; `, fast` is the only kind ever written, `normal` is not a word (owner: "yup")
+
+Design claude proposed that a decimal with nothing after it be exact, as maths class is, so a kid never types `normal`;
+the owner: "yup".
+
 ### 2026-11-03 — Decimals and fractions take the whole numbers' sizes: `medium_decimal, fast` is a float64, `small_decimal` exact, `small_fraction` two small_wholes; no 8-bit float (owner: "yes")
 
 | size | `, fast` (a float) | exact | `_fraction`, top and bottom each a |
@@ -191,6 +196,5 @@ what a `let` without `can't_change` may do.
 - Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
-- Whether a bare `small_decimal` is exact with `, fast` the only word written, or `normal` is written too; design claude proposed bare is exact.
 - What an exact decimal does with `1 / 3`, which it cannot hold.
 - True and false.
