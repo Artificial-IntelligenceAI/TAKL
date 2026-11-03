@@ -5,6 +5,19 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Every compile error is shown, those caused by an earlier one hidden, then a last line pointing at the first (owner: "yes")
+
+```
+3 mistakes found. Start with the first one: game.takl:2:5, line 2 column 5.
+```
+
+Design claude proposed the first error alone. The owner: "Does that mean you'll have to rerun to find a new error
+everytime?" Design claude proposed every separate error, the ones an earlier error causes hidden (a misspelt `lives`
+not flagged again on each line using it), as Elm and Rust do, capped near 5. The owner: "Why not just all". With the
+knock-on errors hidden, each one left is a real mistake; a kid reads the bottom of a scrolled terminal, so the last line
+says how many and where the first is, in both places as every error does. A run-time error stops the program, so there
+is only ever one. The owner: "yes".
+
 ### 2026-11-03 — `= 5` on a param is its default: `move` alone is `move 5` (owner: "Yes")
 
 It falls out of the param being written as a `let` is. Design claude proposed it; the owner: "Yes to all, except
@@ -138,8 +151,8 @@ happened; one layout at compile time and run time, the kind word alone differing
 Design claude proposed copying it with three changes for kids: the kind words are `Stopped before running:` and
 `Stopped while running:`; `why:` gives the rule in plain words with no decision number, and bridges to other
 languages ("other languages call this an int16"); "did you mean" is Radium's `fix:`, given only when one near match
-is certain, several near matches getting the facts and no guess. The owner: "yes". Not designed: how many errors are
-shown at once.
+is certain, several near matches getting the facts and no guess. The owner: "yes". How many errors are shown at once:
+the entry above.
 
 ### 2026-11-03 — One IR between bytecode and Cranelift, at two strengths: warm code gets few passes and Cranelift's quick mode, very hot code every pass and its speed mode (owner: "yes")
 
@@ -499,5 +512,4 @@ what a `let` without `can't_change` may do.
 
 ## Open
 
-- How many errors are shown at once; design claude proposed the first only.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
