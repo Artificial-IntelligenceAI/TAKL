@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — No `show "Hi" 50x` shortcut (owner: "drop shortcut")
+
+The owner proposed `show "Hi" 50x` printing it 50 times, a shortcut before general loops. Design claude raised a count
+from a variable (`show "Hi" lives x`, or `(lives)x` by the bracket rule) and `x` clashing with multiplying, CyborgPL's
+`'price' x 'tax'`. The owner: "Nvm", then, asked whether all of it or the count only: "drop shortcut".
+
 ### 2026-11-03 — The type of true and false is `true_or_false`: `let done: true_or_false = false` (owner)
 
 Design claude proposed `yes_or_no`, keeping `true` and `false` as the values since they carry over everywhere, with an
