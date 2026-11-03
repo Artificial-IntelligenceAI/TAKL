@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `= 5` on a param is its default: `move` alone is `move 5` (owner: "Yes")
+
+It falls out of the param being written as a `let` is. Design claude proposed it; the owner: "Yes to all, except
+errors".
+
 ### 2026-11-03 — A param is handed a copy unless it says `share`, and then the call says it too: `reset share scores` (owner: "Yes")
 
 ```
@@ -496,4 +501,3 @@ what a `let` without `can't_change` may do.
 
 - How many errors are shown at once; design claude proposed the first only.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
-- Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
