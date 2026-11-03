@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A `, fast` decimal refuses a number it cannot hold exactly; `~0.1` asks for the nearest, on written numbers only (owner: "correct")
+
+```
+let a: medium_decimal, fast = 0.5     # fine, held exactly
+let b: medium_decimal, fast = 0.1     # error: 0.1 cannot be held exactly
+let c: medium_decimal, fast = ~0.1    # about 0.1, the nearest one
+```
+
+The owner: "Should we refuse `0.1` in Binary, and there's an override, like `~` in front". As an exact decimal refuses
+`1 / 3`, nothing is rounded unasked: the error names the nearest, "0.1000000000000000055511151231257827…", and
+`~0.1`. `~` is for a number written in the program; the maths of fast decimals still rounds, `a plus b`, since that is
+what `, fast` asks for, and `~` on every sum would leave them unusable. Design claude asked whether that is what the
+owner meant; the owner: "correct".
+
 ### 2026-11-03 — A fraction is written `1 over 3`, and `show` prints it so: `1 over 3` (owner: "yes")
 
 With `/` answered "did you mean", `over` is one word and how a fraction is read aloud; what `show` prints can be typed
