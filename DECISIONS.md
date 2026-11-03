@@ -5,6 +5,15 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The compiler inlines a recursive procedure into itself a few levels, in TAKL's IR at the very-hot strength (owner: "yeah")
+
+`decision.compiler.recursive_inline`
+
+The owner: "Where would we something like CyborgPL's GCC fib LLVM pass? In TAKL?" CyborgPL's 2026-10-17 entry: GCC beat
+kayo on `fib` by inlining recursion into itself, and the owner chose that and a table of precomputed answers. TAKL has
+no LLVM and Cranelift does not inline, so this is TAKL's own pass on its IR, run on what the interpreter counts as very
+hot. Output matches the oracle byte for byte; only speed changes. The owner: "yeah".
+
 ### 2026-11-03 — Bounds on a whole number, as modifiers: `let @lives: tiny_whole, at least 0, at most 3 = 3` (owner: "yea")
 
 `decision.types.bounds`
