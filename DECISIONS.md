@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Artificial-IntelligenceAI/TAKL is public, with its full history (owner: "Public")
+
+The repository was made private on the owner's account, not Soclets, when it was created, design claude choosing private
+since the owner had not said. The owner: "Public".
+
 ### 2026-11-03 — The code is Apache 2.0 with the LLVM exception; the docs are CC BY 4.0 (owner)
 
 The owner: "Apache 2.0 with LLVM, and CC BY 4.0 for docs". The code, the compiler and anything a program is built with, is
