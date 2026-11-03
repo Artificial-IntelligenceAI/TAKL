@@ -622,10 +622,10 @@ impl<'a> Machine<'a> {
                     return Ok(Value::Text(String::new()));
                 };
                 if b.is_zero() {
-                    return Err(messages::divided_by_zero(expr.span, Stage::WhileRunning));
+                    return Err(self.because(expr, messages::divided_by_zero(expr.span, Stage::WhileRunning)));
                 }
                 if a.is_negative() || b.is_negative() {
-                    return Err(messages::negative_remainder_not_designed(expr.span));
+                    return Err(self.because(expr, messages::negative_remainder_not_designed(expr.span)));
                 }
                 Ok(Value::Whole { size, never_negative, n: a % b })
             }
@@ -650,17 +650,20 @@ impl<'a> Machine<'a> {
                     MathsOp::Minus => a - b,
                     MathsOp::Times => a * b,
                     MathsOp::DividedBy => {
+                        // Every maths step that stops says where its values came from, as `because:`.
                         if b.is_zero() {
-                            return Err(messages::divided_by_zero(expr.span, Stage::WhileRunning));
+                            return Err(self.because(expr, messages::divided_by_zero(expr.span, Stage::WhileRunning)));
                         }
                         if round {
-                            numbers::round_nearest(&a, &b)
-                                .map_err(|_| messages::round_halfway_not_designed(expr.span, Stage::WhileRunning))?
+                            numbers::round_nearest(&a, &b).map_err(|_| {
+                                self.because(expr, messages::round_halfway_not_designed(expr.span, Stage::WhileRunning))
+                            })?
                         } else if (&a % &b).is_zero() {
                             a / b
                         } else {
                             let written = format!("{} divided by {}", a, b);
-                            return Err(messages::uneven_whole_division(expr.span, &written, Stage::WhileRunning));
+                            let error = messages::uneven_whole_division(expr.span, &written, Stage::WhileRunning);
+                            return Err(self.because(expr, error));
                         }
                     }
                 };
@@ -719,7 +722,10 @@ impl<'a> Machine<'a> {
 
     /// Adds where each variable in a step got its value, oldest first.
     fn because(&self, expr: &Expr, mut error: Diagnostic) -> Diagnostic {
-        let ExprKind::Maths(_, left, right) = &expr.kind else { return error };
+        let (left, right) = match &expr.kind {
+            ExprKind::Maths(_, left, right) | ExprKind::Remainder(left, right) => (left, right),
+            _ => return error,
+        };
         let mut sets: Vec<(u64, Span, String)> = Vec::new();
         for side in [left, right] {
             if let ExprKind::Variable(name) = &side.kind

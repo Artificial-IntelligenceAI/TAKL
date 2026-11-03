@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @word: text = "cat"
+  show position 4 of @word
+  finish
+end procedure start_running

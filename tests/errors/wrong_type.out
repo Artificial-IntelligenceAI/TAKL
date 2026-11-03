@@ -1,0 +1,31 @@
+Stopped before running: tests/errors/wrong_type.takl:6:10, line 6 column 10
+  6 |   return 0.5
+               ^^^
+what: this is a decimal, but a small_whole goes here
+why:  A value has to match the type it's going into.
+
+Stopped before running: tests/errors/wrong_type.takl:10:25, line 10 column 25
+  10 |   let @w: small_whole = 2.5
+                               ^^^
+what: this is a decimal, but a small_whole goes here
+why:  A value has to match the type it's going into.
+
+Stopped before running: tests/errors/wrong_type.takl:12:8, line 12 column 8
+  12 |   @x = 1.5
+              ^^^
+what: this is a decimal, but a small_whole goes here
+why:  A value has to match the type it's going into.
+
+Stopped before running: tests/errors/wrong_type.takl:13:16, line 13 column 16
+  13 |   show @x plus 2.5
+                      ^^^
+what: this is a decimal, but a small_whole goes here
+why:  A value has to match the type it's going into.
+
+Stopped before running: tests/errors/wrong_type.takl:14:15, line 14 column 15
+  14 |   takes_whole 1.5
+                     ^^^
+what: this is a decimal, but a small_whole goes here
+why:  A value has to match the type it's going into.
+
+5 mistakes found. Start with the first one: tests/errors/wrong_type.takl:6:10, line 6 column 10.

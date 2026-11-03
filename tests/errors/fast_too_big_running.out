@@ -1,0 +1,8 @@
+Stopped while running: tests/errors/fast_too_big_running.takl:3:8, line 3 column 8
+  3 |   show @a plus @a
+             ^^^^^^^^^^
+what: this is too big for a tiny_decimal, fast_but_inexact
+why:  Use a bigger decimal.
+because: @a was 60000, tests/errors/fast_too_big_running.takl:2:3, line 2 column 3
+  2 |   let @a: tiny_decimal, fast_but_inexact = 60000
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

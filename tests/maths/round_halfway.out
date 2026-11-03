@@ -4,3 +4,6 @@ Stopped while running: tests/maths/round_halfway.takl:3:15, line 3 column 15
 what: which way `round` goes when the answer is exactly halfway
 why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
       It's on TAKL's list of open questions.
+because: @a was 7, tests/maths/round_halfway.takl:2:3, line 2 column 3
+  2 |   let @a: small_whole = 7
+        ^^^^^^^^^^^^^^^^^^^^^^^

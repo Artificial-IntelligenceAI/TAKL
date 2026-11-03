@@ -4,3 +4,6 @@ Stopped while running: tests/open/negative_remainder.takl:3:8, line 3 column 8
 what: the remainder when a number is below zero
 why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
       It's on TAKL's list of open questions.
+because: @a was -7, tests/open/negative_remainder.takl:2:3, line 2 column 3
+  2 |   let @a: small_whole = 0 minus 7
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

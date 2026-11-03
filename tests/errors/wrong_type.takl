@@ -1,0 +1,16 @@
+procedure takes_whole (@n: small_whole) just finishes:
+  finish
+end procedure takes_whole
+
+procedure half returns small_whole:
+  return 0.5
+end procedure half
+
+procedure start_running just finishes:
+  let @w: small_whole = 2.5
+  let @x: small_whole = 1
+  @x = 1.5
+  show @x plus 2.5
+  takes_whole 1.5
+  finish
+end procedure start_running

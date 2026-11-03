@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @x: small_whole, can't_change = 5
+  @x = 6
+  finish
+end procedure start_running

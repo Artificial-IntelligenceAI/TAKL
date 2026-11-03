@@ -5,3 +5,6 @@ what: 7 divided by 2 doesn't come out even, so a whole number can't hold it
 why:  Whole numbers never drop what's left over on their own.
       Use `round (...)` to round it, a decimal or a fraction to keep it,
       or `remainder of (...)` for what's left over.
+because: @a was 7, tests/maths/whole_divide.takl:2:3, line 2 column 3
+  2 |   let @a: small_whole = 7
+        ^^^^^^^^^^^^^^^^^^^^^^^

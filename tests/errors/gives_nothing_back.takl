@@ -1,0 +1,9 @@
+procedure beep just finishes:
+  show "beep"
+  finish
+end procedure beep
+
+procedure start_running just finishes:
+  show beep()
+  finish
+end procedure start_running

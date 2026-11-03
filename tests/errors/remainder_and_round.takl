@@ -1,0 +1,7 @@
+procedure start_running just finishes:
+  let @d: small_decimal = 7.5
+  let @f: medium_decimal, fast_but_inexact = 0.5
+  show remainder of (@d divided by 2)
+  show round (@f divided by 2)
+  finish
+end procedure start_running

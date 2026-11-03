@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @xs: table of small_whole = [1, 2, 3]
+  show position 0 of @xs
+  finish
+end procedure start_running

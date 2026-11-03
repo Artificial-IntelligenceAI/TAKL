@@ -1,0 +1,10 @@
+procedure greet (@name: text) just finishes:
+  show "Hi, ", @name
+  finish
+end procedure greet
+
+procedure start_running just finishes:
+  grete "Sam"
+  nothing_like_this 1
+  finish
+end procedure start_running

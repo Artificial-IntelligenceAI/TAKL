@@ -1,0 +1,10 @@
+Stopped before running: tests/errors/cant_change.takl:3:3, line 3 column 3
+  3 |   @x = 6
+        ^^
+what: `@x` can't change
+why:  It says `can't_change`, so it keeps the value it started with.
+because: `@x` is made can't_change here, tests/errors/cant_change.takl:2:7, line 2 column 7
+  2 |   let @x: small_whole, can't_change = 5
+            ^^
+
+1 mistake found: tests/errors/cant_change.takl:3:3, line 3 column 3.

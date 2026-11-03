@@ -1,0 +1,8 @@
+procedure ping just finishes:
+  finish
+end procedure ping
+
+procedure start_running just finishes:
+  ping 1
+  finish
+end procedure start_running

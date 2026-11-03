@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  if 5:
+    show "x"
+  end if
+  finish
+end procedure start_running

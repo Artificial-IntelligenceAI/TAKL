@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @xs: table of small_whole = empty
+  show smallest of @xs
+  finish
+end procedure start_running

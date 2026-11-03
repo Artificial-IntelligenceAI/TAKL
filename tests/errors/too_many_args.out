@@ -1,0 +1,7 @@
+Stopped before running: tests/errors/too_many_args.takl:6:8, line 6 column 8
+  6 |   ping 1
+             ^
+what: `ping` takes 0 things, and this is one too many
+why:  Each thing passed fills one of its params, in order.
+
+1 mistake found: tests/errors/too_many_args.takl:6:8, line 6 column 8.

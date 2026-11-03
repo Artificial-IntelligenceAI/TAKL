@@ -1,0 +1,13 @@
+Stopped before running: tests/errors/unknown_procedure.takl:7:3, line 7 column 3
+  7 |   grete "Sam"
+        ^^^^^
+fix:  greet
+why:  There's no procedure called `grete`.
+
+Stopped before running: tests/errors/unknown_procedure.takl:8:3, line 8 column 3
+  8 |   nothing_like_this 1
+        ^^^^^^^^^^^^^^^^^
+what: there's no procedure called `nothing_like_this`
+why:  A procedure has to be made with `procedure` before it's called.
+
+2 mistakes found. Start with the first one: tests/errors/unknown_procedure.takl:7:3, line 7 column 3.

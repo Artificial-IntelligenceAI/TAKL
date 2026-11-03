@@ -1,0 +1,7 @@
+Stopped before running: tests/errors/needs_test.takl:2:6, line 2 column 6
+  2 |   if 5:
+           ^
+what: this is a whole number, but a test goes here
+why:  A test is true or false, like `@lives is 0`.
+
+1 mistake found: tests/errors/needs_test.takl:2:6, line 2 column 6.

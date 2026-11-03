@@ -1,0 +1,5 @@
+Stopped while running: tests/errors/no_items_biggest.takl:3:8, line 3 column 8
+  3 |   show biggest of @xs
+             ^^^^^^^^^^^^^^
+what: the table is empty, so it has no biggest
+why:  `biggest of` needs at least one item.

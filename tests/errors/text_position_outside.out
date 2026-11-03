@@ -1,0 +1,5 @@
+Stopped while running: tests/errors/text_position_outside.takl:3:8, line 3 column 8
+  3 |   show position 4 of @word
+             ^^^^^^^^^^^^^^^^^^^
+what: there's no position 4: it only has 3 letters
+why:  `position` counts from 1, and `offset` counts from 0.

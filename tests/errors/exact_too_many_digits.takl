@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: tiny_decimal = 12345.67
+  show @a times @a
+  finish
+end procedure start_running

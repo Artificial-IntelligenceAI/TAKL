@@ -1,0 +1,8 @@
+Stopped while running: tests/errors/exact_too_many_digits.takl:3:8, line 3 column 8
+  3 |   show @a times @a
+             ^^^^^^^^^^^
+what: this has more digits than a tiny_decimal holds
+why:  Exact decimals never round on their own. Round it with `round (...)`, or use a bigger decimal.
+because: @a was 12345.67, tests/errors/exact_too_many_digits.takl:2:3, line 2 column 3
+  2 |   let @a: tiny_decimal = 12345.67
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,11 @@
+Stopped while running: tests/errors/exact_divided_by_zero.takl:4:8, line 4 column 8
+  4 |   show @a divided by @b
+             ^^^^^^^^^^^^^^^^
+what: this divides by zero
+why:  Nothing can be divided by zero.
+because: @a was 1, tests/errors/exact_divided_by_zero.takl:2:3, line 2 column 3
+  2 |   let @a: small_decimal = 1
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+because: @b was 0, tests/errors/exact_divided_by_zero.takl:3:3, line 3 column 3
+  3 |   let @b: small_decimal = 0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^

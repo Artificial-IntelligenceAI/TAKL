@@ -1,0 +1,15 @@
+Stopped before running: tests/errors/remainder_and_round.takl:4:8, line 4 column 8
+  4 |   show remainder of (@d divided by 2)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+what: the remainder of a small_decimal
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+Stopped before running: tests/errors/remainder_and_round.takl:5:8, line 5 column 8
+  5 |   show round (@f divided by 2)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+what: rounding a medium_decimal, fast_but_inexact
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+2 mistakes found. Start with the first one: tests/errors/remainder_and_round.takl:4:8, line 4 column 8.

@@ -1,0 +1,7 @@
+Stopped before running: tests/errors/gives_nothing_back.takl:7:8, line 7 column 8
+  7 |   show beep()
+             ^^^^^^
+what: `beep` gives nothing back, so it can't be used as a value
+why:  It `just finishes`. Call it on its own line instead.
+
+1 mistake found: tests/errors/gives_nothing_back.takl:7:8, line 7 column 8.

@@ -1,0 +1,15 @@
+Stopped before running: tests/errors/mixing_decimals.takl:5:8, line 5 column 8
+  5 |   show @a plus @b
+             ^^^^^^^^^^
+what: maths that mixes a small_decimal with a medium_decimal
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+Stopped before running: tests/errors/mixing_decimals.takl:6:8, line 6 column 8
+  6 |   show @a plus @c
+             ^^^^^^^^^^
+what: maths that mixes a small_decimal with a small_decimal, fast_but_inexact
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+2 mistakes found. Start with the first one: tests/errors/mixing_decimals.takl:5:8, line 5 column 8.

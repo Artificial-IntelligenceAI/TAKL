@@ -1,0 +1,9 @@
+procedure answer returns medium_whole:
+  show "thinking"
+  return 42
+end procedure answer
+
+procedure start_running just finishes:
+  answer
+  finish
+end procedure start_running

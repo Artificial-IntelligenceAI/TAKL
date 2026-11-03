@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: tiny_decimal, fast_but_inexact = 60000
+  show @a plus @a
+  finish
+end procedure start_running
