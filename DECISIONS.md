@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `not` goes in front of one name or a bracketed test: `if not done:`, `not (lives is 0 and score is 0)` (owner: "yes")
+
+With `isn't` there, `not` is mostly for a `true_or_false`. Design claude proposed it under the bracket rule; the owner:
+"yes".
+
 ### 2026-11-03 — Tests join with `and` and `or`; mixing the two needs brackets (owner: "yes")
 
 ```
@@ -13,7 +18,7 @@ if lives is 0 and score is 0 or time is 0:       # error: add brackets
 ```
 
 Whether `a and b or c` is `(a and b) or c` or `a and (b or c)` is refused rather than remembered, as
-`position i + 1 of xs` is; Easium had left it open. Design claude proposed it; the owner: "yes". Not designed: `not`.
+`position i + 1 of xs` is; Easium had left it open. Design claude proposed it; the owner: "yes". `not`: the entry above.
 
 ### 2026-11-03 — `if lives is 0:` ... `else if lives is 1:` ... `else:` ... `end if` (owner: "yup")
 
