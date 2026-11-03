@@ -5,6 +5,17 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `show` prints its pieces one after another, commas between them: `show "Hello, ", name` (owner)
+
+```
+show "Hello, World!"
+show "Hello, ", name
+```
+
+Design claude proposed how `show` prints each type. The owner: "There's only this `show` for now". Text prints without
+its quotes; nothing is put between the pieces, so the space is the kid's, inside `"Hello, "`. Not designed: how a
+number, a decimal, a table or `true` prints, and whether `show` ends its line.
+
 ### 2026-11-03 — Text is written in double quotes: `show "Hi"` (owner: "yes")
 
 `'` already belongs to `can't_change` and `isn't`, so `"` is the one that clashes with nothing; autocorrect's `“ ”`
