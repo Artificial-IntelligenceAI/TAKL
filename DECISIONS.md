@@ -5,6 +5,23 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A procedure that gives nothing back says `just finishes` where another says `returns small_whole`; leaving both out is an error (owner: "yes")
+
+`decision.procedures.just_finishes`
+
+```
+procedure start_running just finishes:
+  show "Hello, World!"
+  finish
+end procedure start_running
+```
+
+The owner: "types have `empty` as a word, but why does `procedure` that only finishes doesn't have `returns...`": giving
+nothing back should be said on purpose. Design claude proposed `returns nothing`, then, asked whether it confuses,
+found that it invites `return nothing` by the pattern of `returns` and `return`. The owner: "Or `just_finishes`?"
+Grammar is never glued, so design claude proposed it spaced, two grammar words as `at least` is. Every first line now
+says how its procedure ends: `returns small_whole` with `return x`, `just finishes` with `finish`. The owner: "yes".
+
 ### 2026-11-03 — `finish` leaves a procedure that gives nothing back, in place of `return nothing`; `return` always carries a value (owner: "yup")
 
 `decision.procedures.finish`
