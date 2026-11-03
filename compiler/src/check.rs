@@ -599,14 +599,14 @@ impl<'s> Checker<'s> {
                             return Self::broken(span);
                         }
                     }
-                    let mut checked = self.division_word(operand, operand.span, false);
+                    // `round`'s brackets are its own, so an error inside them points at what they hold.
+                    let mut checked = self.division_word(inner, inner.span, false);
                     if !matches!(checked.kind, CheckedKind::Constant(_)) {
-                        checked.span = operand.span;
+                        checked.span = inner.span;
                     }
                     return checked;
                 }
-                let mut checked = self.infer(operand);
-                checked.span = span;
+                let checked = self.infer(inner);
                 if let Type::Decimal { fast: true, .. } = checked.ty {
                     self.fail(messages::not_designed_yet(span, format!("rounding a {}", checked.ty.name())));
                     return Self::broken(span);
