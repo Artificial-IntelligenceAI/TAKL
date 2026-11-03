@@ -5,6 +5,18 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `add 40 to scores` puts it on the end; `add 40 to scores at position 2` puts it there, the rest moving up (owner: "yes")
+
+```
+add 40 to scores                    # [10, 20, 30, 40]
+add 40 to scores at position 2      # [10, 40, 20, 30]
+add "sam": 10 to ages               # a named key, on the end
+```
+
+The owner: "Where". On the end, where the no-holes error points; a named key too, as `for each` goes in the order
+things were put in. `at position` and `at offset` count as they do everywhere. Design claude proposed both; the owner:
+"yes".
+
 ### 2026-11-03 — A decimal prints as it is held: an exact `2.50` as `2.50`, a fast `~0.1` as `0.1000000000000000055511151231257827021181583404541015625` (owner: "correct")
 
 Design claude proposed exact decimals as written and fast ones in the shortest form that reads back the same. The
@@ -123,7 +135,7 @@ As Easium's D41, with TAKL's `end`; `stop if` is the line ending in `if`. Design
 ### 2026-11-03 — No holes: setting past a table's end is refused, "xs has 3 items, use `add` to put one on the end" (owner: "Yes")
 
 Design claude proposed it against Lua's holes, where a table's length stops being true. The owner, of a quick round:
-"Yes to all, except errors". Not designed: the word for putting an item on the end; `add` is design claude's.
+"Yes to all, except errors". Putting an item on the end: `add`, the entry above.
 
 ### 2026-11-03 — `and` and `or` short-circuit; `and also` and `or also` always check both sides (owner: "yes", "good")
 
