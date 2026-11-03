@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `lives is more than 5`, `less than 5`, `at least 5`, `at most 5` (owner: "yes")
+
+Design claude proposed `above`, `below`, `5 or more` and `5 or less`, worried that `or` would also join tests. The
+owner: "Why not `at least`?" Design claude had been inconsistent: `at least` is two grammar words, as `for each` and
+`repeat until` are, and the rule refuses only gluing grammar, not grammar of two words. The owner: "Why not `more
+than`?" It is maths class's word, `above` and `below` being about places. The owner: "yes".
+
 ### 2026-11-03 — `lives is 0`, `lives isn't 0`; `is not` is answered "did you mean `isn't`?" (owner: "yea")
 
 Easium's `is_not` would be grammar of two pieces, which TAKL's rule refuses. The owner: "Why is there no `_`?" Design
