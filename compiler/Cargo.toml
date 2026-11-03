@@ -1,0 +1,38 @@
+[package]
+name = "takl"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0 WITH LLVM-exception"
+description = "TAKL's compiler: bytecode, its interpreter, TAKL's IR, and Cranelift at two strengths"
+
+[lib]
+name = "takl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "takl"
+path = "src/main.rs"
+
+[[bin]]
+name = "takl_fuzz"
+path = "src/bin/takl_fuzz.rs"
+
+[dependencies]
+num-bigint = "0.4.8"
+num-integer = "0.1"
+num-traits = "0.2"
+unicode-segmentation = "1.13.3"
+half = "2.7.1"
+rustc_apfloat = "0.2.3"
+cranelift-codegen = "=0.136.5"
+cranelift-frontend = "=0.136.5"
+cranelift-jit = "=0.136.5"
+cranelift-module = "=0.136.5"
+cranelift-native = "=0.136.5"
+
+[profile.release]
+debug = 1
+panic = "unwind"
+
+[profile.dev]
+opt-level = 1
