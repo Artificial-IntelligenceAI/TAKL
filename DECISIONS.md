@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A pure procedure over a small bounded input is made a table of its answers, built on another core (owner: "yeah")
+
+`decision.compiler.precompute`
+
+```
+procedure fib (@n: tiny_whole, at least 0, at most 92) returns big_whole:
+```
+
+CyborgPL's second fix for `fib`, where Precog had to prove a function pure and its input range small. In TAKL the
+language says both: the bounds give the inputs (93 here), and a procedure with no `share` param, no `show` and no
+input, calling only procedures like it, gives the same answer for the same input, since a param is a copy. The table
+is built in the background on another core, as compiling is, and calls become a lookup. Kids never see it; output
+matches the oracle byte for byte. The owner: "yeah". Not designed: how small is small enough.
+
 ### 2026-11-03 — The compiler inlines a recursive procedure into itself a few levels, in TAKL's IR at the very-hot strength (owner: "yeah")
 
 `decision.compiler.recursive_inline`
