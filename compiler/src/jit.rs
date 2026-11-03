@@ -131,6 +131,15 @@ unsafe extern "C" fn takl_release_frame(machine_pointer: *mut Machine, procedure
     }
 }
 
+/// Quick loop code asking whether speed code for its loop is ready; 0 if not yet.
+unsafe extern "C" fn takl_promote(machine_pointer: *mut Machine, procedure: u64, loop_id: u64) -> u64 {
+    let machine = unsafe { machine(machine_pointer) };
+    match &machine.tiers {
+        Some(tiers) => tiers.speed_loop(procedure as u32, loop_id as u16) as u64,
+        None => 0,
+    }
+}
+
 unsafe extern "C" fn takl_retain(value: u64) {
     crate::runtime::retain(value);
 }
@@ -156,6 +165,9 @@ struct Lowering<'a, 'b> {
     frame: clir::Value,
     pointer: clir::Type,
     entries: *const AtomicUsize,
+    /// The procedure's loop counters, for `Promote`.
+    rounds: *const std::sync::atomic::AtomicU32,
+    hot: u32,
     self_reference: Option<clir::FuncRef>,
     helper_signatures: HashMap<usize, clir::SigRef>,
     compiled_signature: clir::SigRef,
@@ -582,6 +594,41 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 let _ = self.depth_enter(fail);
                 return None;
             }
+            Op::Promote { loop_id, live } => {
+                // SAFETY: the counters live as long as the program's tiers, which outlive all compiled code.
+                let counter = unsafe { self.rounds.add(*loop_id as usize) } as i64;
+                let counter = self.builder.ins().iconst(self.pointer, counter);
+                let rounds = self.builder.ins().load(types::I32, MemFlagsData::trusted(), counter, 0);
+                let rounds = self.builder.ins().iadd_imm(rounds, 1);
+                self.builder.ins().store(MemFlagsData::trusted(), rounds, counter, 0);
+                // Ask now and then, once it's hot: every 1,024 rounds past `hot`, or every round when testing.
+                let past = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThanOrEqual, rounds, self.hot as i64);
+                let every = if self.hot < 1024 { 0 } else { 1023 };
+                let low = self.builder.ins().band_imm(rounds, every);
+                let due = self.builder.ins().icmp_imm(IntCC::Equal, low, 0);
+                let ask = self.builder.ins().band(past, due);
+                let asking = self.builder.create_block();
+                self.builder.set_cold_block(asking);
+                let moving = self.builder.create_block();
+                self.builder.set_cold_block(moving);
+                let next = self.builder.create_block();
+                self.builder.ins().brif(ask, asking, &[], next, &[]);
+                self.builder.switch_to_block(asking);
+                let procedure = self.constant(self.function.procedure as i64);
+                let loop_constant = self.constant(*loop_id as i64);
+                let code = self.helper(takl_promote as usize, &[self.machine, procedure, loop_constant], 1)[0];
+                self.builder.ins().brif(code, moving, &[], next, &[]);
+                self.builder.switch_to_block(moving);
+                for (register, value) in live {
+                    let value = self.value(*value);
+                    self.builder.ins().store(MemFlagsData::trusted(), value, self.frame, *register as i32 * 8);
+                }
+                let call = self.builder.ins().call_indirect(self.compiled_signature, code, &[self.machine, self.frame]);
+                let answer = self.builder.inst_results(call).to_vec();
+                self.builder.ins().return_(&answer);
+                self.builder.switch_to_block(next);
+                return None;
+            }
             Op::DepthLeave => {
                 let depth = self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.machine, 0);
                 let shallower = self.builder.ins().iadd_imm(depth, -1);
@@ -654,7 +701,14 @@ fn reverse_postorder(function: &ir::Function) -> Vec<usize> {
 }
 
 /// Compiles a procedure's IR at a strength, giving back the address of its code.
-pub fn compile(program: &Program, function: &ir::Function, strength: Strength, entries: *const AtomicUsize) -> Result<usize, String> {
+pub fn compile(
+    program: &Program,
+    function: &ir::Function,
+    strength: Strength,
+    entries: *const AtomicUsize,
+    rounds: *const std::sync::atomic::AtomicU32,
+    hot: u32,
+) -> Result<usize, String> {
     let mut flags = settings::builder();
     let opt_level = match strength {
         Strength::Quick => "none",
@@ -691,6 +745,8 @@ pub fn compile(program: &Program, function: &ir::Function, strength: Strength, e
         frame: clir::Value::from_u32(0),
         pointer,
         entries,
+        rounds,
+        hot,
         self_reference: None,
         helper_signatures: HashMap::new(),
         compiled_signature: clir::SigRef::from_u32(0),

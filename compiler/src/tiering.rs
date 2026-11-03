@@ -25,8 +25,6 @@ pub const WARM: u32 = 1_000;
 /// Calls or loop rounds before it is compiled at the speed strength.
 pub const HOT: u32 = 10_000;
 
-const NONE: u8 = 0;
-const ASKED: u8 = 1;
 
 struct Job {
     procedure: u32,
@@ -38,8 +36,10 @@ pub struct Tiers {
     program: Arc<Program>,
     /// Compiled code for each procedure's start, read by compiled code too, so its layout is `usize`s.
     pub entries: Vec<AtomicUsize>,
-    /// Compiled code entered at each loop's top.
+    /// Compiled code entered at each loop's top, the latest ready.
     loops: Vec<Vec<AtomicUsize>>,
+    /// Speed code entered at each loop's top, which quick loop code moves into.
+    speed_loops: Vec<Vec<AtomicUsize>>,
     calls: Vec<AtomicU32>,
     rounds: Vec<Vec<AtomicU32>>,
     /// What has been asked for, so nothing is asked twice: quick and speed, for the start and for each loop.
@@ -47,48 +47,71 @@ pub struct Tiers {
     sender: Mutex<Option<Sender<Job>>>,
     in_place: bool,
     tiered: bool,
+    /// The thresholds this run uses: `WARM` and `HOT`, or tiny ones for testing every move between tiers.
+    pub warm: u32,
+    pub hot: u32,
     /// A compile that failed; in a forced mode this is TAKL breaking.
     pub broken: AtomicBool,
     pub compiled: AtomicU32,
     pub compile_nanos: AtomicUsize,
-    _state: u8,
+    /// Times the interpreter jumped into a compiled loop.
+    pub jumps_in: AtomicU32,
+    pub started: std::time::Instant,
+    /// When each entry became ready, from the start: for measuring compiling elsewhere against in place.
+    pub ready: Mutex<Vec<(String, std::time::Duration)>>,
 }
 
 impl Tiers {
-    fn new(program: &Arc<Program>, tiered: bool, in_place: bool) -> Tiers {
+    fn new(program: &Arc<Program>, tiered: bool, in_place: bool, (warm, hot): (u32, u32)) -> Tiers {
         let count = program.procedures.len();
         Tiers {
             program: Arc::clone(program),
             entries: (0..count).map(|_| AtomicUsize::new(0)).collect(),
             loops: program.procedures.iter().map(|procedure| procedure.loops.iter().map(|_| AtomicUsize::new(0)).collect()).collect(),
+            speed_loops: program.procedures.iter().map(|procedure| procedure.loops.iter().map(|_| AtomicUsize::new(0)).collect()).collect(),
             calls: (0..count).map(|_| AtomicU32::new(0)).collect(),
             rounds: program.procedures.iter().map(|procedure| procedure.loops.iter().map(|_| AtomicU32::new(0)).collect()).collect(),
             asked: Mutex::new(std::collections::HashSet::new()),
             sender: Mutex::new(None),
             in_place,
             tiered,
+            warm,
+            hot,
             broken: AtomicBool::new(false),
             compiled: AtomicU32::new(0),
             compile_nanos: AtomicUsize::new(0),
-            _state: NONE,
+            jumps_in: AtomicU32::new(0),
+            started: std::time::Instant::now(),
+            ready: Mutex::new(Vec::new()),
         }
     }
 
     /// Compiles one entry of one procedure now, and installs it.
     fn compile_now(&self, procedure: u32, entry: Entry, strength: Strength) {
         let started = std::time::Instant::now();
-        let mut function = ir::build(&self.program, procedure, entry);
+        let promote = self.tiered && strength == Strength::Quick;
+        let mut function = ir::build_with(&self.program, procedure, entry, promote);
         match strength {
             Strength::Quick => passes::quick(&mut function),
             Strength::Speed => passes::speed(&self.program, &mut function),
         }
-        match jit::compile(&self.program, &function, strength, self.entries.as_ptr()) {
+        let rounds = self.rounds[procedure as usize].as_ptr();
+        match jit::compile(&self.program, &function, strength, self.entries.as_ptr(), rounds, self.hot) {
             Ok(code) => {
                 match entry {
                     Entry::Start => self.entries[procedure as usize].store(code, Ordering::Release),
-                    Entry::Loop(loop_id) => self.loops[procedure as usize][loop_id as usize].store(code, Ordering::Release),
+                    Entry::Loop(loop_id) => {
+                        self.loops[procedure as usize][loop_id as usize].store(code, Ordering::Release);
+                        if strength == Strength::Speed {
+                            self.speed_loops[procedure as usize][loop_id as usize].store(code, Ordering::Release);
+                        }
+                    }
                 }
                 self.compiled.fetch_add(1, Ordering::Relaxed);
+                if let Ok(mut ready) = self.ready.lock() {
+                    let name = format!("{} {:?} {:?}", self.program.procedures[procedure as usize].name, entry, strength);
+                    ready.push((name, self.started.elapsed()));
+                }
             }
             Err(problem) => {
                 if std::env::var("TAKL_DEBUG").is_ok() {
@@ -151,7 +174,7 @@ impl Tiers {
     #[inline(always)]
     fn count_call(&self, procedure: u32) {
         let calls = self.calls[procedure as usize].fetch_add(1, Ordering::Relaxed) + 1;
-        if calls == WARM || calls == HOT {
+        if calls == self.warm || calls == self.hot {
             self.warmed(procedure, calls);
         }
     }
@@ -159,7 +182,7 @@ impl Tiers {
     #[cold]
     fn warmed(&self, procedure: u32, calls: u32) {
         if let Some(tiers) = self.me() {
-            let strength = if calls >= HOT { Strength::Speed } else { Strength::Quick };
+            let strength = if calls >= self.hot { Strength::Speed } else { Strength::Quick };
             tiers.ask(procedure, Entry::Start, strength);
         }
     }
@@ -175,7 +198,7 @@ impl Tiers {
             return false;
         }
         let rounds = self.rounds[procedure as usize][loop_id as usize].fetch_add(1, Ordering::Relaxed) + 1;
-        if rounds == WARM || rounds == HOT {
+        if rounds == self.warm || rounds == self.hot {
             self.loop_warmed(procedure, loop_id, rounds);
         }
         self.loops[procedure as usize][loop_id as usize].load(Ordering::Relaxed) != 0
@@ -184,7 +207,7 @@ impl Tiers {
     #[cold]
     fn loop_warmed(&self, procedure: u32, loop_id: u16, rounds: u32) {
         if let Some(tiers) = self.me() {
-            let strength = if rounds >= HOT { Strength::Speed } else { Strength::Quick };
+            let strength = if rounds >= self.hot { Strength::Speed } else { Strength::Quick };
             tiers.ask(procedure, Entry::Loop(loop_id), strength);
             // The procedure itself is worth compiling for its next call.
             tiers.ask(procedure, Entry::Start, strength);
@@ -198,12 +221,41 @@ impl Tiers {
         if code == 0 {
             return None;
         }
+        self.jumps_in.fetch_add(1, Ordering::Relaxed);
         Some(run(code, machine, base))
     }
 
-    /// Waits for every compile asked for; for measuring.
-    pub fn compiled_count(&self) -> u32 {
-        self.compiled.load(Ordering::Relaxed)
+    /// Speed code for a loop, for quick code to move into; asks for it the first time.
+    pub fn speed_loop(&self, procedure: u32, loop_id: u16) -> usize {
+        let code = self.speed_loops[procedure as usize][loop_id as usize].load(Ordering::Acquire);
+        if code == 0
+            && let Some(tiers) = self.me()
+        {
+            tiers.ask(procedure, Entry::Loop(loop_id), Strength::Speed);
+            tiers.ask(procedure, Entry::Start, Strength::Speed);
+        }
+        if code != 0 {
+            self.jumps_in.fetch_add(1, Ordering::Relaxed);
+        }
+        code
+    }
+
+    /// What the tiers did, for `TAKL_STATS`.
+    pub fn report(&self) -> String {
+        let mut out = format!(
+            "{} compiled, {:.2} ms compiling {}, {} jumps into compiled loops, ran {:.2} ms\n",
+            self.compiled.load(Ordering::Relaxed),
+            self.compile_nanos.load(Ordering::Relaxed) as f64 / 1e6,
+            if self.in_place { "in place" } else { "on another core" },
+            self.jumps_in.load(Ordering::Relaxed),
+            self.started.elapsed().as_secs_f64() * 1e3,
+        );
+        if let Ok(ready) = self.ready.lock() {
+            for (name, at) in ready.iter() {
+                out.push_str(&format!("  ready at {:8.3} ms: {}\n", at.as_secs_f64() * 1e3, name));
+            }
+        }
+        out
     }
 }
 
@@ -221,17 +273,19 @@ fn run(code: usize, machine: &mut Machine, base: usize) -> Result<u64, Stopped> 
 
 /// Starts the tiers a mode asks for; the interpreter alone needs none.
 pub fn start(program: &Arc<Program>, mode: crate::Mode) -> Option<Arc<Tiers>> {
-    start_with(program, mode, std::env::var("TAKL_IN_PLACE").is_ok())
+    start_with(program, mode, std::env::var("TAKL_IN_PLACE").is_ok_and(|value| !value.is_empty()))
 }
 
 pub fn start_with(program: &Arc<Program>, mode: crate::Mode, in_place: bool) -> Option<Arc<Tiers>> {
-    let strength = match mode {
+    let (strength, in_place, thresholds) = match mode {
         crate::Mode::Interpret => return None,
-        crate::Mode::Quick => Some(Strength::Quick),
-        crate::Mode::Speed => Some(Strength::Speed),
-        crate::Mode::Tiered => None,
+        crate::Mode::Quick => (Some(Strength::Quick), in_place, (WARM, HOT)),
+        crate::Mode::Speed => (Some(Strength::Speed), in_place, (WARM, HOT)),
+        crate::Mode::Tiered => (None, in_place, (WARM, HOT)),
+        // Every move between tiers, on every program: compiled in place so it happens at the same round each run.
+        crate::Mode::TieredEager => (None, true, (2, 4)),
     };
-    let tiers = Arc::new(Tiers::new(program, strength.is_none(), in_place));
+    let tiers = Arc::new(Tiers::new(program, strength.is_none(), in_place, thresholds));
     ME.with(|me| *me.borrow_mut() = Some(Arc::downgrade(&tiers)));
     if let Some(strength) = strength {
         // Forced: everything compiled before it runs.

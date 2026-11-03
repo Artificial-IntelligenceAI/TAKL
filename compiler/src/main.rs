@@ -9,6 +9,7 @@ fn main() {
             "--interpret" => mode = takl::Mode::Interpret,
             "--quick" => mode = takl::Mode::Quick,
             "--speed" => mode = takl::Mode::Speed,
+            "--eager" => mode = takl::Mode::TieredEager,
             other => path = Some(other.to_string()),
         }
     }

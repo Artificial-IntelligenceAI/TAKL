@@ -80,3 +80,8 @@ fn golden_on_speed() {
 fn golden_tiered() {
     run_all(Mode::Tiered);
 }
+
+#[test]
+fn golden_tiered_eagerly() {
+    run_all(Mode::TieredEager);
+}

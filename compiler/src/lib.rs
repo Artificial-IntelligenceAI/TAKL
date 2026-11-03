@@ -40,6 +40,8 @@ pub enum Mode {
     Quick,
     Speed,
     Tiered,
+    /// Tiered with tiny thresholds, so every move between tiers happens on every program: for testing.
+    TieredEager,
 }
 
 // trace: decision.house.impl_rules
@@ -88,6 +90,11 @@ pub fn run_with(name: &str, text: &str, mode: Mode, live: bool) -> Outcome {
         return shown(Outcome { output, exit_code: 1 }, live);
     }
     let ran = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| machine.run_start()));
+    if std::env::var("TAKL_STATS").is_ok()
+        && let Some(tiers) = &machine.tiers
+    {
+        eprint!("{}", tiers.report());
+    }
     let mut output = String::from_utf8_lossy(&machine.output).to_string();
     let exit_code = match ran {
         Ok(Ok(code)) => code,

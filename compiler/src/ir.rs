@@ -52,6 +52,9 @@ pub enum Op {
     /// An inlined call's entry: checks how deep calls go, and counts one more.
     DepthEnter { fail: FailPoint },
     DepthLeave,
+    /// At a loop's top in quick code: counts the round, and once speed code for the loop is ready, moves there with
+    /// the values of the registers live here.
+    Promote { loop_id: u16, live: Vec<(Register, Value)> },
 }
 
 impl Op {
@@ -88,6 +91,7 @@ impl Op {
             }
             Op::Step { reads, .. } => found.extend(reads.iter().map(|(_, value)| *value)),
             Op::DepthEnter { fail } => fail_values(fail, &mut found),
+            Op::Promote { live, .. } => found.extend(live.iter().map(|(_, value)| *value)),
         }
         found
     }
@@ -126,6 +130,11 @@ impl Op {
                 }
             }
             Op::DepthEnter { fail } => map_fail(fail, map),
+            Op::Promote { live, .. } => {
+                for (_, value) in live.iter_mut() {
+                    *value = map(*value);
+                }
+            }
         }
     }
 }
@@ -329,6 +338,11 @@ fn blocks_of(procedure: &Procedure) -> (Vec<usize>, Vec<Vec<usize>>) {
 
 /// Builds a procedure's IR, entered at its start or at the top of one of its loops.
 pub fn build(program: &Program, procedure_id: u32, entry: Entry) -> Function {
+    build_with(program, procedure_id, entry, false)
+}
+
+/// Builds a procedure's IR; with `promote`, each loop's top counts rounds to move into speed code.
+pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: bool) -> Function {
     let procedure = &program.procedures[procedure_id as usize];
     let code = &procedure.instructions;
     let (starts, successors) = blocks_of(procedure);
@@ -403,9 +417,14 @@ pub fn build(program: &Program, procedure_id: u32, entry: Entry) -> Function {
     let arguments: Vec<Value> = params[start_block].iter().map(|(register, _)| entry_values[register]).collect();
     function.blocks[0].instrs = entry_instrs;
     function.blocks[0].end = End::Jump(start_block as BlockId + 1, arguments);
+    let loop_tops: HashMap<usize, u16> =
+        procedure.loops.iter().enumerate().map(|(loop_id, top)| (block_of[&(*top as usize)], loop_id as u16)).collect();
     for index in 0..count {
         let mut current: HashMap<Register, Value> = params[index].iter().copied().collect();
         let mut instrs = Vec::new();
+        if promote && let Some(loop_id) = loop_tops.get(&index) {
+            instrs.push(Instr { result: None, op: Op::Promote { loop_id: *loop_id, live: params[index].clone() } });
+        }
         let mut end = None;
         let fall_through = index + 1;
         let mut get = |register: Register, current: &mut HashMap<Register, Value>, instrs: &mut Vec<Instr>, function: &mut Function| -> Value {
