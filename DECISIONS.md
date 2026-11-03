@@ -5,6 +5,21 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `procedure add (a: small_whole | b: small_whole) returns small_whole:` ... `end_of procedure add`; called as `add 1, 2` (owner: "yes")
+
+```
+procedure move (speed: small_whole, never_negative | height: tiny_whole):
+  ...
+end_of procedure move
+```
+
+A param is written as a `let` is, without the word, modifiers after commas; `|` stands between params, so a comma only
+ever joins a param's modifiers. A call has no brackets, as `show` has none (the owner: "print is `show "Hello, World!"`").
+The owner proposed `procedure`, the brackets, `end_of procedure move`, `|` and `returns`; design claude recommended
+`returns` over `->`, since TAKL says things in words and an error can still mention `->`. No `returns` means nothing comes
+back. The `:` replaced the owner's first `has_body`; design claude called it redundant beside `end_of`, and the owner:
+"`:` is there for... Making reading it with wrong grammar less weird".
+
 ### 2026-11-03 — A bare index is one number or one name; anything more is bracketed, `position (i + 1) of xs` (owner: "yes")
 
 Design claude first proposed reading everything between `position` and `of` as the index. The owner, of
@@ -93,6 +108,6 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
-- Whether a parameter is written exactly as a `let` is (`n: small_whole`); design claude proposed it, the owner has not said.
+- Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
 - The types that are not whole numbers.
 - What TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons.
