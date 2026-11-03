@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The text type is `text`, never `string` (owner: "yes")
+
+Design claude proposed `text` over `string`: "string" means nothing to a kid, `text` is what it is, and an error can
+still say "other languages call this a string". The owner: "yes".
+
 ### 2026-11-03 — Text is always valid UTF-8, counted in grapheme clusters, letters as a kid sees them: `"👍🏽"` is 1 long (owner: "yes")
 
 Design claude proposed that a position into text and its length count letters as seen, never bytes or code points, which
@@ -161,7 +166,6 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
-- The name of the text type; `text` is design claude's, used in examples, never chosen.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
 - The types that are not whole numbers.
