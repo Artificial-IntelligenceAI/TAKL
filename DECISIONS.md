@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `end_of` stays one word, so it is never read as the `of` family (owner: "keep")
+
+Shown a kid's own `procedure middle of (...)`, the owner: "Wait, if that one uses a bare `of`, why not the `end`?" Design
+claude: `end of procedure middle` would read as the `of` family, `end of scores` looking like the last item, and a kid
+writing `procedure end of (...)` would leave the compiler unable to tell the two apart. The owner: "keep".
+
 ### 2026-11-03 — The `of` family, `length of`, `sum of`, `biggest of`, `smallest of`, `average of`, beside one in-order `for each` loop; kids can write their own `of` (owner: "yea")
 
 ```
