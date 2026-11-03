@@ -5,7 +5,23 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — No LLVM: the interpreter, then Cranelift for what gets hot; TAKL is written in Rust (owner: "Drop LLVM")
+
+The owner asked whether the interpreter should be C for portability and the tiers Rust and C++. Design claude
+recommended Rust throughout: Rust already reaches where kids are, Windows, Mac, Linux, Chromebooks, iPads and the
+browser through WebAssembly, and tiers sharing values and jumping in mid-loop across C and Rust define every layout
+twice. On iPads and in the browser no JIT is allowed, so there the interpreter is TAKL and must stand alone. The owner:
+"We could drop C, but what about custom LLVM passes?" They run in a JIT as well as ahead of time, but only in C++;
+design claude recommended TAKL's own passes on its own IR in Rust, before either backend, then a C++ wrapper through
+the `cxx` crate if ever needed. The owner: "Or should we drop LLVM?" Design claude leaned yes: LLVM is faster in very hot
+loops, often by something like 1.2 to 2 times on number work, at the cost of a dependency of hundreds of megabytes, its
+C++ churn and a third compiled engine to match, and Cranelift writes object files too, so a kid's program can still
+become an app. The owner: "Drop LLVM". With it goes C++. This narrows the tiers entry below to two tiers; the bytecode
+asked about is not decided.
+
 ### 2026-11-03 — Three tiers: an interpreter first, Cranelift for what gets hot, LLVM for what gets very hot, compiled in the background on other cores (owner)
+
+LLVM dropped the same day: the entry "No LLVM" above.
 
 The owner: "Tier 0 and oracle interp wouldn't be the same, right?" Design claude: no, the oracle reads the parsed
 source and is written to be plainly right, a tier 0 would read the shared IR and be built for speed, and one program
@@ -289,6 +305,8 @@ under the Apache License 2.0 with the LLVM exception (LICENSE); the docs, this l
 Attribution 4.0 International (LICENSE-CC-BY-4.0). Both texts as CyborgPL has them, unchanged.
 
 ### 2026-11-03 — Cranelift now; one IR that both backends read; LLVM later as a second tier (owner: "Yeah, seems good")
+
+LLVM dropped the same day: the entry "No LLVM" above.
 
 The owner proposed tiering Cranelift and LLVM ("fucking insane for a Scratch-ass Ruby fucking language"). Design claude
 recommended building Cranelift alone first, with one IR shaped for two backends so LLVM is added later rather than
