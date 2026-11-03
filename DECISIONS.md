@@ -5,6 +5,22 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Three tiers: an interpreter first, Cranelift for what gets hot, LLVM for what gets very hot, compiled in the background on other cores (owner)
+
+The owner: "Tier 0 and oracle interp wouldn't be the same, right?" Design claude: no, the oracle reads the parsed
+source and is written to be plainly right, a tier 0 would read the shared IR and be built for speed, and one program
+for both would agree with its own bugs. Design claude recommended no tier 0, Cranelift compiling each procedure on its
+first call; the owner: "we could do interp first, and compile in background", then "Like, start with interp, and scan for
+hot to compile in background, and maybe LLVM for very hot. On other cores, if that has better perf". Design claude
+set out the costs: a third engine to match the others to the letter, and a hot loop at the top level reaching compiled
+code only by jumping in mid-loop (on-stack replacement), the hardest part of the JIT. Chosen anyway, by the owner.
+
+So the interpreter runs at once, counts what is hot, and hands it to Cranelift on another core, then very hot code to
+LLVM; the program jumps in mid-loop when the code is ready. The oracle stays its own program. Every tier passes the one
+suite, with a flag forcing each tier, Cranelift and LLVM, from the start. Compiling on other cores is to be measured
+against compiling in place. Not designed: what counts as hot and very hot, and which tier is built first. This widens
+the backend entry below.
+
 ### 2026-11-03 — Testing: golden tests, a reference interpreter as oracle, a forced second tier, and fuzzing, all of them (owner: "All of them.")
 
 The owner: "How should we test? Like the impl". Design claude proposed four, and asked about the reference interpreter
