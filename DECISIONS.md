@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Testing: golden tests, a reference interpreter as oracle, a forced second tier, and fuzzing, all of them (owner: "All of them.")
+
+The owner: "How should we test? Like the impl". Design claude proposed four, and asked about the reference interpreter
+first, the most work up front. The owner: "All of them."
+
+1. Golden tests: a small `.takl` program beside what it must print, a kid-facing error message counted as output to
+   the letter, since the messages are what TAKL is. Every example in this log is one, so the log and the tests cannot
+   drift apart.
+2. A reference interpreter, slow and plain, walking the program as CyborgPL's oracle does; every test runs through it
+   and the JIT, their output matching byte for byte.
+3. A flag sending everything to the second tier at once, so the LLVM tier is tested on every program and not only hot
+   loops, as the backend entry requires.
+4. Fuzzing: random number programs through the interpreter and both tiers, which must agree; where `127 + 1` lives.
+
 ### 2026-11-03 — A block ends with `end` and what it closes: `end procedure move`, `end repeat`, `end for`, `end table level`; `end_of` is gone (owner: "yes")
 
 ```
