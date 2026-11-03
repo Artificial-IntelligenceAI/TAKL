@@ -1,0 +1,8 @@
+Stopped before running: tests/open/named_at_place.takl:3:38, line 3 column 38
+  3 |   add "ana": 11 to @ages at position 1
+                                           ^
+what: putting a named item at a place in the table
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/named_at_place.takl:3:38, line 3 column 38.

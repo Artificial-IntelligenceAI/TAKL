@@ -1,0 +1,3 @@
+procedure start_running (@n: small_whole) just finishes:
+  finish
+end procedure start_running

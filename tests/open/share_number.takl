@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: small_whole = 1
+  let @b: small_whole = share @a
+  finish
+end procedure start_running

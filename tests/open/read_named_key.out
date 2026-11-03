@@ -1,0 +1,8 @@
+Stopped before running: tests/open/read_named_key.takl:3:8, line 3 column 8
+  3 |   show position 1 of @ages
+             ^^^^^^^^^^^^^^^^^^^
+what: how to read one item of a table with named keys
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/read_named_key.takl:3:8, line 3 column 8.

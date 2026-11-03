@@ -1,0 +1,8 @@
+procedure down (@n: big_whole) returns big_whole:
+  return down(@n plus 1)
+end procedure down
+
+procedure start_running just finishes:
+  show down(0)
+  finish
+end procedure start_running

@@ -1,0 +1,11 @@
+Stopped before running: tests/open/name_twice.takl:3:7, line 3 column 7
+  3 |   let @a: small_whole = 2
+            ^^
+what: making `@a` again while the first one is still there
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+because: `@a` is first made here, tests/open/name_twice.takl:2:7, line 2 column 7
+  2 |   let @a: small_whole = 1
+            ^^
+
+1 mistake found: tests/open/name_twice.takl:3:7, line 3 column 7.

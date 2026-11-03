@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @a: small_whole = 1
+  let @b: medium_whole = 2
+  show @a plus @b
+  finish
+end procedure start_running

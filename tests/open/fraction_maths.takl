@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: small_fraction = 1 over 3
+  let @b: small_fraction = @a plus @a
+  finish
+end procedure start_running

@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/exit_code_range.takl:2:10, line 2 column 10
+  2 |   return 300
+               ^^^
+what: 300 is too big for a tiny_whole, never_negative
+why:  A tiny_whole, never_negative holds 0 to 255. Other languages call this a uint8.
+
+1 mistake found: tests/procedures/exit_code_range.takl:2:10, line 2 column 10.

@@ -1,0 +1,8 @@
+Stopped before running: tests/open/bounds_decimal.takl:2:30, line 2 column 30
+  2 |   let @price: small_decimal, at least 0 = 1.5
+                                   ^^^^^^^^^^
+what: bounds on decimals and fractions
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/bounds_decimal.takl:2:30, line 2 column 30.

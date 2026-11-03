@@ -1,0 +1,8 @@
+Stopped before running: tests/open/negative_number.takl:2:33, line 2 column 33
+  2 |   let @x: small_whole, at least -5 = 0
+                                      ^
+what: how a number below zero is written
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/negative_number.takl:2:33, line 2 column 33.

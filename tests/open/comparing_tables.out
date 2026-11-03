@@ -1,0 +1,8 @@
+Stopped before running: tests/open/comparing_tables.takl:3:15, line 3 column 15
+  3 |   show "x" if @a is @a
+                    ^^^^^^^^
+what: whether two tables are the same
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/comparing_tables.takl:3:15, line 3 column 15.

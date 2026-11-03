@@ -1,0 +1,8 @@
+Stopped before running: tests/open/ordering_text.takl:3:15, line 3 column 15
+  3 |   show "x" if @a is more than "b"
+                    ^^^^^^^^^^^^^^^^^^^
+what: whether one text is more or less than another
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/ordering_text.takl:3:15, line 3 column 15.

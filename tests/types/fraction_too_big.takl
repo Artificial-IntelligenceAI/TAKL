@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  let @a: tiny_fraction = 1 over 300
+  finish
+end procedure start_running

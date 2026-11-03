@@ -1,0 +1,8 @@
+Stopped before running: tests/open/let_no_value.takl:2:3, line 2 column 3
+  2 |   let @a: small_whole
+        ^^^^^^^^^^^^^^^^^^^
+what: a `let` with no value, so `@a` would start as nothing
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/let_no_value.takl:2:3, line 2 column 3.

@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  let @xs: table of (small_whole, at least 0) = [1]
+  finish
+end procedure start_running

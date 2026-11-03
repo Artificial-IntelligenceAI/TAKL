@@ -1,0 +1,11 @@
+Stopped before running: tests/open/after_block.takl:5:8, line 5 column 8
+  5 |   show @inside
+             ^^^^^^^
+what: whether `@inside` can be used after the block it was made in ends
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+because: `@inside` is made inside a block here, tests/open/after_block.takl:3:9, line 3 column 9
+  3 |     let @inside: small_whole = 1
+              ^^^^^^^
+
+1 mistake found: tests/open/after_block.takl:5:8, line 5 column 8.

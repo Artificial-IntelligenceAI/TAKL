@@ -1,0 +1,8 @@
+Stopped before running: tests/open/start_running_params.takl:1:26, line 1 column 26
+  1 | procedure start_running (@n: small_whole) just finishes:
+                               ^^
+what: what `start_running`'s params would be given
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/start_running_params.takl:1:26, line 1 column 26.

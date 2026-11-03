@@ -1,0 +1,7 @@
+Stopped before running: tests/spelling/autocorrect_dash.takl:3:11, line 3 column 11
+  3 |   show @a — 1
+                ^
+fix:  minus
+why:  TAKL writes maths in words.
+
+1 mistake found: tests/spelling/autocorrect_dash.takl:3:11, line 3 column 11.

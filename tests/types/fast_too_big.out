@@ -1,0 +1,7 @@
+Stopped before running: tests/types/fast_too_big.takl:2:44, line 2 column 44
+  2 |   let @a: tiny_decimal, fast_but_inexact = 70000
+                                                 ^^^^^
+what: 70000 is too big for a tiny_decimal, fast_but_inexact
+why:  Use a bigger decimal.
+
+1 mistake found: tests/types/fast_too_big.takl:2:44, line 2 column 44.

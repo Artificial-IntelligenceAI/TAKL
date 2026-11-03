@@ -1,0 +1,8 @@
+Stopped before running: tests/open/bounds_item.takl:2:35, line 2 column 35
+  2 |   let @xs: table of (small_whole, at least 0) = [1]
+                                        ^^^^^^^^^^
+what: bounds here, on a table's items or a procedure's return
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/bounds_item.takl:2:35, line 2 column 35.

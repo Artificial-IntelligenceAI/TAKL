@@ -1,0 +1,8 @@
+Stopped before running: tests/open/joining_text.takl:3:8, line 3 column 8
+  3 |   show @a plus "b"
+             ^^^^^^^^^^^
+what: joining text with `plus`
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/joining_text.takl:3:8, line 3 column 8.

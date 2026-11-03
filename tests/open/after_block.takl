@@ -1,0 +1,7 @@
+procedure start_running just finishes:
+  if 1 is 1:
+    let @inside: small_whole = 1
+  end if
+  show @inside
+  finish
+end procedure start_running

@@ -1,0 +1,6 @@
+Stopped while running: tests/open/key_twice.takl:3:3, line 3 column 3
+  3 |   add "sam": 11 to @ages
+        ^^^^^^^^^^^^^^^^^^^^^^
+what: adding "sam" again, when it's already in the table
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.

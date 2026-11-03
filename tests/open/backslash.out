@@ -1,0 +1,8 @@
+Stopped before running: tests/open/backslash.takl:2:11, line 2 column 11
+  2 |   show "C:\\Users"
+                ^
+what: what `\` does inside text
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/backslash.takl:2:11, line 2 column 11.

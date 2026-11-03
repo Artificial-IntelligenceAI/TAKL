@@ -1,0 +1,3 @@
+procedure start_running returns tiny_whole, never_negative:
+  return 300
+end procedure start_running

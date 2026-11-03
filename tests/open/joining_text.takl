@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: text = "a"
+  show @a plus "b"
+  finish
+end procedure start_running

@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  let @price: small_decimal, at least 0 = 1.5
+  finish
+end procedure start_running

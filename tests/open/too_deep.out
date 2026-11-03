@@ -1,0 +1,6 @@
+Stopped while running: tests/open/too_deep.takl:2:10, line 2 column 10
+  2 |   return down(@n plus 1)
+               ^^^^^^^^^^^^^^^
+what: what happens when procedures call each other this deep (10000 calls)
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.

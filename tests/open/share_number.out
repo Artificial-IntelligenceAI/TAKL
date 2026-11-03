@@ -1,0 +1,8 @@
+Stopped before running: tests/open/share_number.takl:3:25, line 3 column 25
+  3 |   let @b: small_whole = share @a
+                              ^^^^^^^^
+what: sharing something that isn't a table
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/share_number.takl:3:25, line 3 column 25.

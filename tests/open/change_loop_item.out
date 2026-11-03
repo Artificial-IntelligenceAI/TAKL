@@ -1,0 +1,8 @@
+Stopped before running: tests/open/change_loop_item.takl:4:5, line 4 column 5
+  4 |     @x = 5
+          ^^
+what: changing `@x` while `for each` goes through it
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/change_loop_item.takl:4:5, line 4 column 5.

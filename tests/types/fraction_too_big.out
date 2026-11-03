@@ -1,0 +1,7 @@
+Stopped before running: tests/types/fraction_too_big.takl:2:27, line 2 column 27
+  2 |   let @a: tiny_fraction = 1 over 300
+                                ^^^^^^^^^^
+what: 1 over 300 is too big for a tiny_fraction
+why:  The top and the bottom of a tiny_fraction are each a tiny_whole.
+
+1 mistake found: tests/types/fraction_too_big.takl:2:27, line 2 column 27.

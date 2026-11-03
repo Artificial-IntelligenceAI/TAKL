@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  show length of ["sam": 10]
+  finish
+end procedure start_running

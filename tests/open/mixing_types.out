@@ -1,0 +1,8 @@
+Stopped before running: tests/open/mixing_types.takl:4:8, line 4 column 8
+  4 |   show @a plus @b
+             ^^^^^^^^^^
+what: maths that mixes a small_whole with a medium_whole
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/mixing_types.takl:4:8, line 4 column 8.

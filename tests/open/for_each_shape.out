@@ -1,0 +1,8 @@
+Stopped before running: tests/open/for_each_shape.takl:3:25, line 3 column 25
+  3 |   for each @i and @x in @xs:
+                              ^^^
+what: this shape of `for each`: one name for a table with named keys, or two for a numbered one
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/for_each_shape.takl:3:25, line 3 column 25.

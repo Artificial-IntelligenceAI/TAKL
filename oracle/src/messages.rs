@@ -960,15 +960,10 @@ pub fn too_big_for(
     before: bool,
 ) -> Diagnostic {
     let never_negative = ty.contains("never_negative");
-    let direction =
-        if value.starts_with('-') || (never_negative && value.starts_with('-')) { "too small" } else { "too big" };
-    let why = format!(
-        "A {} holds {} to {}. Other languages call this an {}.",
-        ty,
-        least,
-        most,
-        other_name(size, never_negative)
-    );
+    let direction = if value.starts_with('-') { "too small" } else { "too big" };
+    let other = other_name(size, never_negative);
+    let article = if other.starts_with('u') { "a" } else { "an" };
+    let why = format!("A {} holds {} to {}. Other languages call this {} {}.", ty, least, most, article, other);
     let headline = format!("{} is {} for a {}", value, direction, ty);
     if before { what(span, headline, why) } else { Diagnostic::while_running(span, Headline::What(headline), why) }
 }

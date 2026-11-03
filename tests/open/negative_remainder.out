@@ -1,0 +1,6 @@
+Stopped while running: tests/open/negative_remainder.takl:3:8, line 3 column 8
+  3 |   show remainder of (@a divided by 2)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+what: the remainder when a number is below zero
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.

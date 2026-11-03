@@ -1,0 +1,6 @@
+Stopped while running: tests/open/negative_repeat.takl:3:3, line 3 column 3
+  3 |   repeat @n times:
+        ^^^^^^^^^^^^^^^^
+what: repeating -1 times
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.

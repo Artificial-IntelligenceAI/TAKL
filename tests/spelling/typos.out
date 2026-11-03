@@ -1,0 +1,7 @@
+Stopped before running: tests/spelling/typos.takl:2:24, line 2 column 24
+  2 |   let @a: small_whole, cant_chang = 5
+                             ^^^^^^^^^^
+fix:  can't_change
+why:  There's no modifier called `cant_chang`.
+
+1 mistake found: tests/spelling/typos.takl:2:24, line 2 column 24.

@@ -1,0 +1,8 @@
+Stopped before running: tests/open/fraction_maths.takl:3:28, line 3 column 28
+  3 |   let @b: small_fraction = @a plus @a
+                                 ^^^^^^^^^^
+what: maths on fractions
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/fraction_maths.takl:3:28, line 3 column 28.

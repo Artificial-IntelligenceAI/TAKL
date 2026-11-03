@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @ages: table of text to small_whole = ["sam": 10]
+  show position 1 of @ages
+  finish
+end procedure start_running

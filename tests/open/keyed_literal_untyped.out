@@ -1,0 +1,8 @@
+Stopped before running: tests/open/keyed_literal_untyped.takl:2:18, line 2 column 18
+  2 |   show length of ["sam": 10]
+                       ^^^^^^^^^^^
+what: a table with named keys where its type isn't written
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/open/keyed_literal_untyped.takl:2:18, line 2 column 18.

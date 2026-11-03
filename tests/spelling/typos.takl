@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  let @a: small_whole, cant_chang = 5
+  finish
+end procedure start_running

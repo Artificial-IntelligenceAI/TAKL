@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: table of small_whole = [1]
+  show "x" if @a is @a
+  finish
+end procedure start_running
