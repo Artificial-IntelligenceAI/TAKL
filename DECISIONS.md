@@ -5,6 +5,17 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `repeat 50 times:` ... `end_of repeat`; a count from a variable is `repeat lives times:` (owner: "good")
+
+```
+repeat 50 times:
+  show "Hi"
+end_of repeat
+```
+
+Design claude proposed it in `procedure`'s shape, the first of the general loops, a count from a variable reading as
+plainly as a number. The owner: "good". Not designed: a loop over a table, a loop while something holds.
+
 ### 2026-11-03 — No `show "Hi" 50x` shortcut (owner: "drop shortcut")
 
 The owner proposed `show "Hi" 50x` printing it 50 times, a shortcut before general loops. Design claude raised a count
