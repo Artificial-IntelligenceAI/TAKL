@@ -5,6 +5,31 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Every variable and param is marked `@`: `let @hp: small_whole = 50`, `heal(@hp)`; procedures and TAKL's words are bare (owner)
+
+`decision.names.at_mark`
+
+```
+procedure heal (@hp: small_whole | @amount: small_whole = 10) returns small_whole:
+  return @hp plus @amount
+end procedure heal
+
+procedure start_running just finishes:
+  let @scores: table of small_whole = [10, 20, 30]
+  add 50 to @scores at offset 0
+  show "HP: ", heal(@hp)
+  finish
+end procedure start_running
+```
+
+The owner: "Should we add a var mark?", then, of `add 50 to scores in offset 0`: "that's basically the average TAKL. So
+many words, and you might not know what variable you're even using". Design claude proposed `@`, on every phone and
+tablet keyboard for email, read aloud as "at", Ruby's mark for instance variables, on everything a kid names. Shown
+it, the owner: "Maybe just variables?" A param is used as a `let` is, so it is marked too; procedures read as verbs
+beside TAKL's own. The owner: "I genuinely had a better time reading this version, than no marks". A grammar word added
+later can still clash with a kid's procedure name, rarely; the error says so. The mark also ends any clash between a
+variable and a grammar word.
+
 ### 2026-11-03 — A grammar word never names a procedure: `procedure add` is refused, so `add 40 to scores` always means the built-in (owner: "yea")
 
 `decision.names.no_grammar_names`
