@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `position 1 of xs` is the first item, counting from 1; `offset 0 of xs` is the same item, counting from 0 (owner)
+
+The owner proposed `total = x + position 1 of xs`, and `offset` beside `position`. Design claude read it as two words, each
+with one start: `position` counts from 1 as a person does, `offset` from 0 as other languages do, so a kid starts with
+`position` and `offset` shows why the rest of the world starts at 0. The owner: "read right". Each word only ever means
+its own start. Not designed: whether `position i + 1 of xs` is position `(i + 1)` or `(position i) + 1`.
+
 ### 2026-11-03 — `, never_negative` after a whole number's type makes it unsigned: `small_whole, never_negative` is a uint16, 0 to 65535 (owner)
 
 The owner proposed `let score: small_whole, never_negative`. Asked whether it doubles the top end or only refuses
