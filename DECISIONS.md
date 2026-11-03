@@ -1011,4 +1011,35 @@ what a `let` without `can't_change` may do.
 
 ## Open
 
+- Found while building the oracle, each a `NotDesignedYet` stop with its own golden test unless marked:
+  - Whether `show` ends its line. The oracle ends it, in one place (`SHOW_ENDS_WITH`), until the owner says; every
+    golden `.out` depends on it.
+  - What `\` does inside text.
+  - How a number below zero is written (`0 minus 5` works; `-5` and `at least -5` do not).
+  - Which way `round` goes exactly halfway, and whether `round` means "nearest" at all (the oracle rounds to the
+    nearest and stops on a tie).
+  - The remainder when a number is below zero; repeating a negative number of times.
+  - Whether `show` prints `2 over 4` as written or as `1 over 2`; maths on fractions.
+  - How `show` prints true or false, and a table.
+  - Reading one item of a table with named keys; changing an item already in a table (no way to write it exists,
+    so no test); putting a named item at a place; adding a key that is already there; a named-key table written
+    where its type isn't.
+  - `for each` with one name over a named table, or two over a numbered one; changing the loop's own variable.
+  - Using a `let` after the block it was made in ends; making a name again while the first is still there; a `let`
+    with no value.
+  - Sharing something that isn't a table; bounds on a table's items or a procedure's return.
+  - Maths or comparing across types (`small_whole` with `medium_whole`, a whole with a decimal) and turning one type
+    into another; joining text with `plus`; whether one text or true_or_false is more than another; whether two
+    tables are the same.
+  - Params on `start_running`; procedures calling each other 10,000 deep.
+  - Input: `ask_number` and anything that reads what a kid types (no test: nothing to write it with).
+- Chosen by design claude while building the oracle, for the owner to confirm or change:
+  - Every error message's wording, all in `oracle/src/messages.rs`; one error ends with "1 mistake found: <place>."
+  - A compile error exits with 1, as a run-time one does.
+  - "Known before running" means made only of written numbers: `let @x: tiny_whole = 100 plus 100` is a compile
+    error, while a value from a variable is checked when it runs.
+  - Written numbers with nothing to give them a type (`show 5 plus 3`) are worked out exactly, with no size.
+  - `for each` goes through the table as it was when the loop began, since a table is a value: adding to it inside
+    the loop doesn't make the loop longer.
+  - A run-time error's `because:` names where each variable in the failing step last got its value.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".

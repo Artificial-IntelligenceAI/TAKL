@@ -2,6 +2,9 @@
 //!
 //! It is the executable spec. The compiler must match its output byte for byte on every golden test, so every rule
 //! here is written to be checked against its decision by eye, never to be fast.
+//!
+//! trace: decision.house.optimize_early (the compiler is optimized from the start; the oracle stays plain)
+//! trace: decision.house.naming
 
 // An error is a whole message with its code lines, and a program stops at the first one while running, so carrying it
 // by value is simpler than boxing it and costs nothing that matters.

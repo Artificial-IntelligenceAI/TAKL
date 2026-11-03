@@ -68,6 +68,7 @@ pub const GRAMMAR_WORDS: &[&str] = &[
     "share",
 ];
 
+/// trace: decision.loops.no_shortcut (there is no `50x`, so it is read as a mistake)
 pub fn is_grammar(word: &str) -> bool {
     GRAMMAR_WORDS.contains(&word)
 }

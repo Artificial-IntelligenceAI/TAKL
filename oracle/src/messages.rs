@@ -39,6 +39,7 @@ fn not_designed(stage: Stage, span: Span, what: impl Into<String>) -> Diagnostic
 }
 
 /// The one name close enough to be the one meant; none when there are several or none.
+/// trace: decision.spelling.typos (a typo stops, with "did you mean" only when one near match is certain)
 pub fn near(name: &str, candidates: &[String]) -> Option<String> {
     let limit = if name.chars().count() >= 5 { 2 } else { 1 };
     let close: Vec<&String> = candidates.iter().filter(|c| c.as_str() != name && distance(name, c) <= limit).collect();
@@ -120,6 +121,7 @@ pub fn mark(span: Span, mark: char) -> Diagnostic {
 }
 
 pub fn semicolon(span: Span) -> Diagnostic {
+    // trace: decision.syntax.no_semicolons
     what(span, "TAKL lines don't end with `;`", "A line ends where the line ends. Take the `;` out.")
 }
 
@@ -335,6 +337,7 @@ pub fn return_needs_value(span: Span) -> Diagnostic {
 
 pub fn return_nothing_is_finish(span: Span) -> Diagnostic {
     // trace: decision.procedures.finish
+    // trace: decision.procedures.return_nothing (replaced by `finish`, so `return nothing` gets a fix)
     fix(span, "finish", "A procedure that gives nothing back ends with `finish`.")
 }
 
@@ -349,6 +352,7 @@ pub fn nested_call_needs_brackets(span: Span, fixed: &str) -> Diagnostic {
 
 pub fn end_of_is_end(span: Span) -> Diagnostic {
     // trace: decision.blocks.end
+    // trace: decision.blocks.end_of (replaced by `end`, so `end_of` gets a fix)
     fix(span, "end", "A block ends with `end` and what it closes, like `end if` or `end procedure move`.")
 }
 

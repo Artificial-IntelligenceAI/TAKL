@@ -43,6 +43,7 @@ struct Machine<'a> {
 }
 
 /// Runs `start_running` and gives the exit code.
+/// trace: decision.procedures.start_running
 /// trace: decision.procedures.start_running_required
 /// trace: decision.procedures.exit_code
 pub fn run(program: &Program, facts: &Facts, output: &mut String) -> Run<u8> {

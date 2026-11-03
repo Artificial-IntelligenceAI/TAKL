@@ -224,7 +224,9 @@ impl<'a> Checker<'a> {
 
     fn named_type(&mut self, name: &str, span: Span) -> Option<Ty> {
         match name {
+            // trace: decision.text.name
             "text" => Some(Ty::Text),
+            // trace: decision.types.true_or_false
             "true_or_false" => Some(Ty::TrueOrFalse),
             _ => match number_type(name) {
                 Some(ty) => Some(ty),
