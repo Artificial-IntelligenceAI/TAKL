@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `show` prints every number too: `show x` prints `500` (owner)
+
+The owner's first program shows a `small_whole`. Asked whether `show` prints whole numbers, the owner: "can also print
+all numbers": wholes, decimals of both kinds and fractions. A whole number prints as its digits. Not designed: how a
+decimal or a fraction is written out.
+
 ### 2026-11-03 — `show` prints its pieces one after another, commas between them: `show "Hello, ", name` (owner)
 
 ```
@@ -13,8 +19,8 @@ show "Hello, ", name
 ```
 
 Design claude proposed how `show` prints each type. The owner: "There's only this `show` for now". Text prints without
-its quotes; nothing is put between the pieces, so the space is the kid's, inside `"Hello, "`. Not designed: how a
-number, a decimal, a table or `true` prints, and whether `show` ends its line.
+its quotes; nothing is put between the pieces, so the space is the kid's, inside `"Hello, "`. Numbers: the entry
+above. Not designed: how a table or `true` prints, and whether `show` ends its line.
 
 ### 2026-11-03 — Text is written in double quotes: `show "Hi"` (owner: "yes")
 
