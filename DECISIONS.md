@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A decimal prints as it is held: an exact `2.50` as `2.50`, a fast `~0.1` as `0.1000000000000000055511151231257827021181583404541015625` (owner: "correct")
+
+Design claude proposed exact decimals as written and fast ones in the shortest form that reads back the same. The
+owner: "print like how it's stored". So a fast decimal prints its whole held value, long, every digit true.
+
 ### 2026-11-03 — A `, fast` decimal refuses a number it cannot hold exactly; `~0.1` asks for the nearest, on written numbers only (owner: "correct")
 
 ```
@@ -27,8 +32,8 @@ back in. Design claude proposed it; the owner: "yes". Not designed: whether `2 o
 ### 2026-11-03 — `show` prints every number too: `show x` prints `500` (owner)
 
 The owner's first program shows a `small_whole`. Asked whether `show` prints whole numbers, the owner: "can also print
-all numbers": wholes, decimals of both kinds and fractions. A whole number prints as its digits, a fraction as `1 over 3` (the entry above).
-Not designed: how a decimal is written out.
+all numbers": wholes, decimals of both kinds and fractions. A whole number prints as its digits, a fraction as `1 over 3`, a decimal as it is
+held (the entries above).
 
 ### 2026-11-03 — `show` prints its pieces one after another, commas between them: `show "Hello, ", name` (owner)
 
