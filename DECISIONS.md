@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A `let` can change unless it says `can't_change`; `score = score + 10` changes it (owner: "yes")
+
+Design claude proposed that a `let` without `can't_change` can change, written `score = score + 10`, since the owner's
+first program implies it and `can't_change` is then a choice a kid makes. The owner: "yes, because not many kids would
+fucking go 'Oh this is bad, it's not accurate to maths'".
+
 ### 2026-11-03 — The whole numbers are tiny_whole, small_whole, medium_whole and big_whole: int8, int16, int32, int64 (owner)
 
 Design claude proposed `tiny_whole`, `small_whole`, a bare `whole` for int32 as the one kids reach for, and `big_whole`.
@@ -59,6 +65,5 @@ what a `let` without `can't_change` may do.
 
 - Whether a parameter is written exactly as a `let` is (`n: small_whole`); design claude proposed it, the owner has not said.
 - The types that are not whole numbers, and whether unsigned whole numbers exist.
-- Whether a `let` without `can't_change` can change.
 - What a number too big for its type does.
 - What TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons.
