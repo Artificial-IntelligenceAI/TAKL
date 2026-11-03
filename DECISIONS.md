@@ -5,6 +5,14 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A kid's own `of` is only a name, `procedure middle_of (xs: table of small_whole)`, called `middle_of scores`; a bare `of` is the built-in family's alone (owner)
+
+Design claude proposed `procedure middle of (...)`. The owner: "Is that a space in a fn name?" Design claude offered any
+one-param procedure called with `of`, or `of` before the param, `(of xs: ...)`. The owner: "Or just no `of` at all", then
+"They could just name it `middle_of`". So a kid's own `of` is no new form, only a name with `_of` in it; the built-in
+family keeps its bare `of`, `sum of scores`. `sum_of scores` and `middle of scores` are typos, answered "did you mean".
+This replaces "kids can write their own `of`" in the `of` family entry below.
+
 ### 2026-11-03 — `end_of` stays one word, so it is never read as the `of` family (owner: "keep")
 
 Shown a kid's own `procedure middle of (...)`, the owner: "Wait, if that one uses a bare `of`, why not the `end`?" Design
@@ -258,7 +266,6 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Holes, as design claude proposed: setting past a table's end refused.
-- How a kid writes their own `something of`.
 - A loop while something holds; `if`.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
