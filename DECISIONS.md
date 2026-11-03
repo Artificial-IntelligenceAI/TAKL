@@ -5,6 +5,14 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A bare index is one number or one name; anything more is bracketed, `position (i + 1) of xs` (owner: "yes")
+
+Design claude first proposed reading everything between `position` and `of` as the index. The owner, of
+`position i + 1 of xs`: "What the fuck in the stroking shit did I just fucking witnessed". Design claude then proposed
+refusing it: `position 1 of xs` and `position i of xs` stand bare, anything more needs brackets, and
+`position i + 1 of xs` is a compile error saying "did you mean `position (i + 1) of xs`?". The same holds for `offset`.
+The owner: "yes".
+
 ### 2026-11-03 — A number past its type's range is a compile error when it can be known, a stopping error at run time, unless an `otherwise` beside it handles it (owner)
 
 Design claude proposed catching it at compile time when the numbers are known and stopping the program at the line where
@@ -17,7 +25,7 @@ Not designed: how `otherwise` is written, and whether it handles more than numbe
 The owner proposed `total = x + position 1 of xs`, and `offset` beside `position`. Design claude read it as two words, each
 with one start: `position` counts from 1 as a person does, `offset` from 0 as other languages do, so a kid starts with
 `position` and `offset` shows why the rest of the world starts at 0. The owner: "read right". Each word only ever means
-its own start. Not designed: whether `position i + 1 of xs` is position `(i + 1)` or `(position i) + 1`.
+its own start. How an index longer than one number or name is written: the entry above.
 
 ### 2026-11-03 — `, never_negative` after a whole number's type makes it unsigned: `small_whole, never_negative` is a uint16, 0 to 65535 (owner)
 
