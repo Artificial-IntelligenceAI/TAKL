@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `lives is 0`, `lives isn't 0`; `is not` is answered "did you mean `isn't`?" (owner: "yea")
+
+Easium's `is_not` would be grammar of two pieces, which TAKL's rule refuses. The owner: "Why is there no `_`?" Design
+claude: `_` is for names alone, and gluing grammar would bring back the exception `end_of` was. The owner: "Why not
+`isn't`?" One word, as kids say it, beside `can't_change`; the apostrophe rule reads `isnt` and a curly `isn’t` as it.
+Design claude proposed it as the only form; the owner: "yea".
+
 ### 2026-11-03 — A line can end in `if`: `show "hi" if lives is 0` (owner)
 
 The owner: "Also, `show \"hi\" if...` is legal". A line runs only when the test after its `if` holds. Design claude
