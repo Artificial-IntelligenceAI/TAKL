@@ -54,7 +54,12 @@ impl Failure {
             out.push('\n');
         }
         for because in &self.because {
-            out.push_str(&format!("because: {}, {}\n{}\n", because.text, source.place(because.span), source.pointer(because.span)));
+            out.push_str(&format!(
+                "because: {}, {}\n{}\n",
+                because.text,
+                source.place(because.span),
+                source.pointer(because.span)
+            ));
         }
         out
     }

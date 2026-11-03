@@ -60,7 +60,16 @@ unsafe extern "C" fn takl_step(machine_pointer: *mut Machine, procedure: u64, at
 }
 
 /// Whole-number maths with no answer; `operator` 4 is `remainder of`.
-unsafe extern "C" fn takl_fail_whole(machine_pointer: *mut Machine, procedure: u64, failure: u64, operator: u64, kind: u64, x: u64, y: u64, frame: *mut u64) {
+unsafe extern "C" fn takl_fail_whole(
+    machine_pointer: *mut Machine,
+    procedure: u64,
+    failure: u64,
+    operator: u64,
+    kind: u64,
+    x: u64,
+    y: u64,
+    frame: *mut u64,
+) {
     let machine = unsafe { machine(machine_pointer) };
     let program = std::sync::Arc::clone(&machine.program);
     let procedure = &program.procedures[procedure as usize];
@@ -73,30 +82,45 @@ unsafe extern "C" fn takl_fail_whole(machine_pointer: *mut Machine, procedure: u
         let operator = [Maths::Plus, Maths::Minus, Maths::Times, Maths::DividedBy][operator as usize % 4];
         crate::interpreter::whole_problem(operator, kind, x, y)
     };
-    machine.stop(procedure, failure as u16, Detail::Problem(problem), frame);
+    // SAFETY: compiled code passes the failing procedure's frame.
+    unsafe { machine.stop(procedure, failure as u16, Detail::Problem(problem), frame) };
 }
 
 /// A check on one value: a whole number's range, bounds, or a repeat's count.
-unsafe extern "C" fn takl_fail_value(machine_pointer: *mut Machine, procedure: u64, failure: u64, value: u64, frame: *mut u64) {
+unsafe extern "C" fn takl_fail_value(
+    machine_pointer: *mut Machine,
+    procedure: u64,
+    failure: u64,
+    value: u64,
+    frame: *mut u64,
+) {
     let machine = unsafe { machine(machine_pointer) };
     let program = std::sync::Arc::clone(&machine.program);
     let procedure = &program.procedures[procedure as usize];
     let detail = match &procedure.failures[failure as usize].kind {
-        FailureKind::Maths { ty: crate::types::Type::Whole(whole) } => {
-            Detail::Problem(whole.check(value as i64 as i128).err().unwrap_or(numbers::Problem::TooBig(BigInt::from(value as i64))))
-        }
+        FailureKind::Maths { ty: crate::types::Type::Whole(whole) } => Detail::Problem(
+            whole.check(value as i64 as i128).err().unwrap_or(numbers::Problem::TooBig(BigInt::from(value as i64))),
+        ),
         _ => Detail::Value(value as i64 as i128),
     };
-    machine.stop(procedure, failure as u16, detail, frame);
+    // SAFETY: as in `takl_fail_whole`.
+    unsafe { machine.stop(procedure, failure as u16, detail, frame) };
 }
 
 /// Float maths with no answer: dividing by zero, or too big.
-unsafe extern "C" fn takl_fail_fast(machine_pointer: *mut Machine, procedure: u64, failure: u64, divides_by_zero: u64, frame: *mut u64) {
+unsafe extern "C" fn takl_fail_fast(
+    machine_pointer: *mut Machine,
+    procedure: u64,
+    failure: u64,
+    divides_by_zero: u64,
+    frame: *mut u64,
+) {
     let machine = unsafe { machine(machine_pointer) };
     let program = std::sync::Arc::clone(&machine.program);
     let procedure = &program.procedures[procedure as usize];
     let problem = if divides_by_zero != 0 { numbers::Problem::DividesByZero } else { numbers::Problem::FastTooBig };
-    machine.stop(procedure, failure as u16, Detail::Problem(problem), frame);
+    // SAFETY: as in `takl_fail_whole`.
+    unsafe { machine.stop(procedure, failure as u16, Detail::Problem(problem), frame) };
 }
 
 /// A stop with nothing more to say: calls too deep, or written maths that fails.
@@ -104,7 +128,8 @@ unsafe extern "C" fn takl_fail_plain(machine_pointer: *mut Machine, procedure: u
     let machine = unsafe { machine(machine_pointer) };
     let program = std::sync::Arc::clone(&machine.program);
     let procedure = &program.procedures[procedure as usize];
-    machine.stop(procedure, failure as u16, Detail::Nothing, frame);
+    // SAFETY: as in `takl_fail_whole`.
+    unsafe { machine.stop(procedure, failure as u16, Detail::Nothing, frame) };
 }
 
 /// Calls a procedure that isn't compiled, or is compiled elsewhere, from compiled code.
@@ -243,7 +268,7 @@ impl<'a, 'b> Lowering<'a, 'b> {
 
     /// The frame of the procedure a fail point is in.
     fn frame_of(&mut self, frame_offset: u32) -> clir::Value {
-        if frame_offset == 0 { self.frame } else { self.builder.ins().iadd_imm(self.frame, frame_offset as i64 * 8) }
+        if frame_offset == 0 { self.frame } else { self.builder.ins().iadd_imm_s(self.frame, frame_offset as i64 * 8) }
     }
 
     fn stopped(&mut self) {
@@ -275,17 +300,29 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 Helper::Whole { operator, kind, x, y } => {
                     let operator = self.constant(operator as i64);
                     let kind = self.constant(kind as i64);
-                    self.helper(takl_fail_whole as usize, &[self.machine, procedure, failure, operator, kind, x, y, frame], 0);
+                    self.helper(
+                        takl_fail_whole as *const () as usize,
+                        &[self.machine, procedure, failure, operator, kind, x, y, frame],
+                        0,
+                    );
                 }
                 Helper::Value(value) => {
-                    self.helper(takl_fail_value as usize, &[self.machine, procedure, failure, value, frame], 0);
+                    self.helper(
+                        takl_fail_value as *const () as usize,
+                        &[self.machine, procedure, failure, value, frame],
+                        0,
+                    );
                 }
                 Helper::Fast { divides } => {
                     let divides = self.constant(divides as i64);
-                    self.helper(takl_fail_fast as usize, &[self.machine, procedure, failure, divides, frame], 0);
+                    self.helper(
+                        takl_fail_fast as *const () as usize,
+                        &[self.machine, procedure, failure, divides, frame],
+                        0,
+                    );
                 }
                 Helper::Plain => {
-                    self.helper(takl_fail_plain as usize, &[self.machine, procedure, failure, frame], 0);
+                    self.helper(takl_fail_plain as *const () as usize, &[self.machine, procedure, failure, frame], 0);
                 }
             }
             self.stopped();
@@ -311,7 +348,14 @@ impl<'a, 'b> Lowering<'a, 'b> {
         self.fail_block(fail, Helper::Plain)
     }
 
-    fn whole_maths(&mut self, operator: Maths, kind: u8, x: clir::Value, y: clir::Value, fail: &FailPoint) -> clir::Value {
+    fn whole_maths(
+        &mut self,
+        operator: Maths,
+        kind: u8,
+        x: clir::Value,
+        y: clir::Value,
+        fail: &FailPoint,
+    ) -> clir::Value {
         let failed = self.whole_fail(fail, operator as u64, kind, x, y);
         let b = &mut self.builder;
         if kind == BIG_WHOLE || kind == BIG_NEVER_NEGATIVE {
@@ -345,30 +389,37 @@ impl<'a, 'b> Lowering<'a, 'b> {
     /// Fails unless `value` is in a narrow kind's range: one subtraction and one unsigned comparison.
     fn range_check(&mut self, value: clir::Value, kind: u8, failed: clir::Block) {
         let (smallest, biggest) = passes::limits(kind);
-        let shifted = self.builder.ins().iadd_imm(value, smallest.wrapping_neg());
+        let shifted = self.builder.ins().iadd_imm_s(value, smallest.wrapping_neg());
         let span = biggest.wrapping_sub(smallest);
-        let outside = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThan, shifted, span);
+        let outside = self.builder.ins().icmp_imm_s(IntCC::UnsignedGreaterThan, shifted, span);
         self.check(outside, failed);
     }
 
-    fn whole_divide(&mut self, x: clir::Value, y: clir::Value, unsigned: bool, narrow: Option<u8>, failed: clir::Block) -> clir::Value {
-        let zero = self.builder.ins().icmp_imm(IntCC::Equal, y, 0);
+    fn whole_divide(
+        &mut self,
+        x: clir::Value,
+        y: clir::Value,
+        unsigned: bool,
+        narrow: Option<u8>,
+        failed: clir::Block,
+    ) -> clir::Value {
+        let zero = self.builder.ins().icmp_imm_s(IntCC::Equal, y, 0);
         self.check(zero, failed);
         if unsigned {
             let rest = self.builder.ins().urem(x, y);
-            let uneven = self.builder.ins().icmp_imm(IntCC::NotEqual, rest, 0);
+            let uneven = self.builder.ins().icmp_imm_s(IntCC::NotEqual, rest, 0);
             self.check(uneven, failed);
             return self.builder.ins().udiv(x, y);
         }
         if narrow.is_none() {
             // i64::MIN divided by -1 doesn't fit.
-            let smallest = self.builder.ins().icmp_imm(IntCC::Equal, x, i64::MIN);
-            let minus_one = self.builder.ins().icmp_imm(IntCC::Equal, y, -1);
+            let smallest = self.builder.ins().icmp_imm_s(IntCC::Equal, x, i64::MIN);
+            let minus_one = self.builder.ins().icmp_imm_s(IntCC::Equal, y, -1);
             let both = self.builder.ins().band(smallest, minus_one);
             self.check(both, failed);
         }
         let rest = self.builder.ins().srem(x, y);
-        let uneven = self.builder.ins().icmp_imm(IntCC::NotEqual, rest, 0);
+        let uneven = self.builder.ins().icmp_imm_s(IntCC::NotEqual, rest, 0);
         self.check(uneven, failed);
         let answer = self.builder.ins().sdiv(x, y);
         if let Some(kind) = narrow {
@@ -377,7 +428,14 @@ impl<'a, 'b> Lowering<'a, 'b> {
         answer
     }
 
-    fn fast_maths(&mut self, operator: Maths, size: Size, x: clir::Value, y: clir::Value, fail: &FailPoint) -> clir::Value {
+    fn fast_maths(
+        &mut self,
+        operator: Maths,
+        size: Size,
+        x: clir::Value,
+        y: clir::Value,
+        fail: &FailPoint,
+    ) -> clir::Value {
         let fast_fail = |this: &mut Self, divides: u8| this.fail_block(fail, Helper::Fast { divides });
         let float = if size == Size::Small { types::F32 } else { types::F64 };
         let (x, y) = if size == Size::Small {
@@ -394,7 +452,11 @@ impl<'a, 'b> Lowering<'a, 'b> {
             Maths::Minus => self.builder.ins().fsub(fx, fy),
             Maths::Times => self.builder.ins().fmul(fx, fy),
             Maths::DividedBy => {
-                let zero = if size == Size::Small { self.builder.ins().f32const(0.0) } else { self.builder.ins().f64const(0.0) };
+                let zero = if size == Size::Small {
+                    self.builder.ins().f32const(0.0)
+                } else {
+                    self.builder.ins().f64const(0.0)
+                };
                 let is_zero = self.builder.ins().fcmp(FloatCC::Equal, fy, zero);
                 let failed = fast_fail(self, 1);
                 self.check(is_zero, failed);
@@ -402,7 +464,11 @@ impl<'a, 'b> Lowering<'a, 'b> {
             }
         };
         let magnitude = self.builder.ins().fabs(answer);
-        let infinity = if size == Size::Small { self.builder.ins().f32const(f32::INFINITY) } else { self.builder.ins().f64const(f64::INFINITY) };
+        let infinity = if size == Size::Small {
+            self.builder.ins().f32const(f32::INFINITY)
+        } else {
+            self.builder.ins().f64const(f64::INFINITY)
+        };
         let too_big = self.builder.ins().fcmp(FloatCC::Equal, magnitude, infinity);
         let failed = fast_fail(self, 0);
         self.check(too_big, failed);
@@ -430,10 +496,10 @@ impl<'a, 'b> Lowering<'a, 'b> {
     /// Checks how deep calls go, and counts one more; gives back the depth before.
     fn depth_enter(&mut self, fail: &FailPoint) -> clir::Value {
         let depth = self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.machine, 0);
-        let too_deep = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThanOrEqual, depth, MOST_CALLS as i64);
+        let too_deep = self.builder.ins().icmp_imm_s(IntCC::UnsignedGreaterThanOrEqual, depth, MOST_CALLS as i64);
         let failed = self.plain_fail(fail);
         self.check(too_deep, failed);
-        let deeper = self.builder.ins().iadd_imm(depth, 1);
+        let deeper = self.builder.ins().iadd_imm_s(depth, 1);
         self.builder.ins().store(MemFlagsData::trusted(), deeper, self.machine, 0);
         depth
     }
@@ -441,7 +507,8 @@ impl<'a, 'b> Lowering<'a, 'b> {
     fn call(&mut self, callee: u32, arguments: &[clir::Value], fail: &FailPoint) -> clir::Value {
         // trace: decision.compiler.precompute
         // At the speed strength, a call to a procedure with a table looks there first.
-        let shape = if self.strength == Strength::Speed { self.shapes.get(callee as usize).cloned().flatten() } else { None };
+        let shape =
+            if self.strength == Strength::Speed { self.shapes.get(callee as usize).cloned().flatten() } else { None };
         let Some(shape) = shape else { return self.real_call(callee, arguments, fail) };
         let after = self.builder.create_block();
         self.builder.append_block_param(after, types::I64);
@@ -455,25 +522,25 @@ impl<'a, 'b> Lowering<'a, 'b> {
         self.builder.switch_to_block(next);
         let mut index = self.constant(0);
         for ((argument, low), count) in arguments.iter().zip(&shape.lows).zip(&shape.counts) {
-            let offset = self.builder.ins().iadd_imm(*argument, low.wrapping_neg());
-            let outside = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThanOrEqual, offset, *count as i64);
+            let offset = self.builder.ins().iadd_imm_s(*argument, low.wrapping_neg());
+            let outside = self.builder.ins().icmp_imm_s(IntCC::UnsignedGreaterThanOrEqual, offset, *count as i64);
             next = self.builder.create_block();
             self.builder.ins().brif(outside, real, &[], next, &[]);
             self.builder.switch_to_block(next);
-            let scaled = self.builder.ins().imul_imm(index, *count as i64);
+            let scaled = self.builder.ins().imul_imm_s(index, *count as i64);
             index = self.builder.ins().iadd(scaled, offset);
         }
-        let bytes = self.builder.ins().imul_imm(index, 16);
+        let bytes = self.builder.ins().imul_imm_s(index, 16);
         let entry = self.builder.ins().iadd(table, bytes);
         let meta = self.builder.ins().load(types::I64, MemFlagsData::trusted(), entry, 8);
-        let has_answer = self.builder.ins().icmp_imm(IntCC::SignedLessThan, meta, 0);
+        let has_answer = self.builder.ins().icmp_imm_s(IntCC::SignedLessThan, meta, 0);
         next = self.builder.create_block();
         self.builder.ins().brif(has_answer, next, &[], real, &[]);
         self.builder.switch_to_block(next);
-        let deep = self.builder.ins().band_imm(meta, 0xffff_ffff);
+        let deep = self.builder.ins().band_imm_s(meta, 0xffff_ffff);
         let depth = self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.machine, 0);
         let deepest = self.builder.ins().iadd(depth, deep);
-        let too_deep = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThan, deepest, MOST_CALLS as i64);
+        let too_deep = self.builder.ins().icmp_imm_s(IntCC::UnsignedGreaterThan, deepest, MOST_CALLS as i64);
         next = self.builder.create_block();
         self.builder.ins().brif(too_deep, real, &[], next, &[]);
         self.builder.switch_to_block(next);
@@ -489,7 +556,7 @@ impl<'a, 'b> Lowering<'a, 'b> {
     fn real_call(&mut self, callee: u32, arguments: &[clir::Value], fail: &FailPoint) -> clir::Value {
         let depth = self.depth_enter(fail);
         let caller_registers = self.program.procedures[fail.procedure as usize].registers as i64;
-        let callee_frame = self.builder.ins().iadd_imm(self.frame, (fail.frame_offset as i64 + caller_registers) * 8);
+        let callee_frame = self.builder.ins().iadd_imm_s(self.frame, (fail.frame_offset as i64 + caller_registers) * 8);
         for (index, argument) in arguments.iter().enumerate() {
             self.builder.ins().store(MemFlagsData::trusted(), *argument, callee_frame, index as i32 * 8);
         }
@@ -510,11 +577,13 @@ impl<'a, 'b> Lowering<'a, 'b> {
             self.builder.ins().brif(entry, compiled_block, &[], interpreted_block, &[]);
             self.builder.switch_to_block(compiled_block);
             let call = self.builder.ins().call_indirect(self.compiled_signature, entry, &[self.machine, callee_frame]);
-            let results: Vec<BlockArg> = self.builder.inst_results(call).iter().map(|value| BlockArg::Value(*value)).collect();
+            let results: Vec<BlockArg> =
+                self.builder.inst_results(call).iter().map(|value| BlockArg::Value(*value)).collect();
             self.builder.ins().jump(after, &results);
             self.builder.switch_to_block(interpreted_block);
             let callee_constant = self.constant(callee as i64);
-            let results = self.helper(takl_enter as usize, &[self.machine, callee_constant, callee_frame], 2);
+            let results =
+                self.helper(takl_enter as *const () as usize, &[self.machine, callee_constant, callee_frame], 2);
             let results: Vec<BlockArg> = results.iter().map(|value| BlockArg::Value(*value)).collect();
             self.builder.ins().jump(after, &results);
             self.builder.switch_to_block(after);
@@ -535,10 +604,12 @@ impl<'a, 'b> Lowering<'a, 'b> {
     fn op(&mut self, op: &Op) -> Option<clir::Value> {
         Some(match op {
             Op::Constant(value) => self.constant(*value),
-            Op::Load(register) => self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.frame, *register as i32 * 8),
+            Op::Load(register) => {
+                self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.frame, *register as i32 * 8)
+            }
             Op::Step1(value) => {
                 let value = self.value(*value);
-                self.builder.ins().iadd_imm(value, 1)
+                self.builder.ins().iadd_imm_s(value, 1)
             }
             Op::Arith { operator, unsigned, a, b } => {
                 let (x, y) = (self.value(*a), self.value(*b));
@@ -558,10 +629,10 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 let (x, y) = (self.value(*a), self.value(*b));
                 let failed = self.whole_fail(fail, 4, *kind, x, y);
                 let negative = if *kind == BIG_NEVER_NEGATIVE {
-                    self.builder.ins().icmp_imm(IntCC::Equal, y, 0)
+                    self.builder.ins().icmp_imm_s(IntCC::Equal, y, 0)
                 } else {
-                    let below = self.builder.ins().icmp_imm(IntCC::SignedLessThan, x, 0);
-                    let bottom = self.builder.ins().icmp_imm(IntCC::SignedLessThanOrEqual, y, 0);
+                    let below = self.builder.ins().icmp_imm_s(IntCC::SignedLessThan, x, 0);
+                    let bottom = self.builder.ins().icmp_imm_s(IntCC::SignedLessThanOrEqual, y, 0);
                     self.builder.ins().bor(below, bottom)
                 };
                 self.check(negative, failed);
@@ -576,7 +647,7 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 let value = self.value(*value);
                 let failed = self.value_fail(fail, value);
                 if *kind == BIG_NEVER_NEGATIVE {
-                    let below = self.builder.ins().icmp_imm(IntCC::SignedLessThan, value, 0);
+                    let below = self.builder.ins().icmp_imm_s(IntCC::SignedLessThan, value, 0);
                     self.check(below, failed);
                 } else {
                     self.range_check(value, *kind, failed);
@@ -587,11 +658,11 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 let value = self.value(*value);
                 let failed = self.value_fail(fail, value);
                 if let Some(least) = least {
-                    let below = self.builder.ins().icmp_imm(IntCC::SignedLessThan, value, *least);
+                    let below = self.builder.ins().icmp_imm_s(IntCC::SignedLessThan, value, *least);
                     self.check(below, failed);
                 }
                 if let Some(most) = most {
-                    let above = self.builder.ins().icmp_imm(IntCC::SignedGreaterThan, value, *most);
+                    let above = self.builder.ins().icmp_imm_s(IntCC::SignedGreaterThan, value, *most);
                     self.check(above, failed);
                 }
                 return None;
@@ -599,7 +670,7 @@ impl<'a, 'b> Lowering<'a, 'b> {
             Op::CheckCount { value, fail } => {
                 let value = self.value(*value);
                 let failed = self.value_fail(fail, value);
-                let below = self.builder.ins().icmp_imm(IntCC::SignedLessThan, value, 0);
+                let below = self.builder.ins().icmp_imm_s(IntCC::SignedLessThan, value, 0);
                 self.check(below, failed);
                 return None;
             }
@@ -613,7 +684,7 @@ impl<'a, 'b> Lowering<'a, 'b> {
             }
             Op::Not(value) => {
                 let value = self.value(*value);
-                let holds = self.builder.ins().icmp_imm(IntCC::Equal, value, 0);
+                let holds = self.builder.ins().icmp_imm_s(IntCC::Equal, value, 0);
                 self.builder.ins().uextend(types::I64, holds)
             }
             Op::Call { callee, arguments, fail } => {
@@ -628,7 +699,7 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 }
                 let procedure = self.constant(*procedure as i64);
                 let at = self.constant(*at as i64);
-                let status = self.helper(takl_step as usize, &[self.machine, procedure, at, frame], 1)[0];
+                let status = self.helper(takl_step as *const () as usize, &[self.machine, procedure, at, frame], 1)[0];
                 let stop = self.builder.create_block();
                 self.builder.set_cold_block(stop);
                 let next = self.builder.create_block();
@@ -637,7 +708,9 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 self.stopped();
                 self.builder.switch_to_block(next);
                 match write {
-                    Some(register) => self.builder.ins().load(types::I64, MemFlagsData::trusted(), frame, *register as i32 * 8),
+                    Some(register) => {
+                        self.builder.ins().load(types::I64, MemFlagsData::trusted(), frame, *register as i32 * 8)
+                    }
                     None => return None,
                 }
             }
@@ -650,13 +723,13 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 let counter = unsafe { self.rounds.add(*loop_id as usize) } as i64;
                 let counter = self.builder.ins().iconst(self.pointer, counter);
                 let rounds = self.builder.ins().load(types::I32, MemFlagsData::trusted(), counter, 0);
-                let rounds = self.builder.ins().iadd_imm(rounds, 1);
+                let rounds = self.builder.ins().iadd_imm_s(rounds, 1);
                 self.builder.ins().store(MemFlagsData::trusted(), rounds, counter, 0);
                 // Ask now and then, once it's hot: every 1,024 rounds past `hot`, or every round when testing.
-                let past = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThanOrEqual, rounds, self.hot as i64);
+                let past = self.builder.ins().icmp_imm_s(IntCC::UnsignedGreaterThanOrEqual, rounds, self.hot as i64);
                 let every = if self.hot < 1024 { 0 } else { 1023 };
-                let low = self.builder.ins().band_imm(rounds, every);
-                let due = self.builder.ins().icmp_imm(IntCC::Equal, low, 0);
+                let low = self.builder.ins().band_imm_s(rounds, every);
+                let due = self.builder.ins().icmp_imm_s(IntCC::Equal, low, 0);
                 let ask = self.builder.ins().band(past, due);
                 let asking = self.builder.create_block();
                 self.builder.set_cold_block(asking);
@@ -667,7 +740,8 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 self.builder.switch_to_block(asking);
                 let procedure = self.constant(self.function.procedure as i64);
                 let loop_constant = self.constant(*loop_id as i64);
-                let code = self.helper(takl_promote as usize, &[self.machine, procedure, loop_constant], 1)[0];
+                let code =
+                    self.helper(takl_promote as *const () as usize, &[self.machine, procedure, loop_constant], 1)[0];
                 self.builder.ins().brif(code, moving, &[], next, &[]);
                 self.builder.switch_to_block(moving);
                 for (register, value) in live {
@@ -682,7 +756,7 @@ impl<'a, 'b> Lowering<'a, 'b> {
             }
             Op::DepthLeave => {
                 let depth = self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.machine, 0);
-                let shallower = self.builder.ins().iadd_imm(depth, -1);
+                let shallower = self.builder.ins().iadd_imm_s(depth, -1);
                 self.builder.ins().store(MemFlagsData::trusted(), shallower, self.machine, 0);
                 return None;
             }
@@ -707,15 +781,20 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 let answer = match (value, heap) {
                     (Some(value), _) => self.value(*value),
                     (None, Some(register)) => {
-                        let held = self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.frame, *register as i32 * 8);
-                        self.helper(takl_retain as usize, &[held], 0);
+                        let held = self.builder.ins().load(
+                            types::I64,
+                            MemFlagsData::trusted(),
+                            self.frame,
+                            *register as i32 * 8,
+                        );
+                        self.helper(takl_retain as *const () as usize, &[held], 0);
                         held
                     }
                     (None, None) => self.constant(0),
                 };
                 if *release {
                     let procedure = self.constant(self.function.procedure as i64);
-                    self.helper(takl_release_frame as usize, &[self.machine, procedure, self.frame], 0);
+                    self.helper(takl_release_frame as *const () as usize, &[self.machine, procedure, self.frame], 0);
                 }
                 let zero = self.constant(0);
                 self.builder.ins().return_(&[zero, answer]);
@@ -761,14 +840,21 @@ pub struct Addresses<'a> {
 }
 
 /// Compiles a procedure's IR at a strength, giving back the address of its code.
-pub fn compile(program: &Program, function: &ir::Function, strength: Strength, addresses: &Addresses) -> Result<usize, String> {
+pub fn compile(
+    program: &Program,
+    function: &ir::Function,
+    strength: Strength,
+    addresses: &Addresses,
+) -> Result<usize, String> {
     let mut flags = settings::builder();
     let opt_level = match strength {
         Strength::Quick => "none",
         Strength::Speed => "speed",
     };
     flags.set("opt_level", opt_level).map_err(|error| error.to_string())?;
-    flags.set("enable_verifier", if cfg!(debug_assertions) { "true" } else { "false" }).map_err(|error| error.to_string())?;
+    flags
+        .set("enable_verifier", if cfg!(debug_assertions) { "true" } else { "false" })
+        .map_err(|error| error.to_string())?;
     flags.set("use_colocated_libcalls", "false").map_err(|error| error.to_string())?;
     flags.set("is_pic", "false").map_err(|error| error.to_string())?;
     let isa = cranelift_native::builder()

@@ -79,19 +79,53 @@ pub struct Statement {
 
 #[derive(Clone, Debug)]
 pub enum StatementKind {
-    Let { name: String, name_span: Span, written_type: Option<WrittenType>, value: LetValue },
-    Assign { name: String, name_span: Span, value: Expression },
+    Let {
+        name: String,
+        name_span: Span,
+        written_type: Option<WrittenType>,
+        value: LetValue,
+    },
+    Assign {
+        name: String,
+        name_span: Span,
+        value: Expression,
+    },
     Show(Vec<Expression>),
-    If { branches: Vec<(Expression, Vec<Statement>)>, otherwise: Option<Vec<Statement>> },
-    RepeatTimes { count: Expression, body: Vec<Statement> },
-    RepeatUntil { test: Expression, body: Vec<Statement> },
-    RepeatForever { body: Vec<Statement> },
-    ForEach { names: Vec<(String, Span)>, table: Expression, body: Vec<Statement> },
+    If {
+        branches: Vec<(Expression, Vec<Statement>)>,
+        otherwise: Option<Vec<Statement>>,
+    },
+    RepeatTimes {
+        count: Expression,
+        body: Vec<Statement>,
+    },
+    RepeatUntil {
+        test: Expression,
+        body: Vec<Statement>,
+    },
+    RepeatForever {
+        body: Vec<Statement>,
+    },
+    ForEach {
+        names: Vec<(String, Span)>,
+        table: Expression,
+        body: Vec<Statement>,
+    },
     Stop,
     Finish,
     Return(Expression),
-    Add { key: Option<Expression>, item: Expression, table: String, table_span: Span, at: Option<(Counting, Expression)> },
-    Call { name: String, name_span: Span, arguments: Vec<Argument> },
+    Add {
+        key: Option<Expression>,
+        item: Expression,
+        table: String,
+        table_span: Span,
+        at: Option<(Counting, Expression)>,
+    },
+    Call {
+        name: String,
+        name_span: Span,
+        arguments: Vec<Argument>,
+    },
     /// A line that couldn't be read; already reported.
     Broken,
 }
@@ -211,9 +245,15 @@ pub struct Expression {
 
 #[derive(Clone, Debug)]
 pub enum ExpressionKind {
-    Number { whole: String, after_point: Option<String> },
+    Number {
+        whole: String,
+        after_point: Option<String>,
+    },
     /// `~0.1`, the nearest a fast decimal holds.
-    About { whole: String, after_point: Option<String> },
+    About {
+        whole: String,
+        after_point: Option<String>,
+    },
     Text(String),
     True,
     False,
@@ -223,16 +263,43 @@ pub enum ExpressionKind {
     Variable(String),
     /// A name with no `@` and no brackets after it.
     Bare(String),
-    Call { name: String, name_span: Span, arguments: Vec<Argument>, bracketed: bool },
-    Maths { operator: Maths, left: Box<Expression>, right: Box<Expression> },
-    Over { top: Box<Expression>, bottom: Box<Expression> },
-    Compare { operator: Compare, left: Box<Expression>, right: Box<Expression> },
-    Logic { operator: Logic, left: Box<Expression>, right: Box<Expression> },
+    Call {
+        name: String,
+        name_span: Span,
+        arguments: Vec<Argument>,
+        bracketed: bool,
+    },
+    Maths {
+        operator: Maths,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Over {
+        top: Box<Expression>,
+        bottom: Box<Expression>,
+    },
+    Compare {
+        operator: Compare,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Logic {
+        operator: Logic,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
     Not(Box<Expression>),
-    Family { family: Family, operand: Box<Expression> },
+    Family {
+        family: Family,
+        operand: Box<Expression>,
+    },
     /// `remainder of (a divided by b)`, holding the division.
     Remainder(Box<Expression>),
-    Index { counting: Counting, index: Box<Expression>, table: Box<Expression> },
+    Index {
+        counting: Counting,
+        index: Box<Expression>,
+        table: Box<Expression>,
+    },
     Round(Box<Expression>),
     Share(Box<Expression>),
     Bracketed(Box<Expression>),

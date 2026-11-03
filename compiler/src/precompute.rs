@@ -20,6 +20,7 @@
 use crate::bytecode::{Held, Program, Register, RegisterKind};
 use crate::interpreter::{MOST_CALLS, Machine};
 use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::Arc;
 
 /// The most a table may take, in bytes: 16 for each input. CyborgPL's `table_bytes` is 65,536 too.
@@ -119,7 +120,15 @@ pub struct Building {
 
 impl Building {
     /// During building, the procedure's calls to itself use the answers already built.
-    pub fn look_up(&self, machine: &mut Machine, callee: u32, arguments: &[Register], frame: *mut u64) -> Option<u64> {
+    /// # Safety
+    /// `frame` is the caller's frame, and `arguments` name registers inside it.
+    pub unsafe fn look_up(
+        &self,
+        machine: &mut Machine,
+        callee: u32,
+        arguments: &[Register],
+        frame: *mut u64,
+    ) -> Option<u64> {
         if callee != self.procedure {
             return None;
         }
@@ -142,9 +151,9 @@ impl Building {
 /// Builds a procedure's table, on whatever thread calls it.
 pub fn build(program: &Arc<Program>, procedure: u32, shape: Shape) -> Table {
     let inputs = shape.inputs() as usize;
-    let building = Arc::new(Building { procedure, shape: shape.clone(), entries: RefCell::new(vec![None; inputs]) });
+    let building = Rc::new(Building { procedure, shape: shape.clone(), entries: RefCell::new(vec![None; inputs]) });
     let mut machine = Machine::new(Arc::clone(program), false);
-    machine.building = Some(Arc::clone(&building));
+    machine.building = Some(Rc::clone(&building));
     for index in 0..inputs {
         let arguments = shape.arguments(index as u64);
         machine.depth = 1;

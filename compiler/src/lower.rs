@@ -11,7 +11,7 @@ use crate::checked::*;
 use crate::numbers::Size;
 use crate::runtime::{self, HeapValue};
 use crate::source::Span;
-use crate::syntax::{Compare, Counting, Family, Logic, Maths};
+use crate::syntax::{Compare, Counting, Family, Logic};
 use crate::types::Type;
 use std::collections::HashMap;
 
@@ -149,7 +149,10 @@ impl<'p> Lowerer<'p> {
     fn constant(&mut self, constant: &Constant, ty: &Type, dest: Option<Register>) -> Register {
         // Written numbers are shown from text made before running, so they are held in the heap whatever their type.
         let in_heap = ty.is_heap()
-            || matches!(constant, Constant::WrittenWhole(_) | Constant::WrittenDecimal(_) | Constant::WrittenFraction(..));
+            || matches!(
+                constant,
+                Constant::WrittenWhole(_) | Constant::WrittenDecimal(_) | Constant::WrittenFraction(..)
+            );
         let dest = dest.unwrap_or_else(|| if in_heap { self.heap_temp() } else { self.number_temp() });
         match constant {
             Constant::Whole(value) => {
@@ -267,7 +270,8 @@ impl<'p> Lowerer<'p> {
                     self.emit(Instruction::Length { dest, source: table, text });
                     return dest;
                 }
-                let failure = self.failure(expression.span, FailureKind::Family { family: *family, ty: ty.clone() }, &[]);
+                let failure =
+                    self.failure(expression.span, FailureKind::Family { family: *family, ty: ty.clone() }, &[]);
                 let type_id = self.type_id(ty);
                 let dest = dest.unwrap_or_else(|| self.temp_for(ty));
                 self.emit(Instruction::OfFamily { family: *family, type_id, dest, table, failure });
@@ -283,7 +287,14 @@ impl<'p> Lowerer<'p> {
                     self.emit(Instruction::Letter { dest, text: table_register, counting: *counting, at, failure });
                 } else {
                     let heap = ty.is_heap();
-                    self.emit(Instruction::Item { dest, table: table_register, counting: *counting, at, failure, heap });
+                    self.emit(Instruction::Item {
+                        dest,
+                        table: table_register,
+                        counting: *counting,
+                        at,
+                        failure,
+                        heap,
+                    });
                 }
                 dest
             }
@@ -346,7 +357,11 @@ impl<'p> Lowerer<'p> {
                 dest
             }
             CheckedKind::Fail(problem) | CheckedKind::WrittenRound { problem, .. } => {
-                let failure = self.failure(expression.span, FailureKind::Written { problem: problem.clone(), ty: ty.clone() }, &[]);
+                let failure = self.failure(
+                    expression.span,
+                    FailureKind::Written { problem: problem.clone(), ty: ty.clone() },
+                    &[],
+                );
                 self.emit(Instruction::Fail { failure });
                 dest.unwrap_or_else(|| self.temp_for(ty))
             }
@@ -366,7 +381,10 @@ impl<'p> Lowerer<'p> {
 
     /// Made by this expression and held by nothing else.
     fn fresh(expression: &CheckedExpression) -> bool {
-        matches!(expression.kind, CheckedKind::Table(_) | CheckedKind::KeyedTable(_) | CheckedKind::Empty | CheckedKind::Call(_))
+        matches!(
+            expression.kind,
+            CheckedKind::Table(_) | CheckedKind::KeyedTable(_) | CheckedKind::Empty | CheckedKind::Call(_)
+        )
     }
 
     // trace: decision.procedures.share
@@ -379,7 +397,8 @@ impl<'p> Lowerer<'p> {
                 CheckedArgument::Value(value) => {
                     let register = self.owned(value);
                     if !param.bounds.is_empty() {
-                        let failure = self.failure(value.span, FailureKind::Bounds { bounds: param.bounds.clone() }, &[]);
+                        let failure =
+                            self.failure(value.span, FailureKind::Bounds { bounds: param.bounds.clone() }, &[]);
                         self.emit(Instruction::CheckBounds { source: register, failure });
                     }
                     register
@@ -475,7 +494,9 @@ impl<'p> Lowerer<'p> {
     /// Jumps to a target (patched later) when the test comes out `when`; returns the jumps to patch.
     fn jump_when(&mut self, test: &CheckedExpression, when: bool) -> Vec<usize> {
         match &test.kind {
-            CheckedKind::Compare { operator, left, right } if matches!(crate::bytecode::held(&left.ty), Held::Whole(_)) => {
+            CheckedKind::Compare { operator, left, right }
+                if matches!(crate::bytecode::held(&left.ty), Held::Whole(_)) =>
+            {
                 let operator = if when { *operator } else { opposite(*operator) };
                 let unsigned = unsigned(&left.ty);
                 let a = self.value(left, None);
@@ -520,7 +541,11 @@ impl<'p> Lowerer<'p> {
             }
             CheckedKind::Not(inner) => self.jump_when(inner, !when),
             CheckedKind::Constant(Constant::TrueOrFalse(value)) => {
-                if *value == when { vec![self.emit(Instruction::Jump { target: 0 })] } else { Vec::new() }
+                if *value == when {
+                    vec![self.emit(Instruction::Jump { target: 0 })]
+                } else {
+                    Vec::new()
+                }
             }
             _ => {
                 let register = self.number_temp();
@@ -629,7 +654,13 @@ impl<'p> Lowerer<'p> {
                 self.emit(Instruction::CheckCount { source: limit, failure });
                 let counter = self.number_temp();
                 self.emit(Instruction::Load { dest: counter, value: 0 });
-                let skip = self.emit(Instruction::JumpIfWhole { operator: Compare::AtLeast, unsigned: false, a: counter, b: limit, target: 0 });
+                let skip = self.emit(Instruction::JumpIfWhole {
+                    operator: Compare::AtLeast,
+                    unsigned: false,
+                    a: counter,
+                    b: limit,
+                    target: 0,
+                });
                 let top = self.here();
                 let loop_id = self.loops.len() as u16;
                 self.loops.push(top);
@@ -679,15 +710,29 @@ impl<'p> Lowerer<'p> {
                 self.emit(Instruction::Length { dest: length, source: snapshot, text: false });
                 let index = self.number_temp();
                 self.emit(Instruction::Load { dest: index, value: 0 });
-                let exit = self.emit(Instruction::JumpIfWhole { operator: Compare::AtLeast, unsigned: false, a: index, b: length, target: 0 });
+                let exit = self.emit(Instruction::JumpIfWhole {
+                    operator: Compare::AtLeast,
+                    unsigned: false,
+                    a: index,
+                    b: length,
+                    target: 0,
+                });
                 let top = self.here();
                 let loop_id = self.loops.len() as u16;
                 self.loops.push(top);
                 let (item_id, item_span) = *item;
                 let item_type = &self.procedure.variables[item_id].ty;
                 let heap = item_type.is_heap();
-                let failure = self.failure(table.span, FailureKind::Place { counting: Counting::Offset, letters: false }, &[]);
-                self.emit(Instruction::Item { dest: item_id as Register, table: snapshot, counting: Counting::Offset, at: index, failure, heap });
+                let failure =
+                    self.failure(table.span, FailureKind::Place { counting: Counting::Offset, letters: false }, &[]);
+                self.emit(Instruction::Item {
+                    dest: item_id as Register,
+                    table: snapshot,
+                    counting: Counting::Offset,
+                    at: index,
+                    failure,
+                    heap,
+                });
                 self.set_site(item_id, item_span);
                 if let Some((key_id, key_span)) = key {
                     self.emit(Instruction::KeyAt { dest: *key_id as Register, table: snapshot, at: index });
@@ -728,8 +773,15 @@ impl<'p> Lowerer<'p> {
                     (None, Some((counting, index))) => {
                         let at = self.value(index, None);
                         let name = self.procedure.variables[*table].name.clone();
-                        let failure = self.failure(index.span, FailureKind::Hole { counting: *counting, table: name }, &[]);
-                        self.emit(Instruction::AddAt { table: table_register, source, counting: *counting, at, failure });
+                        let failure =
+                            self.failure(index.span, FailureKind::Hole { counting: *counting, table: name }, &[]);
+                        self.emit(Instruction::AddAt {
+                            table: table_register,
+                            source,
+                            counting: *counting,
+                            at,
+                            failure,
+                        });
                     }
                     (None, None) => {
                         self.emit(Instruction::Add { table: table_register, source });
@@ -753,7 +805,7 @@ impl<'p> Lowerer<'p> {
 
 /// Every place each variable gets its value.
 fn definition_sites(statements: &[CheckedStatement], sites: &mut HashMap<VariableId, Vec<Span>>) {
-    let mut note = |id: VariableId, span: Span, sites: &mut HashMap<VariableId, Vec<Span>>| {
+    let note = |id: VariableId, span: Span, sites: &mut HashMap<VariableId, Vec<Span>>| {
         let list = sites.entry(id).or_default();
         if !list.contains(&span) {
             list.push(span);
@@ -849,7 +901,10 @@ fn shows_or_calls(statements: &[CheckedStatement], shows: &mut bool, calls: &mut
                     in_expression(index, calls);
                 }
             }
-            CheckedStatement::Call(call) => in_expression(&CheckedExpression { kind: CheckedKind::Call(call.clone()), ty: Type::Nothing, span: call.span }, calls),
+            CheckedStatement::Call(call) => in_expression(
+                &CheckedExpression { kind: CheckedKind::Call(call.clone()), ty: Type::Nothing, span: call.span },
+                calls,
+            ),
             CheckedStatement::OnlyIf { test, statement } => {
                 in_expression(test, calls);
                 shows_or_calls(std::slice::from_ref(statement), shows, calls);
@@ -920,9 +975,10 @@ fn remap(instruction: &mut Instruction, map: &impl Fn(Register) -> Register) {
             *b = map(*b);
         }
         JumpIfWholeBy { a, .. } => *a = map(*a),
-        CheckWhole { source, .. } | CheckBounds { source, .. } | CheckCount { source, .. } | ShowPiece { source, .. } => {
-            *source = map(*source)
-        }
+        CheckWhole { source, .. }
+        | CheckBounds { source, .. }
+        | CheckCount { source, .. }
+        | ShowPiece { source, .. } => *source = map(*source),
         JumpIfTrue { source, .. } | JumpIfFalse { source, .. } | Return { source } => *source = map(*source),
         RepeatNext { counter, limit, .. } => {
             *counter = map(*counter);
@@ -1012,7 +1068,9 @@ pub fn lower(program: &CheckedProgram) -> Program {
         };
         // A param that gets its value in more than one place starts at its name in the first line.
         for param in &procedure.params {
-            if let (Some(span), true) = (procedure.variables[param.variable].param_site, lowerer.site_registers.contains_key(&param.variable)) {
+            if let (Some(span), true) =
+                (procedure.variables[param.variable].param_site, lowerer.site_registers.contains_key(&param.variable))
+            {
                 lowerer.set_site(param.variable, span);
             }
         }
@@ -1020,7 +1078,8 @@ pub fn lower(program: &CheckedProgram) -> Program {
         // Falling off the end can't happen in a checked program, but the bytecode always ends.
         lowerer.emit(Instruction::Finish);
         let heap_base = lowerer.number_base + lowerer.most_numbers;
-        let map = |register: Register| if register >= HEAP_TEMP { heap_base + (register - HEAP_TEMP) } else { register };
+        let map =
+            |register: Register| if register >= HEAP_TEMP { heap_base + (register - HEAP_TEMP) } else { register };
         for instruction in &mut lowerer.instructions {
             remap(instruction, &map);
         }
@@ -1032,25 +1091,29 @@ pub fn lower(program: &CheckedProgram) -> Program {
         let registers = (heap_base + lowerer.most_heaps) as usize;
         let mut kinds = vec![RegisterKind::Number(Held::Whole(BIG_WHOLE)); registers];
         for (id, variable) in procedure.variables.iter().enumerate() {
-            kinds[id] = if variable.ty.is_heap() { RegisterKind::Heap } else { RegisterKind::Number(held(&variable.ty)) };
+            kinds[id] =
+                if variable.ty.is_heap() { RegisterKind::Heap } else { RegisterKind::Number(held(&variable.ty)) };
         }
         for kind in kinds.iter_mut().skip(heap_base as usize) {
             *kind = RegisterKind::Heap;
         }
-        let param_types: Vec<Type> = procedure.params.iter().map(|param| procedure.variables[param.variable].ty.clone()).collect();
+        let param_types: Vec<Type> =
+            procedure.params.iter().map(|param| procedure.variables[param.variable].ty.clone()).collect();
         let param_ranges = procedure
             .params
             .iter()
             .map(|param| match &procedure.variables[param.variable].ty {
-                Type::Whole(whole) => Some((
-                    param.bounds.least.unwrap_or(whole.smallest()),
-                    param.bounds.most.unwrap_or(whole.biggest()),
-                )),
+                Type::Whole(whole) => {
+                    Some((param.bounds.least.unwrap_or(whole.smallest()), param.bounds.most.unwrap_or(whole.biggest())))
+                }
                 Type::TrueOrFalse => Some((0, 1)),
                 _ => None,
             })
             .collect();
-        let heap_registers = (0..registers).filter(|register| kinds[*register] == RegisterKind::Heap).map(|register| register as Register).collect();
+        let heap_registers = (0..registers)
+            .filter(|register| kinds[*register] == RegisterKind::Heap)
+            .map(|register| register as Register)
+            .collect();
         procedures.push(Procedure {
             name: procedure.name.clone(),
             instructions: lowerer.instructions,

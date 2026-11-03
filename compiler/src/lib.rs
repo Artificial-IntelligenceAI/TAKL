@@ -50,7 +50,10 @@ pub fn broke(span: source::Span, what: &str) -> failure::Failure {
     failure::Failure::what(
         span,
         "TAKL broke, not you",
-        format!("This is a mistake in TAKL itself ({}). Please report it, with your program, at\nhttps://github.com/Artificial-IntelligenceAI/TAKL/issues", what),
+        format!(
+            "This is a mistake in TAKL itself ({}). Please report it, with your program, at\nhttps://github.com/Artificial-IntelligenceAI/TAKL/issues",
+            what
+        ),
     )
 }
 
@@ -73,7 +76,9 @@ pub fn run_with(name: &str, text: &str, mode: Mode, live: bool) -> Outcome {
     let checked = match check::check(&source, &program, failures) {
         Ok(checked) => checked,
         // trace: decision.errors.all
-        Err(failures) => return shown(Outcome { output: failure::render_before_running(&failures, &source), exit_code: 1 }, live),
+        Err(failures) => {
+            return shown(Outcome { output: failure::render_before_running(&failures, &source), exit_code: 1 }, live);
+        }
     };
     let bytecode = lower::lower(&checked);
     if let Err(problem) = verify::verify(&bytecode) {

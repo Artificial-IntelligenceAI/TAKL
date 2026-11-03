@@ -25,7 +25,6 @@ pub const WARM: u32 = 1_000;
 /// Calls or loop rounds before it is compiled at the speed strength.
 pub const HOT: u32 = 10_000;
 
-
 struct Job {
     procedure: u32,
     entry: Entry,
@@ -75,10 +74,22 @@ impl Tiers {
         Tiers {
             program: Arc::clone(program),
             entries: (0..count).map(|_| AtomicUsize::new(0)).collect(),
-            loops: program.procedures.iter().map(|procedure| procedure.loops.iter().map(|_| AtomicUsize::new(0)).collect()).collect(),
-            speed_loops: program.procedures.iter().map(|procedure| procedure.loops.iter().map(|_| AtomicUsize::new(0)).collect()).collect(),
+            loops: program
+                .procedures
+                .iter()
+                .map(|procedure| procedure.loops.iter().map(|_| AtomicUsize::new(0)).collect())
+                .collect(),
+            speed_loops: program
+                .procedures
+                .iter()
+                .map(|procedure| procedure.loops.iter().map(|_| AtomicUsize::new(0)).collect())
+                .collect(),
             calls: (0..count).map(|_| AtomicU32::new(0)).collect(),
-            rounds: program.procedures.iter().map(|procedure| procedure.loops.iter().map(|_| AtomicU32::new(0)).collect()).collect(),
+            rounds: program
+                .procedures
+                .iter()
+                .map(|procedure| procedure.loops.iter().map(|_| AtomicU32::new(0)).collect())
+                .collect(),
             asked: Mutex::new(std::collections::HashSet::new()),
             sender: Mutex::new(None),
             in_place,
@@ -127,7 +138,8 @@ impl Tiers {
                 }
                 self.compiled.fetch_add(1, Ordering::Relaxed);
                 if let Ok(mut ready) = self.ready.lock() {
-                    let name = format!("{} {:?} {:?}", self.program.procedures[procedure as usize].name, entry, strength);
+                    let name =
+                        format!("{} {:?} {:?}", self.program.procedures[procedure as usize].name, entry, strength);
                     ready.push((name, self.started.elapsed()));
                 }
             }
@@ -303,7 +315,13 @@ impl Tiers {
 
     // trace: decision.backend.bytecode
     /// Jumps into compiled code at a loop's top, which runs the rest of the procedure.
-    pub fn jump_in(&self, machine: &mut Machine, procedure: u32, loop_id: u16, base: usize) -> Option<Result<u64, Stopped>> {
+    pub fn jump_in(
+        &self,
+        machine: &mut Machine,
+        procedure: u32,
+        loop_id: u16,
+        base: usize,
+    ) -> Option<Result<u64, Stopped>> {
         let code = self.loops[procedure as usize][loop_id as usize].load(Ordering::Acquire);
         if code == 0 {
             return None;

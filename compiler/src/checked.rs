@@ -68,15 +68,33 @@ pub struct Variable {
     pub param_site: Option<Span>,
 }
 
+// The checked tree is made once per program, so a big variant costs nothing worth boxing for.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]
 pub enum CheckedStatement {
     /// A `let` or an `=`. `site` is the whole line, which `because:` points at.
-    Set { variable: VariableId, value: CheckedExpression, site: Span },
+    Set {
+        variable: VariableId,
+        value: CheckedExpression,
+        site: Span,
+    },
     Show(Vec<CheckedExpression>),
-    If { branches: Vec<(CheckedExpression, Vec<CheckedStatement>)>, otherwise: Vec<CheckedStatement> },
-    RepeatTimes { count: CheckedExpression, body: Vec<CheckedStatement>, span: Span },
-    RepeatUntil { test: CheckedExpression, body: Vec<CheckedStatement> },
-    RepeatForever { body: Vec<CheckedStatement> },
+    If {
+        branches: Vec<(CheckedExpression, Vec<CheckedStatement>)>,
+        otherwise: Vec<CheckedStatement>,
+    },
+    RepeatTimes {
+        count: CheckedExpression,
+        body: Vec<CheckedStatement>,
+        span: Span,
+    },
+    RepeatUntil {
+        test: CheckedExpression,
+        body: Vec<CheckedStatement>,
+    },
+    RepeatForever {
+        body: Vec<CheckedStatement>,
+    },
     ForEach {
         key: Option<(VariableId, Span)>,
         item: (VariableId, Span),
@@ -95,7 +113,10 @@ pub enum CheckedStatement {
     },
     Call(CheckedCall),
     /// A line that runs only when the test holds.
-    OnlyIf { test: CheckedExpression, statement: Box<CheckedStatement> },
+    OnlyIf {
+        test: CheckedExpression,
+        statement: Box<CheckedStatement>,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -105,6 +126,7 @@ pub struct CheckedCall {
     pub span: Span,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]
 pub enum CheckedArgument {
     /// A value, copied into the param; `bounds` and `span` check it against the param's bounds.
@@ -143,15 +165,43 @@ pub enum CheckedKind {
     Constant(Constant),
     Variable(VariableId),
     /// `because` names the variables in the step, in the order they are written.
-    Maths { operator: Maths, left: Box<CheckedExpression>, right: Box<CheckedExpression>, because: Vec<VariableId> },
-    Compare { operator: Compare, left: Box<CheckedExpression>, right: Box<CheckedExpression> },
-    Logic { operator: Logic, left: Box<CheckedExpression>, right: Box<CheckedExpression> },
+    Maths {
+        operator: Maths,
+        left: Box<CheckedExpression>,
+        right: Box<CheckedExpression>,
+        because: Vec<VariableId>,
+    },
+    Compare {
+        operator: Compare,
+        left: Box<CheckedExpression>,
+        right: Box<CheckedExpression>,
+    },
+    Logic {
+        operator: Logic,
+        left: Box<CheckedExpression>,
+        right: Box<CheckedExpression>,
+    },
     Not(Box<CheckedExpression>),
-    Family { family: Family, operand: Box<CheckedExpression> },
-    Remainder { top: Box<CheckedExpression>, bottom: Box<CheckedExpression>, because: Vec<VariableId> },
+    Family {
+        family: Family,
+        operand: Box<CheckedExpression>,
+    },
+    Remainder {
+        top: Box<CheckedExpression>,
+        bottom: Box<CheckedExpression>,
+        because: Vec<VariableId>,
+    },
     /// `round (a divided by b)`.
-    RoundedDivide { top: Box<CheckedExpression>, bottom: Box<CheckedExpression>, because: Vec<VariableId> },
-    Index { counting: Counting, index: Box<CheckedExpression>, table: Box<CheckedExpression> },
+    RoundedDivide {
+        top: Box<CheckedExpression>,
+        bottom: Box<CheckedExpression>,
+        because: Vec<VariableId>,
+    },
+    Index {
+        counting: Counting,
+        index: Box<CheckedExpression>,
+        table: Box<CheckedExpression>,
+    },
     Call(CheckedCall),
     Table(Vec<CheckedExpression>),
     KeyedTable(Vec<(CheckedExpression, CheckedExpression)>),
@@ -165,5 +215,9 @@ pub enum CheckedKind {
     Fail(Problem),
     /// `round (a divided by b)` on written numbers whose answer doesn't end: rounded once the type is known, and
     /// otherwise the problem, when it runs.
-    WrittenRound { top: Constant, bottom: Constant, problem: Problem },
+    WrittenRound {
+        top: Constant,
+        bottom: Constant,
+        problem: Problem,
+    },
 }

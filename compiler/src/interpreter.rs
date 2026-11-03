@@ -54,7 +54,7 @@ pub struct Machine {
     pub live: bool,
     pub tiers: Option<Arc<crate::tiering::Tiers>>,
     /// While a table of answers is being built, the procedure whose calls look in it.
-    pub building: Option<Arc<crate::precompute::Building>>,
+    pub building: Option<std::rc::Rc<crate::precompute::Building>>,
     /// The deepest calls have gone, for a table's entries.
     pub deepest: u64,
     /// Loop rounds and calls left before a run is given up, while building a table.
@@ -85,6 +85,7 @@ impl Machine {
         }
     }
 
+    // trace: decision.procedures.start_running
     /// Runs `start_running`, giving back its exit code.
     pub fn run_start(&mut self) -> Result<u8, Stopped> {
         let start = self.program.start;
@@ -256,7 +257,9 @@ impl Machine {
                         let (x, y) = (reg!(a), reg!(b));
                         match whole_maths(operator, kind, x, y) {
                             Some(answer) => reg!(dest) = answer,
-                            None => return Some(Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame))),
+                            None => {
+                                return Some(Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame)));
+                            }
                         }
                     }
                     Instruction::WholeMathsBy { operator, kind, dest, a, by, failure } => {
@@ -264,7 +267,9 @@ impl Machine {
                         let y = by as i64 as u64;
                         match whole_maths(operator, kind, x, y) {
                             Some(answer) => reg!(dest) = answer,
-                            None => return Some(Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame))),
+                            None => {
+                                return Some(Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame)));
+                            }
                         }
                     }
                     Instruction::WholeRemainder { kind, dest, a, b, failure } => {
@@ -272,7 +277,9 @@ impl Machine {
                         if x >= 0 && y > 0 {
                             reg!(dest) = (x % y) as u64;
                         } else {
-                            let problem = numbers::whole_remainder(&BigInt::from(x), &BigInt::from(y)).err().unwrap_or(Problem::DividesByZero);
+                            let problem = numbers::whole_remainder(&BigInt::from(x), &BigInt::from(y))
+                                .err()
+                                .unwrap_or(Problem::DividesByZero);
                             return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
                         }
                     }
@@ -282,7 +289,9 @@ impl Machine {
                             .and_then(|answer| WHOLE_KINDS[kind as usize].check_big(&answer));
                         match answer {
                             Ok(answer) => reg!(dest) = answer as u64,
-                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
+                            Err(problem) => {
+                                return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
+                            }
                         }
                     }
                     Instruction::WholeCompare { operator, unsigned, dest, a, b } => {
@@ -302,7 +311,10 @@ impl Machine {
                         let value = reg!(source) as i64;
                         let (smallest, biggest) = WHOLE_LIMITS[kind as usize];
                         if value < smallest || value > biggest {
-                            let problem = WHOLE_KINDS[kind as usize].check(value as i128).err().unwrap_or(Problem::TooBig(BigInt::from(value)));
+                            let problem = WHOLE_KINDS[kind as usize]
+                                .check(value as i128)
+                                .err()
+                                .unwrap_or(Problem::TooBig(BigInt::from(value)));
                             return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
                         }
                     }
@@ -318,7 +330,9 @@ impl Machine {
                         let (x, y) = (reg!(a), reg!(b));
                         match fast_maths(operator, size, x, y) {
                             Ok(answer) => reg!(dest) = answer,
-                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
+                            Err(problem) => {
+                                return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
+                            }
                         }
                     }
                     Instruction::FastCompare { operator, size, dest, a, b } => {
@@ -329,7 +343,9 @@ impl Machine {
                         let ty = &procedure.types[type_id as usize];
                         match heap_maths(operator, ty, reg!(a), reg!(b)) {
                             Ok(answer) => set_heap!(dest, answer),
-                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
+                            Err(problem) => {
+                                return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
+                            }
                         }
                     }
                     Instruction::HeapRounded { type_id, dest, a, b, failure } => {
@@ -342,7 +358,9 @@ impl Machine {
                         let y = runtime::decimal_of(reg!(b));
                         match x.divided_by_rounded(y, digits) {
                             Ok(answer) => set_heap!(dest, runtime::new_heap(HeapValue::Decimal(answer))),
-                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
+                            Err(problem) => {
+                                return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
+                            }
                         }
                     }
                     Instruction::HeapCompare { operator, type_id, dest, a, b } => {
@@ -423,7 +441,13 @@ impl Machine {
                     }
                     Instruction::ShowEnd => self.show_end(),
                     Instruction::Call { procedure: callee, dest, arguments, failure } => {
-                        let answer = match self.call_from(procedure, callee, &procedure.call_arguments[arguments as usize], failure, frame) {
+                        let answer = match self.call_from(
+                            procedure,
+                            callee,
+                            &procedure.call_arguments[arguments as usize],
+                            failure,
+                            frame,
+                        ) {
                             Ok(answer) => answer,
                             Err(stopped) => return Some(Err(stopped)),
                         };
@@ -441,8 +465,12 @@ impl Machine {
                         return Some(Ok(value));
                     }
                     Instruction::Finish => return Some(Ok(0)),
-                    Instruction::Fail { failure } => return Some(Err(self.stop(procedure, failure, Detail::Nothing, frame))),
-                    Instruction::NewTable { dest, keyed, item_heap } => set_heap!(dest, runtime::new_table(keyed, item_heap)),
+                    Instruction::Fail { failure } => {
+                        return Some(Err(self.stop(procedure, failure, Detail::Nothing, frame)));
+                    }
+                    Instruction::NewTable { dest, keyed, item_heap } => {
+                        set_heap!(dest, runtime::new_table(keyed, item_heap))
+                    }
                     Instruction::Push { table, source } | Instruction::Add { table, source } => {
                         let value = reg!(source);
                         runtime::change_table(reg!(table), |storage| {
@@ -452,7 +480,8 @@ impl Machine {
                             storage.items.push(value);
                         });
                     }
-                    Instruction::PushKeyed { table, key, source, failure } | Instruction::AddKeyed { table, key, source, failure } => {
+                    Instruction::PushKeyed { table, key, source, failure }
+                    | Instruction::AddKeyed { table, key, source, failure } => {
                         let key = runtime::text_of(reg!(key)).text.clone();
                         let value = reg!(source);
                         let added = runtime::change_table(reg!(table), |storage| {
@@ -477,7 +506,12 @@ impl Machine {
                         let offset = if counting == Counting::Position { asked - 1 } else { asked };
                         let length = runtime::table_length(reg!(table));
                         if offset < 0 || offset > length as i128 {
-                            return Some(Err(self.stop(procedure, failure, Detail::Place { asked, count: length }, frame)));
+                            return Some(Err(self.stop(
+                                procedure,
+                                failure,
+                                Detail::Place { asked, count: length },
+                                frame,
+                            )));
                         }
                         let value = reg!(source);
                         runtime::change_table(reg!(table), |storage| {
@@ -488,7 +522,11 @@ impl Machine {
                         });
                     }
                     Instruction::Length { dest, source, text } => {
-                        reg!(dest) = if text { runtime::text_of(reg!(source)).letters } else { runtime::table_length(reg!(source)) } as u64;
+                        reg!(dest) = if text {
+                            runtime::text_of(reg!(source)).letters
+                        } else {
+                            runtime::table_length(reg!(source))
+                        } as u64;
                     }
                     Instruction::Item { dest, table, counting, at, failure, heap } => {
                         let asked = reg!(at) as i64 as i128;
@@ -514,7 +552,12 @@ impl Machine {
                     }
                     Instruction::KeyAt { dest, table, at } => {
                         let storage = runtime::storage(reg!(table));
-                        let key = storage.keys.as_ref().and_then(|(keys, _)| keys.get(reg!(at) as usize)).cloned().unwrap_or_default();
+                        let key = storage
+                            .keys
+                            .as_ref()
+                            .and_then(|(keys, _)| keys.get(reg!(at) as usize))
+                            .cloned()
+                            .unwrap_or_default();
                         set_heap!(dest, runtime::new_text(key));
                     }
                     Instruction::Letter { dest, text, counting, at, failure } => {
@@ -540,7 +583,9 @@ impl Machine {
                                     reg!(dest) = answer;
                                 }
                             }
-                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
+                            Err(problem) => {
+                                return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
+                            }
                         }
                     }
                     Instruction::TextCompare { operator, dest, a, b } => {
@@ -567,75 +612,114 @@ impl Machine {
     ///
     /// # Safety
     /// `frame` is the caller's frame, and `arguments` name registers inside it.
-    pub unsafe fn call_from(&mut self, caller: &Procedure, callee: u32, arguments: &[Register], failure: FailureId, frame: *mut u64) -> Result<u64, Stopped> {
-        if self.depth >= MOST_CALLS {
-            return Err(self.stop(caller, failure, Detail::Nothing, frame));
-        }
-        self.budget -= 1;
-        if self.budget == 0 {
-            return Err(Stopped);
-        }
-        let called = &self.code().procedures[callee as usize];
-        if self.building.is_some()
-            && let Some(building) = self.building.clone()
-            && let Some(answer) = building.look_up(self, callee, arguments, frame)
-        {
-            return Ok(answer);
-        }
-        let base = self.top;
-        let callee_frame = self.frame_at(base);
-        for register in &called.heap_registers {
-            *callee_frame.add(*register as usize) = 0;
-        }
-        for (index, register) in arguments.iter().enumerate() {
-            let value = *frame.add(*register as usize);
-            if called.kinds[index] == RegisterKind::Heap {
-                runtime::retain(value);
+    pub unsafe fn call_from(
+        &mut self,
+        caller: &Procedure,
+        callee: u32,
+        arguments: &[Register],
+        failure: FailureId,
+        frame: *mut u64,
+    ) -> Result<u64, Stopped> {
+        unsafe {
+            if self.depth >= MOST_CALLS {
+                return Err(self.stop(caller, failure, Detail::Nothing, frame));
             }
-            *callee_frame.add(index) = value;
+            self.budget -= 1;
+            if self.budget == 0 {
+                return Err(Stopped);
+            }
+            let called = &self.code().procedures[callee as usize];
+            if self.building.is_some()
+                && let Some(building) = self.building.clone()
+                && let Some(answer) = building.look_up(self, callee, arguments, frame)
+            {
+                return Ok(answer);
+            }
+            let base = self.top;
+            let callee_frame = self.frame_at(base);
+            for register in &called.heap_registers {
+                *callee_frame.add(*register as usize) = 0;
+            }
+            for (index, register) in arguments.iter().enumerate() {
+                let value = *frame.add(*register as usize);
+                if called.kinds[index] == RegisterKind::Heap {
+                    runtime::retain(value);
+                }
+                *callee_frame.add(index) = value;
+            }
+            self.depth += 1;
+            self.deepest = self.deepest.max(self.depth);
+            let answer = self.enter(callee, base);
+            self.depth -= 1;
+            answer
         }
-        self.depth += 1;
-        self.deepest = self.deepest.max(self.depth);
-        let answer = self.enter(callee, base);
-        self.depth -= 1;
-        answer
     }
 
     #[cold]
     #[allow(clippy::too_many_arguments)]
-    fn whole_failure(&mut self, procedure: &Procedure, failure: FailureId, operator: Maths, kind: WholeKind, x: u64, y: u64, frame: *mut u64) -> Stopped {
+    fn whole_failure(
+        &mut self,
+        procedure: &Procedure,
+        failure: FailureId,
+        operator: Maths,
+        kind: WholeKind,
+        x: u64,
+        y: u64,
+        frame: *mut u64,
+    ) -> Stopped {
         let problem = whole_problem(operator, kind, x, y);
-        self.stop(procedure, failure, Detail::Problem(problem), frame)
+        // SAFETY: the caller passes its own frame.
+        unsafe { self.stop(procedure, failure, Detail::Problem(problem), frame) }
     }
 
     /// Stops the program with an error made from `failure` in `procedure`, reading `because:` values from `frame`.
+    ///
+    /// # Safety
+    /// `frame` is `procedure`'s frame, which holds the registers its `because:` lines name.
     #[cold]
-    pub fn stop(&mut self, procedure: &Procedure, failure: FailureId, detail: Detail, frame: *const u64) -> Stopped {
+    pub unsafe fn stop(
+        &mut self,
+        procedure: &Procedure,
+        failure: FailureId,
+        detail: Detail,
+        frame: *const u64,
+    ) -> Stopped {
         let info = &procedure.failures[failure as usize];
         let span = info.span;
         let mut made = match (&info.kind, detail) {
             (FailureKind::Maths { ty }, Detail::Problem(problem)) => messages::problem(problem, span, ty),
             (FailureKind::Written { problem, ty }, _) => messages::problem(problem.clone(), span, ty),
-            (FailureKind::Bounds { bounds }, Detail::Value(value)) => messages::outside_bounds(span, &value.to_string(), &bounds.rule()),
-            (FailureKind::Place { counting, letters }, Detail::Place { asked, count }) => {
-                messages::no_such_place(span, counting.word(), &asked.to_string(), count, if *letters { "letters" } else { "items" })
+            (FailureKind::Bounds { bounds }, Detail::Value(value)) => {
+                messages::outside_bounds(span, &value.to_string(), &bounds.rule())
             }
+            (FailureKind::Place { counting, letters }, Detail::Place { asked, count }) => messages::no_such_place(
+                span,
+                counting.word(),
+                &asked.to_string(),
+                count,
+                if *letters { "letters" } else { "items" },
+            ),
             (FailureKind::Hole { counting, table }, Detail::Place { asked, count }) => {
                 messages::would_leave_hole(span, counting.word(), &asked.to_string(), table, count)
             }
             (FailureKind::KeyTwice, Detail::Key(key)) => {
                 messages::not_designed_yet(span, format!("adding \"{}\" again, when it's already in the table", key))
             }
-            (FailureKind::Family { family, .. }, Detail::Problem(Problem::DividesByZero)) => messages::no_items(span, family.word()),
+            (FailureKind::Family { family, .. }, Detail::Problem(Problem::DividesByZero)) => {
+                messages::no_items(span, family.word())
+            }
             (FailureKind::Family { ty, .. }, Detail::Problem(problem)) => messages::problem(problem, span, ty),
-            (FailureKind::Count, Detail::Value(value)) => messages::not_designed_yet(span, format!("repeating {} times", value)),
+            (FailureKind::Count, Detail::Value(value)) => {
+                messages::not_designed_yet(span, format!("repeating {} times", value))
+            }
             (FailureKind::FractionShow, Detail::Fraction(top, bottom)) => messages::not_designed_yet(
                 span,
                 format!("whether `show` prints {} over {} as it is or in its lowest terms", top, bottom),
             ),
-            (FailureKind::TooDeep, _) => {
-                messages::not_designed_yet(span, format!("what happens when procedures call each other this deep ({} calls)", MOST_CALLS))
-            }
+            (FailureKind::TooDeep, _) => messages::not_designed_yet(
+                span,
+                format!("what happens when procedures call each other this deep ({} calls)", MOST_CALLS),
+            ),
             _ => crate::broke(span, "a stop with nothing to say"),
         };
         // trace: decision.errors.layout
@@ -668,7 +752,7 @@ pub fn whole_maths(operator: Maths, kind: WholeKind, x: u64, y: u64) -> Option<u
             Maths::Minus => x.checked_sub(y),
             Maths::Times => x.checked_mul(y),
             Maths::DividedBy => {
-                if y == 0 || x % y != 0 {
+                if y == 0 || !x.is_multiple_of(y) {
                     None
                 } else {
                     Some(x / y)
@@ -712,11 +796,6 @@ pub fn whole_problem(operator: Maths, kind: WholeKind, x: u64, y: u64) -> Proble
 pub fn whole_compare(operator: Compare, unsigned: bool, x: u64, y: u64) -> bool {
     let order = if unsigned { x.cmp(&y) } else { (x as i64).cmp(&(y as i64)) };
     compare(operator, order)
-}
-
-fn whole_bits(value: &BigInt) -> u64 {
-    use num_traits::ToPrimitive;
-    value.to_i64().map(|v| v as u64).or_else(|| value.to_u64()).unwrap_or(0)
 }
 
 // trace: decision.types.fast_but_inexact
@@ -814,7 +893,11 @@ pub fn of_family(family: Family, ty: &Type, table: u64) -> Result<u64, Problem> 
         }
         Held::Fast(size) => {
             let pick = |want: std::cmp::Ordering| {
-                items.iter().copied().reduce(|a, b| if fast::compare(size, b as u128, a as u128) == want { b } else { a }).unwrap_or(0)
+                items
+                    .iter()
+                    .copied()
+                    .reduce(|a, b| if fast::compare(size, b as u128, a as u128) == want { b } else { a })
+                    .unwrap_or(0)
             };
             match family {
                 Family::Biggest => Ok(pick(std::cmp::Ordering::Greater)),
@@ -837,15 +920,28 @@ pub fn of_family(family: Family, ty: &Type, table: u64) -> Result<u64, Problem> 
             if let Type::Decimal { size: Size::Big, fast: true } = ty {
                 let values: Vec<u128> = items.iter().map(|item| runtime::quad_of(*item)).collect();
                 let answer = match family {
-                    Family::Biggest => values.iter().copied().reduce(|a, b| if fast::compare(Size::Big, b, a).is_gt() { b } else { a }).unwrap_or(0),
-                    Family::Smallest => values.iter().copied().reduce(|a, b| if fast::compare(Size::Big, b, a).is_lt() { b } else { a }).unwrap_or(0),
+                    Family::Biggest => values
+                        .iter()
+                        .copied()
+                        .reduce(|a, b| if fast::compare(Size::Big, b, a).is_gt() { b } else { a })
+                        .unwrap_or(0),
+                    Family::Smallest => values
+                        .iter()
+                        .copied()
+                        .reduce(|a, b| if fast::compare(Size::Big, b, a).is_lt() { b } else { a })
+                        .unwrap_or(0),
                     _ => {
                         let mut sum = fast::from_whole(Size::Big, 0);
                         for value in &values {
                             sum = fast::maths(Size::Big, Maths::Plus, sum, *value)?;
                         }
                         if family == Family::Average {
-                            sum = fast::maths(Size::Big, Maths::DividedBy, sum, fast::from_whole(Size::Big, values.len() as i128))?;
+                            sum = fast::maths(
+                                Size::Big,
+                                Maths::DividedBy,
+                                sum,
+                                fast::from_whole(Size::Big, values.len() as i128),
+                            )?;
                         }
                         sum
                     }
@@ -858,8 +954,12 @@ pub fn of_family(family: Family, ty: &Type, table: u64) -> Result<u64, Problem> 
             };
             let values: Vec<&numbers::Decimal> = items.iter().map(|item| runtime::decimal_of(*item)).collect();
             let answer = match family {
-                Family::Biggest => values.iter().copied().reduce(|a, b| if b.compare(a).is_gt() { b } else { a }).cloned(),
-                Family::Smallest => values.iter().copied().reduce(|a, b| if b.compare(a).is_lt() { b } else { a }).cloned(),
+                Family::Biggest => {
+                    values.iter().copied().reduce(|a, b| if b.compare(a).is_gt() { b } else { a }).cloned()
+                }
+                Family::Smallest => {
+                    values.iter().copied().reduce(|a, b| if b.compare(a).is_lt() { b } else { a }).cloned()
+                }
                 _ => {
                     let mut sum = numbers::Decimal::from_whole(BigInt::zero());
                     for value in &values {
@@ -871,7 +971,9 @@ pub fn of_family(family: Family, ty: &Type, table: u64) -> Result<u64, Problem> 
                     Some(sum)
                 }
             };
-            Ok(runtime::new_heap(HeapValue::Decimal(answer.unwrap_or_else(|| numbers::Decimal::from_whole(BigInt::zero())))))
+            Ok(runtime::new_heap(HeapValue::Decimal(
+                answer.unwrap_or_else(|| numbers::Decimal::from_whole(BigInt::zero())),
+            )))
         }
     }
 }

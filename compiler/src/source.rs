@@ -23,7 +23,11 @@ impl Span {
 
     /// From the start of `self` to the end of `other`, which is on the same line or later.
     pub fn to(self, other: Span) -> Span {
-        if other.line == self.line { Span { line: self.line, start: self.start, end: other.end.max(self.end) } } else { self }
+        if other.line == self.line {
+            Span { line: self.line, start: self.start, end: other.end.max(self.end) }
+        } else {
+            self
+        }
     }
 }
 

@@ -72,7 +72,11 @@ impl Drop for Storage {
 }
 
 pub fn new_heap(value: HeapValue) -> HeapRef {
-    Arc::into_raw(Arc::new(value)) as HeapRef
+    // Counted atomically, since tables of answers are built on other threads that share the program's constants;
+    // those are never tables, so a table's `RefCell` never leaves the thread that made it.
+    #[allow(clippy::arc_with_non_send_sync)]
+    let counted = Arc::new(value);
+    Arc::into_raw(counted) as HeapRef
 }
 
 pub fn retain(held: HeapRef) {

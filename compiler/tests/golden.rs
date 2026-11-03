@@ -21,7 +21,8 @@ fn programs(folder: &Path, found: &mut Vec<PathBuf>) {
 }
 
 fn run_all(mode: Mode) {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().expect("the compiler lives in the repository").to_path_buf();
+    let root =
+        Path::new(env!("CARGO_MANIFEST_DIR")).parent().expect("the compiler lives in the repository").to_path_buf();
     let mut found = Vec::new();
     programs(&root.join("tests"), &mut found);
     found.sort();
@@ -58,7 +59,14 @@ fn run_all(mode: Mode) {
         handles.into_iter().flat_map(|handle| handle.join().expect("finished")).collect()
     });
     println!("{} golden programs on {:?}", found.len(), mode);
-    assert!(failures.is_empty(), "{} of {} failed on {:?}:\n{}", failures.len(), found.len(), mode, failures.join("\n"));
+    assert!(
+        failures.is_empty(),
+        "{} of {} failed on {:?}:\n{}",
+        failures.len(),
+        found.len(),
+        mode,
+        failures.join("\n")
+    );
 }
 
 #[test]

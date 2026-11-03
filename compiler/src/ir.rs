@@ -8,12 +8,17 @@
 //! `because:` lines need, so compiled code says exactly what the interpreter says, and every place maps back to a
 //! place in the bytecode.
 
-use crate::bytecode::{self, FailureId, FailureKind, Held, Instruction, Place, Procedure, Program, Register, RegisterKind};
+use crate::bytecode::{
+    self, FailureId, FailureKind, Held, Instruction, Place, Procedure, Program, Register, RegisterKind,
+};
 use crate::numbers::Size;
 use crate::syntax::{Compare, Maths};
 use std::collections::{BTreeSet, HashMap};
 
 pub type Value = u32;
+
+/// The builder's way to read a register's current value, making a 0 for one never set on this path.
+type Get<'g> = dyn FnMut(Register, &mut HashMap<Register, Value>, &mut Vec<Instr>, &mut Function) -> Value + 'g;
 pub type BlockId = u32;
 
 /// Where a check that stops the program points back to.
@@ -35,26 +40,85 @@ pub enum Op {
     /// `a + by`, which can't overflow (a loop's step below its limit).
     Step1(Value),
     /// Whole-number maths proven never to fail, so it needs no check.
-    Arith { operator: Maths, unsigned: bool, a: Value, b: Value },
-    WholeMaths { operator: Maths, kind: bytecode::WholeKind, a: Value, b: Value, fail: FailPoint },
-    WholeRemainder { kind: bytecode::WholeKind, a: Value, b: Value, fail: FailPoint },
-    WholeCompare { operator: Compare, unsigned: bool, a: Value, b: Value },
-    CheckWhole { kind: bytecode::WholeKind, value: Value, fail: FailPoint },
-    CheckBounds { value: Value, least: Option<i64>, most: Option<i64>, fail: FailPoint },
-    CheckCount { value: Value, fail: FailPoint },
-    FastMaths { operator: Maths, size: Size, a: Value, b: Value, fail: FailPoint },
-    FastCompare { operator: Compare, size: Size, a: Value, b: Value },
+    Arith {
+        operator: Maths,
+        unsigned: bool,
+        a: Value,
+        b: Value,
+    },
+    WholeMaths {
+        operator: Maths,
+        kind: bytecode::WholeKind,
+        a: Value,
+        b: Value,
+        fail: FailPoint,
+    },
+    WholeRemainder {
+        kind: bytecode::WholeKind,
+        a: Value,
+        b: Value,
+        fail: FailPoint,
+    },
+    WholeCompare {
+        operator: Compare,
+        unsigned: bool,
+        a: Value,
+        b: Value,
+    },
+    CheckWhole {
+        kind: bytecode::WholeKind,
+        value: Value,
+        fail: FailPoint,
+    },
+    CheckBounds {
+        value: Value,
+        least: Option<i64>,
+        most: Option<i64>,
+        fail: FailPoint,
+    },
+    CheckCount {
+        value: Value,
+        fail: FailPoint,
+    },
+    FastMaths {
+        operator: Maths,
+        size: Size,
+        a: Value,
+        b: Value,
+        fail: FailPoint,
+    },
+    FastCompare {
+        operator: Compare,
+        size: Size,
+        a: Value,
+        b: Value,
+    },
     Not(Value),
     /// A call whose arguments and answer are all numbers, to a procedure with no heap registers.
-    Call { callee: u32, arguments: Vec<Value>, fail: FailPoint },
+    Call {
+        callee: u32,
+        arguments: Vec<Value>,
+        fail: FailPoint,
+    },
     /// One bytecode instruction run by the interpreter, with the number registers it reads stored first.
-    Step { procedure: u32, at: Place, reads: Vec<(Register, Value)>, write: Option<Register>, frame_offset: u32 },
+    Step {
+        procedure: u32,
+        at: Place,
+        reads: Vec<(Register, Value)>,
+        write: Option<Register>,
+        frame_offset: u32,
+    },
     /// An inlined call's entry: checks how deep calls go, and counts one more.
-    DepthEnter { fail: FailPoint },
+    DepthEnter {
+        fail: FailPoint,
+    },
     DepthLeave,
     /// At a loop's top in quick code: counts the round, and once speed code for the loop is ready, moves there with
     /// the values of the registers live here.
-    Promote { loop_id: u16, live: Vec<(Register, Value)> },
+    Promote {
+        loop_id: u16,
+        live: Vec<(Register, Value)>,
+    },
 }
 
 impl Op {
@@ -62,17 +126,26 @@ impl Op {
     pub fn is_pure(&self) -> bool {
         matches!(
             self,
-            Op::Constant(_) | Op::Load(_) | Op::Step1(_) | Op::Arith { .. } | Op::WholeCompare { .. } | Op::FastCompare { .. } | Op::Not(_)
+            Op::Constant(_)
+                | Op::Load(_)
+                | Op::Step1(_)
+                | Op::Arith { .. }
+                | Op::WholeCompare { .. }
+                | Op::FastCompare { .. }
+                | Op::Not(_)
         )
     }
 
     pub fn operands(&self) -> Vec<Value> {
         let mut found = Vec::new();
-        let fail_values = |fail: &FailPoint, found: &mut Vec<Value>| found.extend(fail.because.iter().map(|(_, value)| *value));
+        let fail_values =
+            |fail: &FailPoint, found: &mut Vec<Value>| found.extend(fail.because.iter().map(|(_, value)| *value));
         match self {
             Op::Constant(_) | Op::Load(_) | Op::DepthLeave => {}
             Op::Step1(a) | Op::Not(a) => found.push(*a),
-            Op::WholeMaths { a, b, fail, .. } | Op::WholeRemainder { a, b, fail, .. } | Op::FastMaths { a, b, fail, .. } => {
+            Op::WholeMaths { a, b, fail, .. }
+            | Op::WholeRemainder { a, b, fail, .. }
+            | Op::FastMaths { a, b, fail, .. } => {
                 found.push(*a);
                 found.push(*b);
                 fail_values(fail, &mut found);
@@ -81,7 +154,9 @@ impl Op {
                 found.push(*a);
                 found.push(*b);
             }
-            Op::CheckWhole { value, fail, .. } | Op::CheckBounds { value, fail, .. } | Op::CheckCount { value, fail } => {
+            Op::CheckWhole { value, fail, .. }
+            | Op::CheckBounds { value, fail, .. }
+            | Op::CheckCount { value, fail } => {
                 found.push(*value);
                 fail_values(fail, &mut found);
             }
@@ -105,7 +180,9 @@ impl Op {
         match self {
             Op::Constant(_) | Op::Load(_) | Op::DepthLeave => {}
             Op::Step1(a) | Op::Not(a) => *a = map(*a),
-            Op::WholeMaths { a, b, fail, .. } | Op::WholeRemainder { a, b, fail, .. } | Op::FastMaths { a, b, fail, .. } => {
+            Op::WholeMaths { a, b, fail, .. }
+            | Op::WholeRemainder { a, b, fail, .. }
+            | Op::FastMaths { a, b, fail, .. } => {
                 *a = map(*a);
                 *b = map(*b);
                 map_fail(fail, map);
@@ -114,7 +191,9 @@ impl Op {
                 *a = map(*a);
                 *b = map(*b);
             }
-            Op::CheckWhole { value, fail, .. } | Op::CheckBounds { value, fail, .. } | Op::CheckCount { value, fail } => {
+            Op::CheckWhole { value, fail, .. }
+            | Op::CheckBounds { value, fail, .. }
+            | Op::CheckCount { value, fail } => {
                 *value = map(*value);
                 map_fail(fail, map);
             }
@@ -151,7 +230,11 @@ pub enum End {
     /// To the first when the value isn't 0.
     Branch(Value, (BlockId, Vec<Value>), (BlockId, Vec<Value>)),
     /// The procedure is done: a number answer, or a heap register's, or nothing.
-    Return { value: Option<Value>, heap: Option<Register>, release: bool },
+    Return {
+        value: Option<Value>,
+        heap: Option<Register>,
+        release: bool,
+    },
     Fail(FailPoint),
 }
 
@@ -233,8 +316,12 @@ impl Function {
 pub fn number_uses(procedure: &Procedure, instruction: &Instruction) -> (Vec<Register>, Option<Register>) {
     use Instruction::*;
     let (reads, write): (Vec<Register>, Option<Register>) = match *instruction {
-        Load { dest, .. } | LoadHeap { dest, .. } | SetSite { dest, .. } | NewTable { dest, .. } => (vec![], Some(dest)),
-        Move { dest, source } | MoveHeap { dest, source } | CopyTable { dest, source } | Not { dest, source } => (vec![source], Some(dest)),
+        Load { dest, .. } | LoadHeap { dest, .. } | SetSite { dest, .. } | NewTable { dest, .. } => {
+            (vec![], Some(dest))
+        }
+        Move { dest, source } | MoveHeap { dest, source } | CopyTable { dest, source } | Not { dest, source } => {
+            (vec![source], Some(dest))
+        }
         WholeMaths { dest, a, b, .. }
         | WholeRemainder { dest, a, b, .. }
         | WholeRounded { dest, a, b, .. }
@@ -248,7 +335,10 @@ pub fn number_uses(procedure: &Procedure, instruction: &Instruction) -> (Vec<Reg
         WholeMathsBy { dest, a, .. } => (vec![a], Some(dest)),
         JumpIfWhole { a, b, .. } => (vec![a, b], None),
         JumpIfWholeBy { a, .. } => (vec![a], None),
-        CheckWhole { source, .. } | CheckBounds { source, .. } | CheckCount { source, .. } | ShowPiece { source, .. } => (vec![source], None),
+        CheckWhole { source, .. }
+        | CheckBounds { source, .. }
+        | CheckCount { source, .. }
+        | ShowPiece { source, .. } => (vec![source], None),
         JumpIfTrue { source, .. } | JumpIfFalse { source, .. } | Return { source } => (vec![source], None),
         RepeatNext { counter, limit, .. } => (vec![counter, limit], Some(counter)),
         Call { dest, arguments, .. } => (procedure.call_arguments[arguments as usize].clone(), Some(dest)),
@@ -299,7 +389,11 @@ fn blocks_of(procedure: &Procedure) -> (Vec<usize>, Vec<Vec<usize>>) {
                 leaders.insert(target as usize);
                 leaders.insert(at + 1);
             }
-            JumpIfTrue { target, .. } | JumpIfFalse { target, .. } | JumpIfWhole { target, .. } | JumpIfWholeBy { target, .. } | RepeatNext { target, .. } => {
+            JumpIfTrue { target, .. }
+            | JumpIfFalse { target, .. }
+            | JumpIfWhole { target, .. }
+            | JumpIfWholeBy { target, .. }
+            | RepeatNext { target, .. } => {
                 leaders.insert(target as usize);
                 leaders.insert(at + 1);
             }
@@ -323,7 +417,11 @@ fn blocks_of(procedure: &Procedure) -> (Vec<usize>, Vec<Vec<usize>>) {
         let fall = index_of.get(&end).copied();
         match *last {
             Jump { target } | LoopBack { target, .. } => next.push(index_of[&(target as usize)]),
-            JumpIfTrue { target, .. } | JumpIfFalse { target, .. } | JumpIfWhole { target, .. } | JumpIfWholeBy { target, .. } | RepeatNext { target, .. } => {
+            JumpIfTrue { target, .. }
+            | JumpIfFalse { target, .. }
+            | JumpIfWhole { target, .. }
+            | JumpIfWholeBy { target, .. }
+            | RepeatNext { target, .. } => {
                 next.push(index_of[&(target as usize)]);
                 next.extend(fall);
             }
@@ -389,14 +487,22 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
     let mut function = Function { procedure: procedure_id, entry, blocks: Vec::new(), values: 0 };
     // IR block 0 enters; IR block i + 1 is bytecode block i.
     let mut params: Vec<Vec<(Register, Value)>> = Vec::new();
-    function.blocks.push(Block { params: Vec::new(), instrs: Vec::new(), end: End::Return { value: None, heap: None, release: false } });
+    function.blocks.push(Block {
+        params: Vec::new(),
+        instrs: Vec::new(),
+        end: End::Return { value: None, heap: None, release: false },
+    });
     for live in &live_in {
         let mut list = Vec::new();
         for register in live {
             list.push((*register, function.new_value()));
         }
         params.push(list.clone());
-        function.blocks.push(Block { params: list.iter().map(|(_, value)| *value).collect(), instrs: Vec::new(), end: End::Return { value: None, heap: None, release: false } });
+        function.blocks.push(Block {
+            params: list.iter().map(|(_, value)| *value).collect(),
+            instrs: Vec::new(),
+            end: End::Return { value: None, heap: None, release: false },
+        });
     }
     let release = !procedure.heap_registers.is_empty();
     // The entry: loads what is live where it starts.
@@ -427,7 +533,11 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
         }
         let mut end = None;
         let fall_through = index + 1;
-        let mut get = |register: Register, current: &mut HashMap<Register, Value>, instrs: &mut Vec<Instr>, function: &mut Function| -> Value {
+        let mut get = |register: Register,
+                       current: &mut HashMap<Register, Value>,
+                       instrs: &mut Vec<Instr>,
+                       function: &mut Function|
+         -> Value {
             if let Some(value) = current.get(&register) {
                 return *value;
             }
@@ -437,13 +547,24 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
             current.insert(register, value);
             value
         };
-        let at_targets = |target: usize, current: &mut HashMap<Register, Value>, instrs: &mut Vec<Instr>, function: &mut Function, get: &mut dyn FnMut(Register, &mut HashMap<Register, Value>, &mut Vec<Instr>, &mut Function) -> Value| -> (BlockId, Vec<Value>) {
-            let arguments = params[target].iter().map(|(register, _)| get(*register, current, instrs, function)).collect();
+        let at_targets = |target: usize,
+                          current: &mut HashMap<Register, Value>,
+                          instrs: &mut Vec<Instr>,
+                          function: &mut Function,
+                          get: &mut Get|
+         -> (BlockId, Vec<Value>) {
+            let arguments =
+                params[target].iter().map(|(register, _)| get(*register, current, instrs, function)).collect();
             (target as BlockId + 1, arguments)
         };
-        for at in starts[index]..end_of(index) {
-            let instruction = code[at];
-            let fail_point = |failure: FailureId, current: &mut HashMap<Register, Value>, instrs: &mut Vec<Instr>, function: &mut Function, get: &mut dyn FnMut(Register, &mut HashMap<Register, Value>, &mut Vec<Instr>, &mut Function) -> Value| -> FailPoint {
+        for (at, instruction) in code.iter().enumerate().take(end_of(index)).skip(starts[index]) {
+            let instruction = *instruction;
+            let fail_point = |failure: FailureId,
+                              current: &mut HashMap<Register, Value>,
+                              instrs: &mut Vec<Instr>,
+                              function: &mut Function,
+                              get: &mut Get|
+             -> FailPoint {
                 let mut because = Vec::new();
                 for entry in &procedure.failures[failure as usize].because {
                     // A heap value's `because:` is read from the frame, where it already is.
@@ -456,7 +577,7 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                 }
                 FailPoint { procedure: procedure_id, failure, frame_offset: 0, because }
             };
-            let mut emit = |op: Op, function: &mut Function, instrs: &mut Vec<Instr>| -> Value {
+            let emit = |op: Op, function: &mut Function, instrs: &mut Vec<Instr>| -> Value {
                 let value = function.new_value();
                 instrs.push(Instr { result: Some(value), op });
                 value
@@ -506,7 +627,8 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                     let a = get(a, &mut current, &mut instrs, &mut function);
                     let b = get(b, &mut current, &mut instrs, &mut function);
                     let test = emit(Op::WholeCompare { operator, unsigned, a, b }, &mut function, &mut instrs);
-                    let yes = at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
+                    let yes =
+                        at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
                     let no = at_targets(fall_through, &mut current, &mut instrs, &mut function, &mut get);
                     end = Some(End::Branch(test, yes, no));
                 }
@@ -514,7 +636,8 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                     let a = get(a, &mut current, &mut instrs, &mut function);
                     let b = emit(Op::Constant(by as i64), &mut function, &mut instrs);
                     let test = emit(Op::WholeCompare { operator, unsigned, a, b }, &mut function, &mut instrs);
-                    let yes = at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
+                    let yes =
+                        at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
                     let no = at_targets(fall_through, &mut current, &mut instrs, &mut function, &mut get);
                     end = Some(End::Branch(test, yes, no));
                 }
@@ -527,7 +650,9 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                     let fail = fail_point(failure, &mut current, &mut instrs, &mut function, &mut get);
                     let value = get(source, &mut current, &mut instrs, &mut function);
                     let (least, most) = match &procedure.failures[failure as usize].kind {
-                        FailureKind::Bounds { bounds } => (bounds.least.map(|v| v as i64), bounds.most.map(|v| v as i64)),
+                        FailureKind::Bounds { bounds } => {
+                            (bounds.least.map(|v| v as i64), bounds.most.map(|v| v as i64))
+                        }
                         _ => (None, None),
                     };
                     instrs.push(Instr { result: None, op: Op::CheckBounds { value, least, most, fail } });
@@ -556,26 +681,39 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                     current.insert(dest, made);
                 }
                 Jump { target } | LoopBack { target, .. } => {
-                    let to = at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
+                    let to =
+                        at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
                     end = Some(End::Jump(to.0, to.1));
                 }
                 JumpIfTrue { source, target } | JumpIfFalse { source, target } => {
                     let test = get(source, &mut current, &mut instrs, &mut function);
-                    let jump = at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
+                    let jump =
+                        at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
                     let fall = at_targets(fall_through, &mut current, &mut instrs, &mut function, &mut get);
-                    end = Some(if matches!(instruction, JumpIfTrue { .. }) { End::Branch(test, jump, fall) } else { End::Branch(test, fall, jump) });
+                    end = Some(if matches!(instruction, JumpIfTrue { .. }) {
+                        End::Branch(test, jump, fall)
+                    } else {
+                        End::Branch(test, fall, jump)
+                    });
                 }
                 RepeatNext { counter, limit, target, .. } => {
                     let counter_value = get(counter, &mut current, &mut instrs, &mut function);
                     let limit_value = get(limit, &mut current, &mut instrs, &mut function);
                     let next = emit(Op::Step1(counter_value), &mut function, &mut instrs);
                     current.insert(counter, next);
-                    let test = emit(Op::WholeCompare { operator: Compare::LessThan, unsigned: false, a: next, b: limit_value }, &mut function, &mut instrs);
-                    let back = at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
+                    let test = emit(
+                        Op::WholeCompare { operator: Compare::LessThan, unsigned: false, a: next, b: limit_value },
+                        &mut function,
+                        &mut instrs,
+                    );
+                    let back =
+                        at_targets(block_of[&(target as usize)], &mut current, &mut instrs, &mut function, &mut get);
                     let out = at_targets(fall_through, &mut current, &mut instrs, &mut function, &mut get);
                     end = Some(End::Branch(test, back, out));
                 }
-                Call { procedure: callee, dest, arguments, failure } if fast_call(program, procedure, callee, dest, arguments) => {
+                Call { procedure: callee, dest, arguments, failure }
+                    if fast_call(program, procedure, callee, dest, arguments) =>
+                {
                     let fail = fail_point(failure, &mut current, &mut instrs, &mut function, &mut get);
                     let values = procedure.call_arguments[arguments as usize]
                         .iter()
@@ -588,7 +726,11 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                     end = Some(if procedure.kinds[source as usize] == RegisterKind::Heap {
                         End::Return { value: None, heap: Some(source), release }
                     } else {
-                        End::Return { value: Some(get(source, &mut current, &mut instrs, &mut function)), heap: None, release }
+                        End::Return {
+                            value: Some(get(source, &mut current, &mut instrs, &mut function)),
+                            heap: None,
+                            release,
+                        }
                     });
                 }
                 Finish => end = Some(End::Return { value: None, heap: None, release }),
@@ -597,9 +739,15 @@ pub fn build_with(program: &Program, procedure_id: u32, entry: Entry, promote: b
                 }
                 other => {
                     let (reads, write) = number_uses(procedure, &other);
-                    let reads = reads.into_iter().map(|register| (register, get(register, &mut current, &mut instrs, &mut function))).collect();
+                    let reads = reads
+                        .into_iter()
+                        .map(|register| (register, get(register, &mut current, &mut instrs, &mut function)))
+                        .collect();
                     let result = write.map(|_| function.new_value());
-                    instrs.push(Instr { result, op: Op::Step { procedure: procedure_id, at: at as Place, reads, write, frame_offset: 0 } });
+                    instrs.push(Instr {
+                        result,
+                        op: Op::Step { procedure: procedure_id, at: at as Place, reads, write, frame_offset: 0 },
+                    });
                     if let (Some(register), Some(value)) = (write, result) {
                         current.insert(register, value);
                     }
@@ -628,7 +776,9 @@ pub fn fast_call(program: &Program, procedure: &Procedure, callee: u32, dest: Re
     let called = &program.procedures[callee as usize];
     called.heap_registers.is_empty()
         && procedure.kinds[dest as usize] != RegisterKind::Heap
-        && procedure.call_arguments[arguments as usize].iter().all(|register| procedure.kinds[*register as usize] != RegisterKind::Heap)
+        && procedure.call_arguments[arguments as usize]
+            .iter()
+            .all(|register| procedure.kinds[*register as usize] != RegisterKind::Heap)
         && called.returns.as_ref().is_none_or(|ty| !ty.is_heap())
 }
 

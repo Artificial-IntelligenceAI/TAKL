@@ -265,11 +265,8 @@ impl Decimal {
             lead -= 1;
         }
         let scale = limit - 1 - lead;
-        let (scaled_top, scaled_bottom) = if scale >= 0 {
-            (top * ten_to(scale as u64), bottom)
-        } else {
-            (top, bottom * ten_to((-scale) as u64))
-        };
+        let (scaled_top, scaled_bottom) =
+            if scale >= 0 { (top * ten_to(scale as u64), bottom) } else { (top, bottom * ten_to((-scale) as u64)) };
         let rounded = round_nearest(&scaled_top, &scaled_bottom)?;
         Decimal { coefficient: rounded, scale }.fit(digits)
     }
@@ -285,10 +282,18 @@ impl Decimal {
         let negative = self.coefficient.is_negative();
         let digits = self.coefficient.abs().to_string();
         let body = if self.scale <= 0 {
-            if self.coefficient.is_zero() { "0".to_string() } else { format!("{}{}", digits, "0".repeat((-self.scale) as usize)) }
+            if self.coefficient.is_zero() {
+                "0".to_string()
+            } else {
+                format!("{}{}", digits, "0".repeat((-self.scale) as usize))
+            }
         } else {
             let scale = self.scale as usize;
-            let padded = if digits.len() <= scale { format!("{}{}", "0".repeat(scale + 1 - digits.len()), digits) } else { digits };
+            let padded = if digits.len() <= scale {
+                format!("{}{}", "0".repeat(scale + 1 - digits.len()), digits)
+            } else {
+                digits
+            };
             let (whole, after) = padded.split_at(padded.len() - scale);
             format!("{}.{}", whole, after)
         };
@@ -298,7 +303,11 @@ impl Decimal {
 
 /// `top * 10^power` against `bottom`.
 fn compare_scaled(top: &BigInt, bottom: &BigInt, power: i64) -> Ordering {
-    if power >= 0 { (top.clone()).cmp(&(bottom * ten_to(power as u64))) } else { (top * ten_to((-power) as u64)).cmp(bottom) }
+    if power >= 0 {
+        (top.clone()).cmp(&(bottom * ten_to(power as u64)))
+    } else {
+        (top * ten_to((-power) as u64)).cmp(bottom)
+    }
 }
 
 fn only_twos_and_fives(value: &BigInt) -> bool {

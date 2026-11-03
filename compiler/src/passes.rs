@@ -6,7 +6,7 @@
 //! A pass may only change speed. Every check that can stop the program stays unless the pass proves it can't fail,
 //! and a check that stays keeps its failure and its `because:` values, so the output is the interpreter's to the byte.
 
-use crate::bytecode::{WHOLE_LIMITS, BIG_NEVER_NEGATIVE};
+use crate::bytecode::{BIG_NEVER_NEGATIVE, WHOLE_LIMITS};
 use crate::interpreter;
 use crate::ir::*;
 use std::collections::{HashMap, HashSet};
@@ -26,7 +26,8 @@ pub fn prune(function: &mut Function) {
         }
     }
     order.sort();
-    let renumber: HashMap<BlockId, BlockId> = order.iter().enumerate().map(|(new, old)| (*old, new as BlockId)).collect();
+    let renumber: HashMap<BlockId, BlockId> =
+        order.iter().enumerate().map(|(new, old)| (*old, new as BlockId)).collect();
     let mut blocks = Vec::new();
     for old in &order {
         let mut block = function.blocks[*old as usize].clone();
@@ -159,11 +160,15 @@ pub fn fold(function: &mut Function) {
         for instr in &mut block.instrs {
             let folded = match &instr.op {
                 Op::WholeMaths { operator, kind, a, b, .. } => match (known.get(a), known.get(b)) {
-                    (Some(x), Some(y)) => interpreter::whole_maths(*operator, *kind, *x as u64, *y as u64).map(|v| v as i64),
+                    (Some(x), Some(y)) => {
+                        interpreter::whole_maths(*operator, *kind, *x as u64, *y as u64).map(|v| v as i64)
+                    }
                     _ => None,
                 },
                 Op::WholeCompare { operator, unsigned, a, b } => match (known.get(a), known.get(b)) {
-                    (Some(x), Some(y)) => Some(interpreter::whole_compare(*operator, *unsigned, *x as u64, *y as u64) as i64),
+                    (Some(x), Some(y)) => {
+                        Some(interpreter::whole_compare(*operator, *unsigned, *x as u64, *y as u64) as i64)
+                    }
                     _ => None,
                 },
                 Op::Not(a) => known.get(a).map(|x| (*x == 0) as i64),
@@ -202,7 +207,9 @@ pub fn dead_code(function: &mut Function) {
         let mut removed = false;
         for block in &mut function.blocks {
             let before = block.instrs.len();
-            block.instrs.retain(|instr| !(instr.op.is_pure() && instr.result.is_some_and(|result| !used.contains(&result))));
+            block
+                .instrs
+                .retain(|instr| !(instr.op.is_pure() && instr.result.is_some_and(|result| !used.contains(&result))));
             removed |= block.instrs.len() != before;
         }
         if !removed {
@@ -288,7 +295,8 @@ fn inline_at(program: &Program, function: &mut Function, block: usize, index: us
     let rest_block = function.blocks.len() as BlockId;
     let rest_instrs = function.blocks[block].instrs.split_off(index + 1);
     function.blocks[block].instrs.pop();
-    let rest_end = std::mem::replace(&mut function.blocks[block].end, End::Return { value: None, heap: None, release: false });
+    let rest_end =
+        std::mem::replace(&mut function.blocks[block].end, End::Return { value: None, heap: None, release: false });
     function.blocks.push(Block { params: vec![result], instrs: rest_instrs, end: rest_end });
     // The callee's blocks, with new values and block numbers.
     let first = function.blocks.len() as BlockId;
@@ -412,7 +420,8 @@ pub fn recursive_inline(program: &Program, function: &mut Function) {
         return;
     }
     // The calls the original body makes to itself, then the copies' calls, level by level.
-    let mut level_calls: Vec<(usize, usize)> = calls(function, |callee| callee == own).into_iter().map(|(b, i, _)| (b, i)).collect();
+    let mut level_calls: Vec<(usize, usize)> =
+        calls(function, |callee| callee == own).into_iter().map(|(b, i, _)| (b, i)).collect();
     for _level in 0..RECURSIVE_LEVELS {
         if level_calls.is_empty() || size(function) > GROWTH_LIMIT {
             return;
@@ -456,10 +465,16 @@ pub fn checks_that_cannot_fail(function: &mut Function) {
                 Op::Constant(value) => found = Some((*value as i128, *value as i128)),
                 Op::WholeCompare { .. } | Op::FastCompare { .. } | Op::Not(_) => found = Some((0, 1)),
                 Op::Step1(a) => found = range(a).map(|(low, high)| (low + 1, high + 1)),
-                Op::Arith { operator, a, b, .. } => found = range(a).zip(range(b)).and_then(|(x, y)| arith_range(*operator, x, y)),
+                Op::Arith { operator, a, b, .. } => {
+                    found = range(a).zip(range(b)).and_then(|(x, y)| arith_range(*operator, x, y))
+                }
                 Op::WholeMaths { operator, kind, a, b, .. } => {
                     let (smallest, biggest) = limits(*kind);
-                    let (smallest, biggest) = if *kind == crate::bytecode::BIG_NEVER_NEGATIVE { (0, u64::MAX as i128) } else { (smallest as i128, biggest as i128) };
+                    let (smallest, biggest) = if *kind == crate::bytecode::BIG_NEVER_NEGATIVE {
+                        (0, u64::MAX as i128)
+                    } else {
+                        (smallest as i128, biggest as i128)
+                    };
                     found = Some((smallest, biggest));
                     if let (Some(x), Some(y)) = (range(a), range(b))
                         && let Some((low, high)) = arith_range(*operator, x, y)
@@ -488,7 +503,8 @@ pub fn checks_that_cannot_fail(function: &mut Function) {
                 }
                 Op::CheckBounds { value, least, most, .. } => {
                     if let Some((low, high)) = range(value) {
-                        remove = least.is_none_or(|least| low >= least as i128) && most.is_none_or(|most| high <= most as i128);
+                        remove = least.is_none_or(|least| low >= least as i128)
+                            && most.is_none_or(|most| high <= most as i128);
                     }
                 }
                 Op::CheckCount { value, .. } => remove = range(value).is_some_and(|(low, _)| low >= 0),
@@ -562,11 +578,20 @@ pub fn validate(function: &Function) -> Result<(), String> {
             let wanted = function.blocks[target as usize].params.len();
             let given = match &block.end {
                 End::Jump(_, arguments) => arguments.len(),
-                End::Branch(_, (a, x), (_, y)) => if *a == target { x.len() } else { y.len() },
+                End::Branch(_, (a, x), (_, y)) => {
+                    if *a == target {
+                        x.len()
+                    } else {
+                        y.len()
+                    }
+                }
                 _ => 0,
             };
             if wanted != given {
-                return Err(format!("block {} gives {} arguments to block {} which wants {}", index, given, target, wanted));
+                return Err(format!(
+                    "block {} gives {} arguments to block {} which wants {}",
+                    index, given, target, wanted
+                ));
             }
         }
     }

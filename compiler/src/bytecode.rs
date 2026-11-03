@@ -83,82 +83,276 @@ pub fn held(ty: &Type) -> Held {
 pub enum Instruction {
     // ---- values ----
     /// Any number held in a register's bits: a whole number, a float's bits, true as 1.
-    Load { dest: Register, value: i64 },
+    Load {
+        dest: Register,
+        value: i64,
+    },
     /// A heap constant from the procedure's pool.
-    LoadHeap { dest: Register, constant: u32 },
-    Move { dest: Register, source: Register },
+    LoadHeap {
+        dest: Register,
+        constant: u32,
+    },
+    Move {
+        dest: Register,
+        source: Register,
+    },
     /// Counts one more holder of a heap value.
-    MoveHeap { dest: Register, source: Register },
+    MoveHeap {
+        dest: Register,
+        source: Register,
+    },
     /// A table as a value: a new table with the same items, shared until either changes.
-    CopyTable { dest: Register, source: Register },
+    CopyTable {
+        dest: Register,
+        source: Register,
+    },
     /// Remembers where a variable last got its value, for `because:`.
-    SetSite { dest: Register, site: u32 },
+    SetSite {
+        dest: Register,
+        site: u32,
+    },
 
     // ---- whole numbers; each checks its answer against its kind's range ----
-    WholeMaths { operator: Maths, kind: WholeKind, dest: Register, a: Register, b: Register, failure: FailureId },
-    WholeMathsBy { operator: Maths, kind: WholeKind, dest: Register, a: Register, by: i32, failure: FailureId },
-    WholeRemainder { kind: WholeKind, dest: Register, a: Register, b: Register, failure: FailureId },
-    WholeRounded { kind: WholeKind, dest: Register, a: Register, b: Register, failure: FailureId },
-    WholeCompare { operator: Compare, unsigned: bool, dest: Register, a: Register, b: Register },
+    WholeMaths {
+        operator: Maths,
+        kind: WholeKind,
+        dest: Register,
+        a: Register,
+        b: Register,
+        failure: FailureId,
+    },
+    WholeMathsBy {
+        operator: Maths,
+        kind: WholeKind,
+        dest: Register,
+        a: Register,
+        by: i32,
+        failure: FailureId,
+    },
+    WholeRemainder {
+        kind: WholeKind,
+        dest: Register,
+        a: Register,
+        b: Register,
+        failure: FailureId,
+    },
+    WholeRounded {
+        kind: WholeKind,
+        dest: Register,
+        a: Register,
+        b: Register,
+        failure: FailureId,
+    },
+    WholeCompare {
+        operator: Compare,
+        unsigned: bool,
+        dest: Register,
+        a: Register,
+        b: Register,
+    },
     /// Jumps when `a operator b` holds.
-    JumpIfWhole { operator: Compare, unsigned: bool, a: Register, b: Register, target: Place },
-    JumpIfWholeBy { operator: Compare, unsigned: bool, a: Register, by: i32, target: Place },
+    JumpIfWhole {
+        operator: Compare,
+        unsigned: bool,
+        a: Register,
+        b: Register,
+        target: Place,
+    },
+    JumpIfWholeBy {
+        operator: Compare,
+        unsigned: bool,
+        a: Register,
+        by: i32,
+        target: Place,
+    },
     /// A whole number of any kind, made into `kind`.
-    CheckWhole { kind: WholeKind, source: Register, failure: FailureId },
-    CheckBounds { source: Register, failure: FailureId },
+    CheckWhole {
+        kind: WholeKind,
+        source: Register,
+        failure: FailureId,
+    },
+    CheckBounds {
+        source: Register,
+        failure: FailureId,
+    },
 
     // ---- floats in registers ----
-    FastMaths { operator: Maths, size: crate::numbers::Size, dest: Register, a: Register, b: Register, failure: FailureId },
-    FastCompare { operator: Compare, size: crate::numbers::Size, dest: Register, a: Register, b: Register },
+    FastMaths {
+        operator: Maths,
+        size: crate::numbers::Size,
+        dest: Register,
+        a: Register,
+        b: Register,
+        failure: FailureId,
+    },
+    FastCompare {
+        operator: Compare,
+        size: crate::numbers::Size,
+        dest: Register,
+        a: Register,
+        b: Register,
+    },
 
     // ---- everything else, worked out by `numbers` ----
     /// Exact decimals and float128s, in heap registers.
-    HeapMaths { operator: Maths, type_id: u16, dest: Register, a: Register, b: Register, failure: FailureId },
-    HeapRounded { type_id: u16, dest: Register, a: Register, b: Register, failure: FailureId },
-    HeapCompare { operator: Compare, type_id: u16, dest: Register, a: Register, b: Register },
+    HeapMaths {
+        operator: Maths,
+        type_id: u16,
+        dest: Register,
+        a: Register,
+        b: Register,
+        failure: FailureId,
+    },
+    HeapRounded {
+        type_id: u16,
+        dest: Register,
+        a: Register,
+        b: Register,
+        failure: FailureId,
+    },
+    HeapCompare {
+        operator: Compare,
+        type_id: u16,
+        dest: Register,
+        a: Register,
+        b: Register,
+    },
 
     // ---- true or false ----
-    Not { dest: Register, source: Register },
-    Jump { target: Place },
-    JumpIfTrue { source: Register, target: Place },
-    JumpIfFalse { source: Register, target: Place },
+    Not {
+        dest: Register,
+        source: Register,
+    },
+    Jump {
+        target: Place,
+    },
+    JumpIfTrue {
+        source: Register,
+        target: Place,
+    },
+    JumpIfFalse {
+        source: Register,
+        target: Place,
+    },
     /// The jump back to the top of a loop, which counts how hot the loop is.
-    LoopBack { target: Place, loop_id: u16 },
+    LoopBack {
+        target: Place,
+        loop_id: u16,
+    },
     /// `counter` up by one, and back to `target` while it is below `limit`; a loop's jump back too.
-    RepeatNext { counter: Register, limit: Register, target: Place, loop_id: u16 },
+    RepeatNext {
+        counter: Register,
+        limit: Register,
+        target: Place,
+        loop_id: u16,
+    },
     /// A `repeat`'s count, which must not be below zero.
-    CheckCount { source: Register, failure: FailureId },
+    CheckCount {
+        source: Register,
+        failure: FailureId,
+    },
 
     // ---- show ----
     /// One piece of a `show`, after every piece is worked out.
-    ShowPiece { source: Register, type_id: u16, failure: FailureId },
+    ShowPiece {
+        source: Register,
+        type_id: u16,
+        failure: FailureId,
+    },
     ShowEnd,
 
     // ---- procedures ----
     /// Calls with the registers in `call_arguments[arguments]` as the callee's first registers; the answer goes
     /// in `dest`. A heap argument is handed on counted, so the caller copies a table first unless it is shared.
-    Call { procedure: u32, dest: Register, arguments: u32, failure: FailureId },
-    Return { source: Register },
+    Call {
+        procedure: u32,
+        dest: Register,
+        arguments: u32,
+        failure: FailureId,
+    },
+    Return {
+        source: Register,
+    },
     Finish,
     /// Stops the program with a written-number problem worked out before running.
-    Fail { failure: FailureId },
+    Fail {
+        failure: FailureId,
+    },
 
     // ---- tables and text ----
-    NewTable { dest: Register, keyed: bool, item_heap: bool },
+    NewTable {
+        dest: Register,
+        keyed: bool,
+        item_heap: bool,
+    },
     /// Adds onto the end of a table this procedure just made, for a written table.
-    Push { table: Register, source: Register },
-    PushKeyed { table: Register, key: Register, source: Register, failure: FailureId },
+    Push {
+        table: Register,
+        source: Register,
+    },
+    PushKeyed {
+        table: Register,
+        key: Register,
+        source: Register,
+        failure: FailureId,
+    },
     /// `add x to @t`, changing only this table.
-    Add { table: Register, source: Register },
-    AddAt { table: Register, source: Register, counting: Counting, at: Register, failure: FailureId },
-    AddKeyed { table: Register, key: Register, source: Register, failure: FailureId },
-    Length { dest: Register, source: Register, text: bool },
-    Item { dest: Register, table: Register, counting: Counting, at: Register, failure: FailureId, heap: bool },
+    Add {
+        table: Register,
+        source: Register,
+    },
+    AddAt {
+        table: Register,
+        source: Register,
+        counting: Counting,
+        at: Register,
+        failure: FailureId,
+    },
+    AddKeyed {
+        table: Register,
+        key: Register,
+        source: Register,
+        failure: FailureId,
+    },
+    Length {
+        dest: Register,
+        source: Register,
+        text: bool,
+    },
+    Item {
+        dest: Register,
+        table: Register,
+        counting: Counting,
+        at: Register,
+        failure: FailureId,
+        heap: bool,
+    },
     /// The key at an offset, for `for each @key and @value`.
-    KeyAt { dest: Register, table: Register, at: Register },
-    Letter { dest: Register, text: Register, counting: Counting, at: Register, failure: FailureId },
-    OfFamily { family: Family, type_id: u16, dest: Register, table: Register, failure: FailureId },
-    TextCompare { operator: Compare, dest: Register, a: Register, b: Register },
+    KeyAt {
+        dest: Register,
+        table: Register,
+        at: Register,
+    },
+    Letter {
+        dest: Register,
+        text: Register,
+        counting: Counting,
+        at: Register,
+        failure: FailureId,
+    },
+    OfFamily {
+        family: Family,
+        type_id: u16,
+        dest: Register,
+        table: Register,
+        failure: FailureId,
+    },
+    TextCompare {
+        operator: Compare,
+        dest: Register,
+        a: Register,
+        b: Register,
+    },
 }
 
 /// What a stop says, beyond the problem itself.
@@ -173,15 +367,31 @@ pub struct FailureInfo {
 #[derive(Clone, Debug)]
 pub enum FailureKind {
     /// Maths in this type: the problem is worked out from the operands when it stops.
-    Maths { ty: Type },
+    Maths {
+        ty: Type,
+    },
     /// Written-number maths that stops, worked out before running.
-    Written { problem: crate::numbers::Problem, ty: Type },
-    Bounds { bounds: Bounds },
+    Written {
+        problem: crate::numbers::Problem,
+        ty: Type,
+    },
+    Bounds {
+        bounds: Bounds,
+    },
     /// No such position or offset in a table (`letters` for text).
-    Place { counting: Counting, letters: bool },
-    Hole { counting: Counting, table: String },
+    Place {
+        counting: Counting,
+        letters: bool,
+    },
+    Hole {
+        counting: Counting,
+        table: String,
+    },
     KeyTwice,
-    Family { family: Family, ty: Type },
+    Family {
+        family: Family,
+        ty: Type,
+    },
     Count,
     FractionShow,
     TooDeep,

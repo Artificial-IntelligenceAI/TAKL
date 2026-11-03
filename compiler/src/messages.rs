@@ -101,11 +101,7 @@ pub fn unknown_variable_near(span: Span, written: &str, near: &str) -> Failure {
 }
 
 pub fn unknown_variable(span: Span, written: &str) -> Failure {
-    Failure::what(
-        span,
-        format!("there's no `@{}` here", written),
-        "A variable is made with `let` before it's used.",
-    )
+    Failure::what(span, format!("there's no `@{}` here", written), "A variable is made with `let` before it's used.")
 }
 
 // trace: decision.names.at_mark
@@ -282,7 +278,11 @@ pub fn outside_procedures(span: Span) -> Failure {
 
 // trace: decision.tables.item_modifiers
 pub fn item_modifier(span: Span, fix: String) -> Failure {
-    Failure::fix(span, fix, "Is that modifier the table's or its items'? Brackets say: inside them is what each item is.")
+    Failure::fix(
+        span,
+        fix,
+        "Is that modifier the table's or its items'? Brackets say: inside them is what each item is.",
+    )
 }
 
 // trace: decision.tables.shape
@@ -419,7 +419,11 @@ pub fn bits_name(span: Span, fix: &str, other_name: &str) -> Failure {
 }
 
 pub fn wrong_type(span: Span, is: &str, goes: &str) -> Failure {
-    Failure::what(span, format!("this is {}, but a {} goes here", is, goes), "A value has to match the type it's going into.")
+    Failure::what(
+        span,
+        format!("this is {}, but a {} goes here", is, goes),
+        "A value has to match the type it's going into.",
+    )
 }
 
 // trace: decision.conditions.if
@@ -429,8 +433,12 @@ pub fn needs_test(span: Span, is: &str) -> Failure {
 
 // trace: decision.lets.change
 pub fn cant_change(span: Span, name: &str, made: Span) -> Failure {
-    Failure::what(span, format!("`@{}` can't change", name), "It says `can't_change`, so it keeps the value it started with.")
-        .because(format!("`@{}` is made can't_change here", name), made)
+    Failure::what(
+        span,
+        format!("`@{}` can't change", name),
+        "It says `can't_change`, so it keeps the value it started with.",
+    )
+    .because(format!("`@{}` is made can't_change here", name), made)
 }
 
 // trace: decision.lists.index
@@ -484,7 +492,9 @@ pub fn problem(problem: crate::numbers::Problem, span: Span, ty: &crate::types::
             _ => fast_too_big(span, &ty.name()),
         },
         Problem::TooSmall(value) => match ty {
-            Type::Whole(whole) => too_small(span, &value.to_string(), &whole.name(), &whole.holds(), &whole.other_name()),
+            Type::Whole(whole) => {
+                too_small(span, &value.to_string(), &whole.name(), &whole.holds(), &whole.other_name())
+            }
             _ => fast_too_big(span, &ty.name()),
         },
         Problem::DividesByZero => divides_by_zero(span),

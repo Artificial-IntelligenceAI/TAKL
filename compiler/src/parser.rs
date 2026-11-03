@@ -13,11 +13,61 @@ use crate::syntax::*;
 
 /// TAKL's own words, which never name a procedure or start an argument.
 pub const GRAMMAR_WORDS: &[&str] = &[
-    "let", "show", "of", "in", "for", "each", "repeat", "times", "position", "offset", "procedure", "returns", "return",
-    "end", "add", "to", "at", "if", "else", "until", "forever", "stop", "finish", "just", "finishes", "and", "or",
-    "also", "not", "is", "isn't", "isnt", "more", "less", "than", "least", "most", "plus", "minus", "divided", "by",
-    "over", "round", "remainder", "sum", "length", "biggest", "smallest", "average", "share", "empty", "true", "false",
-    "table", "nothing",
+    "let",
+    "show",
+    "of",
+    "in",
+    "for",
+    "each",
+    "repeat",
+    "times",
+    "position",
+    "offset",
+    "procedure",
+    "returns",
+    "return",
+    "end",
+    "add",
+    "to",
+    "at",
+    "if",
+    "else",
+    "until",
+    "forever",
+    "stop",
+    "finish",
+    "just",
+    "finishes",
+    "and",
+    "or",
+    "also",
+    "not",
+    "is",
+    "isn't",
+    "isnt",
+    "more",
+    "less",
+    "than",
+    "least",
+    "most",
+    "plus",
+    "minus",
+    "divided",
+    "by",
+    "over",
+    "round",
+    "remainder",
+    "sum",
+    "length",
+    "biggest",
+    "smallest",
+    "average",
+    "share",
+    "empty",
+    "true",
+    "false",
+    "table",
+    "nothing",
 ];
 
 pub fn is_grammar_word(word: &str) -> bool {
@@ -126,8 +176,10 @@ fn starts_value(token: &Token) -> bool {
         TokenKind::Number { .. } | TokenKind::Text(_) | TokenKind::Variable(_) => true,
         TokenKind::Symbol(symbol) => matches!(symbol, '[' | '(' | '~'),
         TokenKind::Word(word) => {
-            matches!(word.as_str(), "true" | "false" | "empty" | "position" | "offset" | "round" | "remainder" | "share")
-                || Family::from_word(word).is_some()
+            matches!(
+                word.as_str(),
+                "true" | "false" | "empty" | "position" | "offset" | "round" | "remainder" | "share"
+            ) || Family::from_word(word).is_some()
                 || !is_grammar_word(word)
         }
     }
@@ -337,11 +389,7 @@ impl<'s> Parser<'s> {
             if is_table && belongs_to_items && !inside_brackets {
                 // trace: decision.tables.item_modifiers
                 if let Base::Table { item, .. } = &base {
-                    let fix = format!(
-                        "table of ({}, {})",
-                        self.text(item.span),
-                        self.text(modifier.span)
-                    );
+                    let fix = format!("table of ({}, {})", self.text(item.span), self.text(modifier.span));
                     self.fail(messages::item_modifier(modifier.span, fix));
                 }
                 continue;
@@ -432,7 +480,8 @@ impl<'s> Parser<'s> {
         Some(Modifier { kind, span: token.span.to(cursor.last_span()) })
     }
 
-    /// Reports the token where reading stopped, and stops reading the line.
+    // trace: decision.loops.no_shortcut
+    /// Reports the token where reading stopped, and stops reading the line: `show "Hi" 50x` stops at `50`.
     fn unreadable(&mut self, cursor: &mut Cursor) {
         if cursor.broken {
             return;
@@ -504,7 +553,10 @@ impl<'s> Parser<'s> {
             }
             Closing::End { line, .. } | Closing::ElseIf { line } | Closing::Else { line } => {
                 let span = self.lines[line].span;
-                self.fail(messages::not_designed_yet(span, format!("a block closed with something other than `end {}`", word)));
+                self.fail(messages::not_designed_yet(
+                    span,
+                    format!("a block closed with something other than `end {}`", word),
+                ));
                 self.at = line + 1;
             }
             Closing::Procedure { line } => {
@@ -558,6 +610,7 @@ impl<'s> Parser<'s> {
                     cursor.next();
                     StatementKind::Finish
                 }
+                // trace: decision.procedures.return
                 "return" => {
                     cursor.next();
                     if cursor.at_word("nothing") {
@@ -638,7 +691,11 @@ impl<'s> Parser<'s> {
             self.unreadable(cursor);
             LetValue::Expression(Expression::broken(span))
         };
-        Statement { kind: StatementKind::Let { name, name_span, written_type: Some(written_type), value }, span, only_if: None }
+        Statement {
+            kind: StatementKind::Let { name, name_span, written_type: Some(written_type), value },
+            span,
+            only_if: None,
+        }
     }
 
     // trace: decision.tables.shape
@@ -646,7 +703,10 @@ impl<'s> Parser<'s> {
         let mut items = Vec::new();
         loop {
             if self.at >= self.lines.len() {
-                self.fail(messages::not_designed_yet(span, format!("this block never ends: `end table @{}` is missing", name)));
+                self.fail(messages::not_designed_yet(
+                    span,
+                    format!("this block never ends: `end table @{}` is missing", name),
+                ));
                 break;
             }
             let tokens = std::mem::take(&mut self.lines[self.at].tokens);
@@ -659,7 +719,10 @@ impl<'s> Parser<'s> {
                     && tokens[1].is_word("table")
                     && matches!(&tokens[2].kind, TokenKind::Variable(found) if *found == name);
                 if !names_it {
-                    self.fail(messages::not_designed_yet(line_span, format!("a table block closed with something other than `end table @{}`", name)));
+                    self.fail(messages::not_designed_yet(
+                        line_span,
+                        format!("a table block closed with something other than `end table @{}`", name),
+                    ));
                 }
                 self.lines[line_index].tokens = tokens;
                 break;
@@ -677,7 +740,8 @@ impl<'s> Parser<'s> {
             items.push(item);
             self.lines[line_index].tokens = tokens;
         }
-        let kind = StatementKind::Let { name, name_span, written_type: Some(written_type), value: LetValue::Block(items) };
+        let kind =
+            StatementKind::Let { name, name_span, written_type: Some(written_type), value: LetValue::Block(items) };
         Statement { kind, span, only_if: None }
     }
 
@@ -855,11 +919,8 @@ impl<'s> Parser<'s> {
     fn add_statement(&mut self, cursor: &mut Cursor) -> StatementKind {
         cursor.next();
         let first = self.test(cursor);
-        let (key, item) = if !cursor.broken && cursor.eat_symbol(':') {
-            (Some(first), self.test(cursor))
-        } else {
-            (None, first)
-        };
+        let (key, item) =
+            if !cursor.broken && cursor.eat_symbol(':') { (Some(first), self.test(cursor)) } else { (None, first) };
         if cursor.broken || !cursor.eat_word("to") {
             self.unreadable(cursor);
             return StatementKind::Broken;
@@ -1006,7 +1067,10 @@ impl<'s> Parser<'s> {
             };
             let right = self.not_level(cursor);
             let span = left.span.to(right.span);
-            left = Expression { kind: ExpressionKind::Logic { operator, left: Box::new(left), right: Box::new(right) }, span };
+            left = Expression {
+                kind: ExpressionKind::Logic { operator, left: Box::new(left), right: Box::new(right) },
+                span,
+            };
         }
     }
 
@@ -1102,7 +1166,10 @@ impl<'s> Parser<'s> {
             cursor.next();
             let right = self.product(cursor);
             let span = left.span.to(right.span);
-            left = Expression { kind: ExpressionKind::Maths { operator, left: Box::new(left), right: Box::new(right) }, span };
+            left = Expression {
+                kind: ExpressionKind::Maths { operator, left: Box::new(left), right: Box::new(right) },
+                span,
+            };
         }
     }
 
@@ -1128,7 +1195,10 @@ impl<'s> Parser<'s> {
             cursor.next();
             let right = self.over(cursor);
             let span = left.span.to(right.span);
-            left = Expression { kind: ExpressionKind::Maths { operator, left: Box::new(left), right: Box::new(right) }, span };
+            left = Expression {
+                kind: ExpressionKind::Maths { operator, left: Box::new(left), right: Box::new(right) },
+                span,
+            };
         }
     }
 
@@ -1286,7 +1356,10 @@ impl<'s> Parser<'s> {
                     }
                     return Expression { kind: ExpressionKind::Bracketed(Box::new(inner)), span };
                 }
-                return Expression { kind: ExpressionKind::Bracketed(Box::new(inner)), span: span.to(cursor.last_span()) };
+                return Expression {
+                    kind: ExpressionKind::Bracketed(Box::new(inner)),
+                    span: span.to(cursor.last_span()),
+                };
             }
             TokenKind::Symbol('[') => return self.square_table(cursor, span),
             TokenKind::Word(word) => match word.as_str() {

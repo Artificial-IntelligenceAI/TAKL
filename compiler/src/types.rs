@@ -9,12 +9,18 @@ use crate::numbers::{Size, WholeType};
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Type {
     Whole(WholeType),
-    Decimal { size: Size, fast: bool },
+    Decimal {
+        size: Size,
+        fast: bool,
+    },
     Fraction(Size),
     Text,
     TrueOrFalse,
     /// `table of T`, keyed 1, 2, 3, or `table of text to T` when `keyed`.
-    Table { keyed: bool, item: Box<Type> },
+    Table {
+        keyed: bool,
+        item: Box<Type>,
+    },
     /// Made only of written numbers, worked out exactly with no size until it goes somewhere typed.
     WrittenWhole,
     WrittenDecimal,
@@ -111,8 +117,20 @@ impl Type {
 
 /// Every type name, for "did you mean".
 pub const TYPE_NAMES: &[&str] = &[
-    "tiny_whole", "small_whole", "medium_whole", "big_whole", "tiny_decimal", "small_decimal", "medium_decimal",
-    "big_decimal", "tiny_fraction", "small_fraction", "medium_fraction", "big_fraction", "text", "true_or_false",
+    "tiny_whole",
+    "small_whole",
+    "medium_whole",
+    "big_whole",
+    "tiny_decimal",
+    "small_decimal",
+    "medium_decimal",
+    "big_decimal",
+    "tiny_fraction",
+    "small_fraction",
+    "medium_fraction",
+    "big_fraction",
+    "text",
+    "true_or_false",
 ];
 
 /// Every modifier, for "did you mean".

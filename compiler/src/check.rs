@@ -16,8 +16,7 @@ use crate::source::{Source, Span};
 use crate::syntax::*;
 use crate::types::{MODIFIER_NAMES, TYPE_NAMES, Type, near_match};
 use num_bigint::BigInt;
-use num_integer::Integer;
-use num_traits::{One, Signed, ToPrimitive, Zero};
+use num_traits::{ToPrimitive, Zero};
 use std::collections::HashMap;
 
 /// How a variable came to be, for the errors that point back at it.
@@ -37,7 +36,7 @@ struct Signature {
 }
 
 pub struct Checker<'s> {
-    source: &'s Source,
+    _source: std::marker::PhantomData<&'s Source>,
     failures: Vec<Failure>,
     signatures: Vec<Signature>,
     by_name: HashMap<String, ProcedureId>,
@@ -57,10 +56,6 @@ fn whole_type(size: Size, never_negative: bool) -> Type {
 impl<'s> Checker<'s> {
     fn fail(&mut self, failure: Failure) {
         self.failures.push(failure);
-    }
-
-    fn text(&self, span: Span) -> String {
-        self.source.text(span).to_string()
     }
 
     // ---- types as written ----
@@ -88,12 +83,18 @@ impl<'s> Checker<'s> {
                 ModifierKind::NeverNegative => match &mut ty {
                     Type::Whole(whole) => whole.never_negative = true,
                     Type::Broken => {}
-                    _ => self.fail(messages::not_designed_yet(modifier.span, format!("`never_negative` on a {}", ty.name()))),
+                    _ => self.fail(messages::not_designed_yet(
+                        modifier.span,
+                        format!("`never_negative` on a {}", ty.name()),
+                    )),
                 },
                 ModifierKind::FastButInexact => match &mut ty {
                     Type::Decimal { fast, .. } => *fast = true,
                     Type::Broken => {}
-                    _ => self.fail(messages::not_designed_yet(modifier.span, format!("`fast_but_inexact` on a {}", ty.name()))),
+                    _ => self.fail(messages::not_designed_yet(
+                        modifier.span,
+                        format!("`fast_but_inexact` on a {}", ty.name()),
+                    )),
                 },
                 ModifierKind::CantChange => {
                     if place != TypePlace::Let {
@@ -115,7 +116,11 @@ impl<'s> Checker<'s> {
                             match in_range {
                                 None => self.fail(messages::bound_outside_type(modifier.span, &whole.name())),
                                 Some(v) => {
-                                    if least { bounds.least = Some(v) } else { bounds.most = Some(v) }
+                                    if least {
+                                        bounds.least = Some(v)
+                                    } else {
+                                        bounds.most = Some(v)
+                                    }
                                     if let (Some(low), Some(high)) = (bounds.least, bounds.most)
                                         && low > high
                                     {
@@ -148,11 +153,17 @@ impl<'s> Checker<'s> {
                         }
                     }
                     "normal" => self.fail(messages::normal_modifier(modifier.span)),
-                    _ => match near_match(&word.replace('\'', ""), MODIFIER_NAMES.iter().map(|name| name.trim_matches('\0'))) {
+                    _ => match near_match(
+                        &word.replace('\'', ""),
+                        MODIFIER_NAMES.iter().map(|name| name.trim_matches('\0')),
+                    ) {
                         Some(near) => self.fail(messages::unknown_modifier_near(modifier.span, word, near)),
                         None => match near_match(word, MODIFIER_NAMES.iter().copied()) {
                             Some(near) => self.fail(messages::unknown_modifier_near(modifier.span, word, near)),
-                            None => self.fail(messages::not_designed_yet(modifier.span, format!("a modifier called `{}`", word))),
+                            None => self.fail(messages::not_designed_yet(
+                                modifier.span,
+                                format!("a modifier called `{}`", word),
+                            )),
                         },
                     },
                 },
@@ -197,7 +208,12 @@ impl<'s> Checker<'s> {
     // ---- variables ----
 
     fn lookup(&self, name: &str) -> Option<&Made> {
-        self.scopes.iter().rev().flat_map(|scope| scope.iter().rev()).find(|(found, _)| found == name).map(|(_, made)| made)
+        self.scopes
+            .iter()
+            .rev()
+            .flat_map(|scope| scope.iter().rev())
+            .find(|(found, _)| found == name)
+            .map(|(_, made)| made)
     }
 
     fn visible_names(&self) -> Vec<String> {
@@ -208,8 +224,11 @@ impl<'s> Checker<'s> {
         if let Some(first) = self.lookup(name).cloned() {
             // trace: decision.lets.change
             self.fail(
-                messages::not_designed_yet(name_span, format!("making `@{}` again while the first one is still there", name))
-                    .because(format!("`@{}` is first made here", name), first.name_span),
+                messages::not_designed_yet(
+                    name_span,
+                    format!("making `@{}` again while the first one is still there", name),
+                )
+                .because(format!("`@{}` is first made here", name), first.name_span),
             );
             return first.id;
         }
@@ -264,7 +283,7 @@ impl<'s> Checker<'s> {
 
     /// The variables a step reads, each once, in the order they are written, for `because:`.
     fn variables_in(expression: &CheckedExpression, found: &mut Vec<VariableId>) {
-        let mut add = |id: VariableId, found: &mut Vec<VariableId>| {
+        let add = |id: VariableId, found: &mut Vec<VariableId>| {
             if !found.contains(&id) {
                 found.push(id);
             }
@@ -314,7 +333,9 @@ impl<'s> Checker<'s> {
         if let (Some(expected), ExpressionKind::About { whole, after_point }) = (expected, &expression.kind) {
             return self.about(whole, after_point.as_deref(), expected, span);
         }
-        if let (Some(expected @ Type::Table { keyed: true, item }), ExpressionKind::KeyedTable(pairs)) = (expected, &expression.kind) {
+        if let (Some(expected @ Type::Table { keyed: true, item }), ExpressionKind::KeyedTable(pairs)) =
+            (expected, &expression.kind)
+        {
             let mut checked = Vec::new();
             for (key, value) in pairs {
                 let key = self.expression(key, Some(&Type::Text));
@@ -325,7 +346,9 @@ impl<'s> Checker<'s> {
         }
         if let (Some(expected), ExpressionKind::Empty) = (expected, &expression.kind) {
             return match expected {
-                Type::Text | Type::Table { .. } => CheckedExpression { kind: CheckedKind::Empty, ty: expected.clone(), span },
+                Type::Text | Type::Table { .. } => {
+                    CheckedExpression { kind: CheckedKind::Empty, ty: expected.clone(), span }
+                }
                 Type::Broken => Self::broken(span),
                 _ => {
                     self.fail(messages::not_designed_yet(span, "`empty` where it isn't text or a table"));
@@ -374,14 +397,20 @@ impl<'s> Checker<'s> {
             return checked;
         }
         match &checked.kind {
-            CheckedKind::Constant(constant) if checked.ty.is_written() => match self.constant_into(constant, expected, span) {
-                Some(made) => CheckedExpression { kind: CheckedKind::Constant(made), ty: expected.clone(), span },
-                None => Self::broken(span),
-            },
+            CheckedKind::Constant(constant) if checked.ty.is_written() => {
+                match self.constant_into(constant, expected, span) {
+                    Some(made) => CheckedExpression { kind: CheckedKind::Constant(made), ty: expected.clone(), span },
+                    None => Self::broken(span),
+                }
+            }
             CheckedKind::WrittenRound { top, bottom, .. } if matches!(expected, Type::Decimal { fast: false, .. }) => {
                 let Type::Decimal { size, .. } = expected else { return Self::broken(span) };
                 match written_decimal(top).divided_by_rounded(&written_decimal(bottom), Some(size.digits())) {
-                    Ok(value) => CheckedExpression { kind: CheckedKind::Constant(Constant::Decimal(value)), ty: expected.clone(), span },
+                    Ok(value) => CheckedExpression {
+                        kind: CheckedKind::Constant(Constant::Decimal(value)),
+                        ty: expected.clone(),
+                        span,
+                    },
                     Err(problem) => {
                         self.fail(messages::problem(problem, span, expected));
                         Self::broken(span)
@@ -403,7 +432,11 @@ impl<'s> Checker<'s> {
             }
             CheckedKind::Resize(_) | CheckedKind::Family { .. } if checked.ty == Type::WrittenWhole => {
                 if matches!(expected, Type::Whole(_)) {
-                    return CheckedExpression { kind: CheckedKind::Resize(Box::new(checked)), ty: expected.clone(), span };
+                    return CheckedExpression {
+                        kind: CheckedKind::Resize(Box::new(checked)),
+                        ty: expected.clone(),
+                        span,
+                    };
                 }
                 self.fail(messages::wrong_type(span, &checked.ty.with_article(), &expected.name()));
                 Self::broken(span)
@@ -478,7 +511,8 @@ impl<'s> Checker<'s> {
 
     fn infer(&mut self, expression: &Expression) -> CheckedExpression {
         let span = expression.span;
-        let constant = |constant: Constant, ty: Type| CheckedExpression { kind: CheckedKind::Constant(constant), ty, span };
+        let constant =
+            |constant: Constant, ty: Type| CheckedExpression { kind: CheckedKind::Constant(constant), ty, span };
         match &expression.kind {
             ExpressionKind::Number { whole, after_point: None } => {
                 constant(Constant::WrittenWhole(whole.parse().unwrap_or_default()), Type::WrittenWhole)
@@ -500,20 +534,36 @@ impl<'s> Checker<'s> {
                     return CheckedExpression { kind: CheckedKind::Empty, ty: Type::WrittenEmpty, span };
                 };
                 // A table takes its items' type from the first typed one; written numbers follow it.
-                let item_type =
-                    checked.iter().find(|item| !item.ty.is_written()).map(|item| item.ty.clone()).unwrap_or(first.ty.clone());
+                let item_type = checked
+                    .iter()
+                    .find(|item| !item.ty.is_written())
+                    .map(|item| item.ty.clone())
+                    .unwrap_or(first.ty.clone());
                 let items: Vec<CheckedExpression> = if item_type.is_written() {
                     let kinds: Vec<Type> = checked.iter().map(|item| item.ty.clone()).collect();
                     if kinds.iter().any(|kind| *kind != item_type) {
-                        let wrong = checked.iter().find(|item| item.ty != item_type).map(|item| item.span).unwrap_or(span);
-                        self.fail(messages::wrong_type(wrong, &checked.iter().find(|item| item.ty != item_type).map(|item| item.ty.with_article()).unwrap_or_default(), &item_type.name()));
+                        let wrong =
+                            checked.iter().find(|item| item.ty != item_type).map(|item| item.span).unwrap_or(span);
+                        self.fail(messages::wrong_type(
+                            wrong,
+                            &checked
+                                .iter()
+                                .find(|item| item.ty != item_type)
+                                .map(|item| item.ty.with_article())
+                                .unwrap_or_default(),
+                            &item_type.name(),
+                        ));
                         return Self::broken(span);
                     }
                     checked
                 } else {
                     checked.into_iter().map(|item| self.made_into(item, &item_type)).collect()
                 };
-                CheckedExpression { kind: CheckedKind::Table(items), ty: Type::Table { keyed: false, item: Box::new(item_type) }, span }
+                CheckedExpression {
+                    kind: CheckedKind::Table(items),
+                    ty: Type::Table { keyed: false, item: Box::new(item_type) },
+                    span,
+                }
             }
             ExpressionKind::KeyedTable(_) => {
                 self.fail(messages::not_designed_yet(span, "a table with named keys where its type isn't written"));
@@ -562,8 +612,10 @@ impl<'s> Checker<'s> {
                 if left.ty.is_broken() || right.ty.is_broken() {
                     return Self::broken(span);
                 }
-                if let (CheckedKind::Constant(Constant::TrueOrFalse(a)), CheckedKind::Constant(Constant::TrueOrFalse(b))) =
-                    (&left.kind, &right.kind)
+                if let (
+                    CheckedKind::Constant(Constant::TrueOrFalse(a)),
+                    CheckedKind::Constant(Constant::TrueOrFalse(b)),
+                ) = (&left.kind, &right.kind)
                 {
                     let value = match operator {
                         Logic::And | Logic::AndAlso => *a && *b,
@@ -629,7 +681,10 @@ impl<'s> Checker<'s> {
                         return Self::broken(span);
                     }
                     other => {
-                        self.fail(messages::not_designed_yet(table.span, format!("`{}` of a {}", counting.word(), other.name())));
+                        self.fail(messages::not_designed_yet(
+                            table.span,
+                            format!("`{}` of a {}", counting.word(), other.name()),
+                        ));
                         return Self::broken(span);
                     }
                 };
@@ -638,7 +693,11 @@ impl<'s> Checker<'s> {
                     return Self::broken(span);
                 }
                 CheckedExpression {
-                    kind: CheckedKind::Index { counting: *counting, index: Box::new(index_checked), table: Box::new(table) },
+                    kind: CheckedKind::Index {
+                        counting: *counting,
+                        index: Box::new(index_checked),
+                        table: Box::new(table),
+                    },
                     ty: item,
                     span,
                 }
@@ -675,7 +734,9 @@ impl<'s> Checker<'s> {
     fn whole_index(&mut self, checked: CheckedExpression) -> Option<CheckedExpression> {
         match &checked.ty {
             Type::Whole(_) => Some(checked),
-            Type::WrittenWhole => Some(self.made_into(checked, &whole_type(Size::Big, false))).filter(|made| !made.ty.is_broken()),
+            Type::WrittenWhole => {
+                Some(self.made_into(checked, &whole_type(Size::Big, false))).filter(|made| !made.ty.is_broken())
+            }
             other => {
                 self.fail(messages::wrong_type(checked.span, &other.with_article(), "whole number"));
                 None
@@ -695,7 +756,13 @@ impl<'s> Checker<'s> {
     }
 
     /// Two sides of maths or a comparison, made the same type; `None` if that can't be done (already reported).
-    fn two_sides(&mut self, left: &Expression, right: &Expression, span: Span, comparing: bool) -> Option<(CheckedExpression, CheckedExpression)> {
+    fn two_sides(
+        &mut self,
+        left: &Expression,
+        right: &Expression,
+        span: Span,
+        comparing: bool,
+    ) -> Option<(CheckedExpression, CheckedExpression)> {
         let left = self.infer(left);
         let right = self.infer(right);
         if left.ty.is_broken() || right.ty.is_broken() {
@@ -751,11 +818,21 @@ impl<'s> Checker<'s> {
             return Self::broken(span);
         }
         let because = self.because_of(&[&left, &right]);
-        CheckedExpression { kind: CheckedKind::Maths { operator, left: Box::new(left), right: Box::new(right), because }, ty, span }
+        CheckedExpression {
+            kind: CheckedKind::Maths { operator, left: Box::new(left), right: Box::new(right), because },
+            ty,
+            span,
+        }
     }
 
     /// Maths on written numbers, worked out now, exactly.
-    fn written_maths(&mut self, operator: Maths, left: &CheckedExpression, right: &CheckedExpression, span: Span) -> CheckedExpression {
+    fn written_maths(
+        &mut self,
+        operator: Maths,
+        left: &CheckedExpression,
+        right: &CheckedExpression,
+        span: Span,
+    ) -> CheckedExpression {
         if let CheckedKind::Fail(problem) | CheckedKind::WrittenRound { problem, .. } = &left.kind {
             return CheckedExpression { kind: CheckedKind::Fail(problem.clone()), ty: left.ty.clone(), span };
         }
@@ -768,7 +845,11 @@ impl<'s> Checker<'s> {
             let left = self.made_into(left.clone(), &ty);
             let right = self.made_into(right.clone(), &ty);
             let because = self.because_of(&[&left, &right]);
-            return CheckedExpression { kind: CheckedKind::Maths { operator, left: Box::new(left), right: Box::new(right), because }, ty, span };
+            return CheckedExpression {
+                kind: CheckedKind::Maths { operator, left: Box::new(left), right: Box::new(right), because },
+                ty,
+                span,
+            };
         };
         let outcome = match (a, b) {
             (Constant::WrittenWhole(x), Constant::WrittenWhole(y)) => match operator {
@@ -789,7 +870,9 @@ impl<'s> Checker<'s> {
                 .map(Constant::WrittenDecimal)
             }
         };
-        let ty = if matches!(outcome, Ok(Constant::WrittenWhole(_))) || (left.ty == Type::WrittenWhole && right.ty == Type::WrittenWhole) {
+        let ty = if matches!(outcome, Ok(Constant::WrittenWhole(_)))
+            || (left.ty == Type::WrittenWhole && right.ty == Type::WrittenWhole)
+        {
             Type::WrittenWhole
         } else {
             Type::WrittenDecimal
@@ -829,11 +912,16 @@ impl<'s> Checker<'s> {
             if let (CheckedKind::Constant(a), CheckedKind::Constant(b)) = (&top.kind, &bottom.kind) {
                 let outcome = match (a, b) {
                     (Constant::WrittenWhole(x), Constant::WrittenWhole(y)) => {
-                        if remainder { numbers::whole_remainder(x, y) } else { numbers::whole_rounded(x, y) }.map(Constant::WrittenWhole)
+                        if remainder { numbers::whole_remainder(x, y) } else { numbers::whole_rounded(x, y) }
+                            .map(Constant::WrittenWhole)
                     }
                     _ => written_decimal(a).divided_by_rounded(&written_decimal(b), None).map(Constant::WrittenDecimal),
                 };
-                let ty = if matches!(outcome, Ok(Constant::WrittenWhole(_))) || ty == Type::WrittenWhole { Type::WrittenWhole } else { Type::WrittenDecimal };
+                let ty = if matches!(outcome, Ok(Constant::WrittenWhole(_))) || ty == Type::WrittenWhole {
+                    Type::WrittenWhole
+                } else {
+                    Type::WrittenDecimal
+                };
                 return match outcome {
                     Ok(value) => CheckedExpression { kind: CheckedKind::Constant(value), ty, span },
                     // A decimal is rounded to the digits of the type it goes into, so this waits until that is known.
@@ -894,7 +982,11 @@ impl<'s> Checker<'s> {
                 _ => written_decimal(a).compare(&written_decimal(b)),
             };
             let value = compare_holds(operator, order);
-            return CheckedExpression { kind: CheckedKind::Constant(Constant::TrueOrFalse(value)), ty: Type::TrueOrFalse, span };
+            return CheckedExpression {
+                kind: CheckedKind::Constant(Constant::TrueOrFalse(value)),
+                ty: Type::TrueOrFalse,
+                span,
+            };
         }
         let (left, right) = if left.ty.is_written() {
             let big = whole_type(Size::Big, false);
@@ -934,7 +1026,11 @@ impl<'s> Checker<'s> {
                             span,
                         };
                     }
-                    CheckedExpression { kind: CheckedKind::Family { family, operand: Box::new(operand) }, ty: Type::WrittenWhole, span }
+                    CheckedExpression {
+                        kind: CheckedKind::Family { family, operand: Box::new(operand) },
+                        ty: Type::WrittenWhole,
+                        span,
+                    }
                 }
                 other => {
                     self.fail(messages::not_designed_yet(span, format!("`length of` a {}", other.name())));
@@ -966,7 +1062,13 @@ impl<'s> Checker<'s> {
         CheckedExpression { kind: CheckedKind::Family { family, operand: Box::new(operand) }, ty: item, span }
     }
 
-    fn written_family(&mut self, family: Family, items: &[CheckedExpression], item: &Type, span: Span) -> CheckedExpression {
+    fn written_family(
+        &mut self,
+        family: Family,
+        items: &[CheckedExpression],
+        item: &Type,
+        span: Span,
+    ) -> CheckedExpression {
         let values: Vec<Decimal> = items
             .iter()
             .filter_map(|value| match &value.kind {
@@ -983,8 +1085,12 @@ impl<'s> Checker<'s> {
         }
         let outcome = match family {
             Family::Sum => Ok(sum),
-            Family::Biggest => Ok(values.iter().cloned().fold(values[0].clone(), |a, b| if b.compare(&a).is_gt() { b } else { a })),
-            Family::Smallest => Ok(values.iter().cloned().fold(values[0].clone(), |a, b| if b.compare(&a).is_lt() { b } else { a })),
+            Family::Biggest => {
+                Ok(values.iter().cloned().fold(values[0].clone(), |a, b| if b.compare(&a).is_gt() { b } else { a }))
+            }
+            Family::Smallest => {
+                Ok(values.iter().cloned().fold(values[0].clone(), |a, b| if b.compare(&a).is_lt() { b } else { a }))
+            }
             Family::Average => {
                 if *item == Type::WrittenWhole {
                     let total = sum.rational().0;
@@ -1001,7 +1107,11 @@ impl<'s> Checker<'s> {
                 ty: Type::WrittenWhole,
                 span,
             },
-            Ok(value) => CheckedExpression { kind: CheckedKind::Constant(Constant::WrittenDecimal(value)), ty: Type::WrittenDecimal, span },
+            Ok(value) => CheckedExpression {
+                kind: CheckedKind::Constant(Constant::WrittenDecimal(value)),
+                ty: Type::WrittenDecimal,
+                span,
+            },
             Err(problem) => CheckedExpression { kind: CheckedKind::Fail(problem), ty: item.clone(), span },
         }
     }
@@ -1034,7 +1144,13 @@ impl<'s> Checker<'s> {
                 let things = if takes == 1 { "thing" } else { "things" };
                 let failure = messages::one_too_many(argument.span, name, takes);
                 let failure = if takes == 1 {
-                    crate::failure::Failure { head: crate::failure::Head::What(format!("`{}` takes 1 {}, and this is one too many", name, things)), ..failure }
+                    crate::failure::Failure {
+                        head: crate::failure::Head::What(format!(
+                            "`{}` takes 1 {}, and this is one too many",
+                            name, things
+                        )),
+                        ..failure
+                    }
                 } else {
                     failure
                 };
@@ -1069,7 +1185,10 @@ impl<'s> Checker<'s> {
                 checked.push(CheckedArgument::Share(id));
             } else {
                 if argument.share {
-                    self.fail(messages::not_designed_yet(argument.span, "`share` for a param that doesn't say `share`"));
+                    self.fail(messages::not_designed_yet(
+                        argument.span,
+                        "`share` for a param that doesn't say `share`",
+                    ));
                 }
                 let value = self.expression(&argument.value, Some(param_type));
                 if value.ty.is_broken() {
@@ -1153,7 +1272,10 @@ impl<'s> Checker<'s> {
                     LetValue::Expression(expression) => Some(self.value_for(expression, &ty, &bounds)),
                     LetValue::Block(items) => Some(self.block_table(items, &ty, span)),
                     LetValue::Missing => {
-                        let failure = messages::not_designed_yet(span, format!("a `let` with no value, so `@{}` would start as nothing", name));
+                        let failure = messages::not_designed_yet(
+                            span,
+                            format!("a `let` with no value, so `@{}` would start as nothing", name),
+                        );
                         self.fail(failure);
                         None
                     }
@@ -1169,7 +1291,10 @@ impl<'s> Checker<'s> {
                     return None;
                 };
                 if made.loop_item {
-                    self.fail(messages::not_designed_yet(*name_span, format!("changing `@{}` while `for each` goes through it", name)));
+                    self.fail(messages::not_designed_yet(
+                        *name_span,
+                        format!("changing `@{}` while `for each` goes through it", name),
+                    ));
                     return None;
                 }
                 if !made.can_change {
@@ -1186,13 +1311,21 @@ impl<'s> Checker<'s> {
                 for piece in pieces {
                     let value = self.infer(piece);
                     match &value.ty {
-                        Type::TrueOrFalse => self.fail(messages::not_designed_yet(value.span, "how `show` prints true or false")),
-                        Type::Table { .. } => self.fail(messages::not_designed_yet(value.span, "how `show` prints a table")),
-                        Type::WrittenEmpty => self.fail(messages::not_designed_yet(value.span, "what `show empty` prints")),
+                        Type::TrueOrFalse => {
+                            self.fail(messages::not_designed_yet(value.span, "how `show` prints true or false"))
+                        }
+                        Type::Table { .. } => {
+                            self.fail(messages::not_designed_yet(value.span, "how `show` prints a table"))
+                        }
+                        Type::WrittenEmpty => {
+                            self.fail(messages::not_designed_yet(value.span, "what `show empty` prints"))
+                        }
                         Type::Nothing => {}
                         _ => {}
                     }
-                    let value = if value.ty == Type::WrittenWhole && !matches!(value.kind, CheckedKind::Constant(_) | CheckedKind::Fail(_)) {
+                    let value = if value.ty == Type::WrittenWhole
+                        && !matches!(value.kind, CheckedKind::Constant(_) | CheckedKind::Fail(_))
+                    {
                         self.made_into(value, &whole_type(Size::Big, false))
                     } else {
                         value
@@ -1245,7 +1378,10 @@ impl<'s> Checker<'s> {
                     Type::Table { keyed, item } => (*keyed, (**item).clone()),
                     Type::Broken => (false, Type::Broken),
                     other => {
-                        self.fail(messages::not_designed_yet(table.span, format!("`for each` over a {}", other.name())));
+                        self.fail(messages::not_designed_yet(
+                            table.span,
+                            format!("`for each` over a {}", other.name()),
+                        ));
                         (false, Type::Broken)
                     }
                 };
@@ -1330,14 +1466,20 @@ impl<'s> Checker<'s> {
                         return None;
                     }
                     (None, true) => {
-                        self.fail(messages::not_designed_yet(item.span, "an item with no name on a table with named keys"));
+                        self.fail(messages::not_designed_yet(
+                            item.span,
+                            "an item with no name on a table with named keys",
+                        ));
                         return None;
                     }
                 };
                 let item = self.expression(item, Some(&item_type));
                 let at = match at {
                     Some((_, index)) if keyed => {
-                        self.fail(messages::not_designed_yet(index.span, "putting a named item at a place in the table"));
+                        self.fail(messages::not_designed_yet(
+                            index.span,
+                            "putting a named item at a place in the table",
+                        ));
                         return None;
                     }
                     Some((counting, index)) => {
@@ -1388,7 +1530,10 @@ impl<'s> Checker<'s> {
             let mut pairs = Vec::new();
             for block_item in items {
                 let Some(key) = &block_item.key else {
-                    self.fail(messages::not_designed_yet(block_item.value.span, "an item with no name on a table with named keys"));
+                    self.fail(messages::not_designed_yet(
+                        block_item.value.span,
+                        "an item with no name on a table with named keys",
+                    ));
                     return Self::broken(span);
                 };
                 let key = self.expression(key, Some(&Type::Text));
@@ -1431,8 +1576,7 @@ impl<'s> Checker<'s> {
         let end = procedure.end_span.unwrap_or(procedure.header_span);
         // The line that ends the procedure is its first that leaves it; any after it is reported as never running.
         let leaves = |statement: &&Statement| {
-            statement.only_if.is_none()
-                && matches!(statement.kind, StatementKind::Finish | StatementKind::Return(_))
+            statement.only_if.is_none() && matches!(statement.kind, StatementKind::Finish | StatementKind::Return(_))
         };
         let last = procedure.body.iter().find(leaves).or(procedure.body.last());
         let last = last.filter(|statement| statement.only_if.is_none()).map(|statement| &statement.kind);
@@ -1493,7 +1637,7 @@ pub fn compare_holds(operator: Compare, order: std::cmp::Ordering) -> bool {
 /// Checks a parsed program. The mistakes come back in the order they are in the program.
 pub fn check(source: &Source, program: &Program, mut failures: Vec<Failure>) -> Result<CheckedProgram, Vec<Failure>> {
     let mut checker = Checker {
-        source,
+        _source: std::marker::PhantomData,
         failures: Vec::new(),
         signatures: Vec::new(),
         by_name: HashMap::new(),
@@ -1504,7 +1648,6 @@ pub fn check(source: &Source, program: &Program, mut failures: Vec<Failure>) -> 
         returns: None,
         procedure_name: String::new(),
     };
-    let _ = checker.source;
     // Every procedure's first line first, so a call can come before the procedure it calls.
     for procedure in &program.procedures {
         let mut params = Vec::new();
@@ -1516,10 +1659,7 @@ pub fn check(source: &Source, program: &Program, mut failures: Vec<Failure>) -> 
         let returns = match &procedure.ending {
             Ending::Returns(written, span) => {
                 let (ty, _) = checker.resolve_type(written, TypePlace::Returns);
-                if procedure.name == "start_running"
-                    && !ty.is_broken()
-                    && ty != whole_type(Size::Tiny, true)
-                {
+                if procedure.name == "start_running" && !ty.is_broken() && ty != whole_type(Size::Tiny, true) {
                     // trace: decision.procedures.exit_code
                     checker.fail(messages::exit_code_type(*span, &ty.name()));
                 }
@@ -1533,7 +1673,10 @@ pub fn check(source: &Source, program: &Program, mut failures: Vec<Failure>) -> 
             }
         };
         if checker.by_name.contains_key(&procedure.name) {
-            checker.fail(messages::not_designed_yet(procedure.name_span, format!("two procedures called `{}`", procedure.name)));
+            checker.fail(messages::not_designed_yet(
+                procedure.name_span,
+                format!("two procedures called `{}`", procedure.name),
+            ));
         } else {
             checker.by_name.insert(procedure.name.clone(), checker.signatures.len());
         }
@@ -1584,4 +1727,3 @@ impl<'s> Checker<'s> {
         resolved
     }
 }
-

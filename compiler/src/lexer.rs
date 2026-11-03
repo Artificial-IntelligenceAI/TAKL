@@ -14,7 +14,10 @@ pub enum TokenKind {
     /// `@name`, held without its `@`.
     Variable(String),
     /// A written number: its whole digits, and its digits after the `.` if it has one.
-    Number { whole: String, after_point: Option<String> },
+    Number {
+        whole: String,
+        after_point: Option<String>,
+    },
     /// Text between quotes, without them.
     Text(String),
     Symbol(char),
@@ -46,6 +49,7 @@ pub enum LexProblem {
     TextNotClosed(Span),
 }
 
+// trace: decision.names.underscore
 fn word_start(c: char) -> bool {
     c.is_alphabetic() || c == '_'
 }
@@ -110,7 +114,10 @@ pub fn lex_line(line_number: u32, line: &str) -> (Vec<Token>, Vec<LexProblem>) {
                 }
                 after_point = Some(digits);
             }
-            tokens.push(Token { kind: TokenKind::Number { whole, after_point }, span: Span::new(line_number, start, end_of(index)) });
+            tokens.push(Token {
+                kind: TokenKind::Number { whole, after_point },
+                span: Span::new(line_number, start, end_of(index)),
+            });
             continue;
         }
         if c == '@' && index + 1 < characters.len() && word_start(characters[index + 1].1) {

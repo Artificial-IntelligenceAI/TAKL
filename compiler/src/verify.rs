@@ -14,7 +14,10 @@ pub fn verify(program: &Program) -> Result<(), String> {
         if procedure.kinds.len() != registers || procedure.params > registers {
             return fail("its register kinds don't match its frame");
         }
-        if !matches!(procedure.instructions.last(), Some(Instruction::Finish | Instruction::Return { .. } | Instruction::Jump { .. })) {
+        if !matches!(
+            procedure.instructions.last(),
+            Some(Instruction::Finish | Instruction::Return { .. } | Instruction::Jump { .. })
+        ) {
             return fail("its code doesn't end");
         }
         for failure in &procedure.failures {
@@ -51,12 +54,17 @@ pub fn verify(program: &Program) -> Result<(), String> {
                     check(dest);
                     (constant as usize) < procedure.heap_constants.len()
                 }
-                Move { dest, source } | MoveHeap { dest, source } | CopyTable { dest, source } | Not { dest, source } => {
+                Move { dest, source }
+                | MoveHeap { dest, source }
+                | CopyTable { dest, source }
+                | Not { dest, source } => {
                     check(dest);
                     check(source);
                     true
                 }
-                WholeMaths { dest, a, b, failure, kind, .. } | WholeRemainder { dest, a, b, failure, kind } | WholeRounded { dest, a, b, failure, kind } => {
+                WholeMaths { dest, a, b, failure, kind, .. }
+                | WholeRemainder { dest, a, b, failure, kind }
+                | WholeRounded { dest, a, b, failure, kind } => {
                     check(dest);
                     check(a);
                     check(b);
