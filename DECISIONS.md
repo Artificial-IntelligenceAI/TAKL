@@ -14,7 +14,9 @@ end_of procedure move
 ```
 
 A param is written as a `let` is, without the word, modifiers after commas; `|` stands between params, so a comma only
-ever joins a param's modifiers. A call has no brackets, as `show` has none (the owner: "print is `show "Hello, World!"`").
+ever joins a param's modifiers. A call has no brackets, as `show` has none (the owner: "print is `show "Hello, World!"`"). Its arguments are
+split by commas, `add 1, 2`, since a call has no modifiers to confuse them with and `add 1 | 2` reads as "1 or 2";
+design claude first wrote that in unasked, then put it to the owner, who chose commas: "yup".
 The owner proposed `procedure`, the brackets, `end_of procedure move`, `|` and `returns`; design claude recommended
 `returns` over `->`, since TAKL says things in words and an error can still mention `->`. No `returns` means nothing comes
 back. The `:` replaced the owner's first `has_body`; design claude called it redundant beside `end_of`, and the owner:
