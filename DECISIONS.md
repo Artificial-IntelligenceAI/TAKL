@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — An exact decimal never rounds on its own: `1 / 3` is an error, `round (1 / 3)` rounds on purpose, as in CyborgPL (owner: "copy")
+
+```
+let slice: small_decimal = round (1 / 3)    # fine
+let slice: small_decimal = 1 / 3            # error: this goes on forever, round it or use a fraction
+```
+
+Design claude first proposed rounding to the type's digits on its own, so a kid sharing a pizza three ways is not
+stopped. The owner: "I mean, have we done that before?" Not in TAKL; in CyborgPL, yes: a decimal with `max_decimals`
+needs a rounding said on purpose, `round.near[..., decimals 2]` and four other modes (CyborgPL, 2026-10-17). Asked whether
+to copy that or round on its own, the owner: "copy". A result that fits the type's digits, `1 / 4` as 0.25, is not
+rounded and needs nothing. Not designed: the rounding modes, rounding to a number of places, and whether the error comes
+at compile time, run time or both.
+
 ### 2026-11-03 — A bare `small_decimal` is exact; `, fast` is the only kind ever written, `normal` is not a word (owner: "yup")
 
 Design claude proposed that a decimal with nothing after it be exact, as maths class is, so a kid never types `normal`;
@@ -196,5 +210,4 @@ what a `let` without `can't_change` may do.
 - Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
-- What an exact decimal does with `1 / 3`, which it cannot hold.
 - True and false.
