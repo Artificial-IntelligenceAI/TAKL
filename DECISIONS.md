@@ -5,6 +5,22 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `= a` copies, `= share a` is the same table; memory is reference counting, copy-on-write, and a cycle collector (owner: "yes")
+
+```
+let b: table of small_whole = a          # a copy, as a number is
+let b: table of small_whole = share a    # the same table: change b, a changes too
+```
+
+The owner: "What memory model? GC, RC, Ownership, Arena, Manual?" Design claude proposed value semantics on reference
+counting and copy-on-write, against the beginner's "I changed `b` and `a` changed too!", with no cycles and so no
+collector. The owner: "I mean, GC is very beginner friendly". Design claude: so is a copy, neither asks a kid to free
+anything; the difference is whether `b = a` shares, as Python's, JavaScript's and Ruby's do, and the collector beneath is
+the implementation's. The owner: "`b = share a`, `b = copy a`, whatever that is. Idk". Design claude proposed a bare
+`= a` copying, the safe and common case, and `share` written when it is meant, as `, fast` and `can't_change` are;
+no `copy`, as there is no `normal`. Sharing allows cycles, an enemy aiming at a player aiming back, which plain counting
+leaks, so a cycle collector runs beneath, as Python's does; a kid never sees it. The owner: "yes".
+
 ### 2026-11-03 — Error messages take Radium's layout, made for kids: `Stopped before running:` or `Stopped while running:`, the place, the code and a `^`, then `what:`, `why:`, `when:`, `because:` (owner: "yes")
 
 The owner had design claude ask Radium's design claude, whose decisions are Radium's D114, D116 to D119, D122 and D123:
