@@ -1,0 +1,7 @@
+procedure start_running just finishes:
+  let @done: true_or_false = false
+  show "not done" if not @done
+  show "brackets" if not (@done is true)
+  show "bare" if not @done is true
+  finish
+end procedure start_running

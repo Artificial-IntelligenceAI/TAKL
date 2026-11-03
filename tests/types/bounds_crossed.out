@@ -1,0 +1,13 @@
+Stopped before running: tests/types/bounds_crossed.takl:2:23, line 2 column 23
+  2 |   let @x: tiny_whole, at least 5, at most 1 = 3
+                            ^^^^^^^^^^^^^^^^^^^^^
+what: `at least` is bigger than `at most`, so no number fits
+why:  The smallest a variable may be can't be bigger than the biggest.
+
+Stopped before running: tests/types/bounds_crossed.takl:3:23, line 3 column 23
+  3 |   let @y: tiny_whole, at most 300 = 3
+                            ^^^^^^^^^^^
+what: this bound is outside what a tiny_whole holds
+why:  A bound has to be a number the type can hold.
+
+2 mistakes found. Start with the first one: tests/types/bounds_crossed.takl:2:23, line 2 column 23.

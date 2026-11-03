@@ -1,0 +1,8 @@
+Stopped before running: tests/show/true_or_false.takl:2:8, line 2 column 8
+  2 |   show true
+             ^^^^
+what: how `show` prints true or false
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/show/true_or_false.takl:2:8, line 2 column 8.

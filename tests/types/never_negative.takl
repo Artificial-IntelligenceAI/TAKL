@@ -1,0 +1,10 @@
+procedure start_running just finishes:
+  let @a: tiny_whole, never_negative = 255
+  let @b: small_whole, never_negative = 65535
+  show @a
+  show @b
+  @a = @a minus 255
+  show @a
+  @a = @a minus 1
+  finish
+end procedure start_running

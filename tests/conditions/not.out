@@ -1,0 +1,7 @@
+Stopped before running: tests/conditions/not.takl:5:22, line 5 column 22
+  5 |   show "bare" if not @done is true
+                           ^^^^^^^^^^^^^
+fix:  not (@done is true)
+why:  `not` goes in front of one name, or of a test in brackets.
+
+1 mistake found: tests/conditions/not.takl:5:22, line 5 column 22.

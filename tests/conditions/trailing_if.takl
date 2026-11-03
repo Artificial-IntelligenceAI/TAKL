@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @lives: tiny_whole = 0
+  show "hi" if @lives is 0
+  show "no" if @lives is 1
+  finish
+end procedure start_running

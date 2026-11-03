@@ -1,0 +1,8 @@
+Stopped before running: tests/show/table.takl:3:8, line 3 column 8
+  3 |   show @t
+             ^^
+what: how `show` prints a table
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.
+
+1 mistake found: tests/show/table.takl:3:8, line 3 column 8.

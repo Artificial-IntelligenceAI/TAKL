@@ -1,0 +1,7 @@
+Stopped before running: tests/types/decimal_digits.takl:3:26, line 3 column 26
+  3 |   let @b: tiny_decimal = 12345678
+                               ^^^^^^^^
+what: this has more digits than a tiny_decimal holds
+why:  Exact decimals never round on their own. Round it with `round (...)`, or use a bigger decimal.
+
+1 mistake found: tests/types/decimal_digits.takl:3:26, line 3 column 26.

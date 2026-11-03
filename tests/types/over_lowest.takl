@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @half: small_fraction = 2 over 4
+  show @half
+  finish
+end procedure start_running

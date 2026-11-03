@@ -1,0 +1,8 @@
+procedure start_running just finishes:
+  let @a: small_whole = 10
+  let @b: small_whole = round (@a divided by 3)
+  show @b
+  let @slice: small_decimal = round (1.0 divided by 3)
+  show @slice
+  finish
+end procedure start_running

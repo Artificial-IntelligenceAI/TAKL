@@ -1,0 +1,8 @@
+Stopped before running: tests/types/approx.takl:2:46, line 2 column 46
+  2 |   let @b: medium_decimal, fast_but_inexact = 0.1
+                                                   ^^^
+what: a medium_decimal, fast_but_inexact can't hold 0.1 exactly
+why:  The nearest it holds is 0.1000000000000000055511151231257827….
+      Write `~0.1` for "about 0.1". It's inexact because computers store these in binary.
+
+1 mistake found: tests/types/approx.takl:2:46, line 2 column 46.

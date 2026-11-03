@@ -1,0 +1,13 @@
+procedure start_running just finishes:
+  let @lives: tiny_whole = 2
+  repeat 3 times:
+    show "Hi"
+  end repeat
+  repeat @lives times:
+    show "Life"
+  end repeat
+  repeat (2 times 2) times:
+    show "Four"
+  end repeat
+  finish
+end procedure start_running

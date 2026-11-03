@@ -1,0 +1,6 @@
+Stopped while running: tests/types/over_lowest.takl:3:8, line 3 column 8
+  3 |   show @half
+             ^^^^^
+what: whether `show` prints 2 over 4 as it is or in its lowest terms
+why:  TAKL hasn't decided how this works yet, so it stops instead of guessing.
+      It's on TAKL's list of open questions.

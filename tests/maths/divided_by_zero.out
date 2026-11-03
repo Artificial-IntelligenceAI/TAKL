@@ -1,0 +1,5 @@
+Stopped while running: tests/maths/divided_by_zero.takl:4:8, line 4 column 8
+  4 |   show @a divided by @b
+             ^^^^^^^^^^^^^^^^
+what: this divides by zero
+why:  Nothing can be divided by zero.

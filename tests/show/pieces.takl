@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @name: text = "Sam"
+  show "Hello, ", @name
+  show "Hello, World!"
+  finish
+end procedure start_running

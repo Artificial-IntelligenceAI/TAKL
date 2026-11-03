@@ -1,0 +1,11 @@
+procedure start_running just finishes:
+  let @lives: tiny_whole = 5
+  show "more" if @lives is more than 4
+  show "less" if @lives is less than 6
+  show "at least" if @lives is at least 5
+  show "at most" if @lives is at most 5
+  show "is" if @lives is 5
+  show "isn't" if @lives isn't 4
+  show "never" if @lives is more than 5
+  finish
+end procedure start_running

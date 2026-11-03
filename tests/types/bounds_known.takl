@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @lives: tiny_whole, at least 0, at most 3 = 5
+  let @count: small_whole, at least 1 = 0
+  finish
+end procedure start_running

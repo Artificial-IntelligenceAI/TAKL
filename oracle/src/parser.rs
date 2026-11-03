@@ -922,7 +922,15 @@ impl<'a> Parser<'a> {
             // trace: decision.conditions.not
             let start = cursor.here();
             cursor.next();
+            let operand_start = cursor.at;
             let operand = self.atom(cursor)?;
+            if cursor.peek_word("is") || cursor.peek_word("isn't") {
+                // `not @done is true` could be `not (@done is true)` or `(not @done) is true`.
+                cursor.at = operand_start;
+                let test = self.not_or_compare(cursor)?;
+                let written = self.text(test.span).to_string();
+                return self.fail(messages::not_needs_brackets(test.span, &written));
+            }
             if !matches!(operand.kind, ExprKind::Variable(_) | ExprKind::Brackets(_)) {
                 let written = self.text(operand.span).to_string();
                 return self.fail(messages::not_needs_brackets(operand.span, &written));
@@ -1023,17 +1031,20 @@ impl<'a> Parser<'a> {
             }
             None => return self.fail(messages::expected_value(cursor.here())),
         };
-        let continues =
-            cursor.peek().is_some_and(|token| ["plus", "minus", "times", "divided"].iter().any(|op| token.is_word(op)));
+        // The word that ends the count: a `repeat`'s last `times`, or `of` after a position.
+        let ends_at = if after == "times" {
+            cursor.tokens.iter().rposition(|token| token.is_word("times"))
+        } else if after == "of" {
+            cursor.tokens[cursor.at..].iter().position(|token| token.is_word("of")).map(|index| index + cursor.at)
+        } else {
+            None
+        };
+        let continues = cursor.at != ends_at.unwrap_or(usize::MAX)
+            && cursor
+                .peek()
+                .is_some_and(|token| ["plus", "minus", "times", "divided"].iter().any(|op| token.is_word(op)));
         if continues {
-            // Read on to the word that should have followed, to write the fix.
-            let mut end = cursor.at;
-            while end < cursor.tokens.len()
-                && !(after.is_empty() || cursor.tokens[end].is_word(after))
-                && !cursor.tokens[end].is_word("of")
-            {
-                end += 1;
-            }
+            let end = ends_at.unwrap_or(cursor.tokens.len());
             let span = Span::new(cursor.tokens[start].span.start, cursor.tokens[end - 1].span.end);
             let written = self.text(span).to_string();
             return self.fail(messages::needs_brackets_after(span, word, &written));

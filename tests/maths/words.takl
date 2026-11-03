@@ -1,0 +1,9 @@
+procedure start_running just finishes:
+  let @score: small_whole = 10
+  @score = @score plus 10
+  show @score
+  show @score minus 5
+  show @score times 3
+  show @score divided by 4
+  finish
+end procedure start_running

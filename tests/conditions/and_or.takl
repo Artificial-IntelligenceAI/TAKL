@@ -1,0 +1,8 @@
+procedure start_running just finishes:
+  let @lives: tiny_whole = 0
+  let @score: tiny_whole = 0
+  let @time: tiny_whole = 5
+  show "a" if (@lives is 0 and @score is 0) or @time is 0
+  show "b" if @lives is 0 and @score is 0 or @time is 0
+  finish
+end procedure start_running

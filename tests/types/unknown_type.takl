@@ -1,0 +1,7 @@
+procedure start_running just finishes:
+  let @a: int = 5
+  let @b: string = "hi"
+  let @c: smal_whole = 5
+  let @d: i32 = 5
+  finish
+end procedure start_running

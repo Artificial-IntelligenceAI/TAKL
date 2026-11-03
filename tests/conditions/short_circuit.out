@@ -1,0 +1,6 @@
+checked
+Stopped while running: tests/conditions/short_circuit.takl:6:44, line 6 column 44
+  6 |   show "never" if @i is at most 3 and also position @i of @xs is 0
+                                                 ^^^^^^^^^^^^^^^^^^
+what: there's no position 5: it only has 3 items
+why:  `position` counts from 1, and `offset` counts from 0.

@@ -1,0 +1,11 @@
+procedure start_running just finishes:
+  let @lives: tiny_whole = 1
+  if @lives is 0:
+    show "Game over"
+  else if @lives is 1:
+    show "Last life!"
+  else:
+    show "Keep going"
+  end if
+  finish
+end procedure start_running

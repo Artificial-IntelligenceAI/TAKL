@@ -1,0 +1,9 @@
+procedure start_running just finishes:
+  let @n: tiny_whole = 0
+  repeat forever:
+    @n = @n plus 1
+    stop if @n is 3
+  end repeat
+  show @n
+  finish
+end procedure start_running

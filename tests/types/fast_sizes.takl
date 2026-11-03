@@ -1,0 +1,9 @@
+procedure start_running just finishes:
+  let @a: tiny_decimal, fast_but_inexact = ~0.1
+  let @b: small_decimal, fast_but_inexact = ~0.1
+  let @d: big_decimal, fast_but_inexact = ~0.1
+  show @a
+  show @b
+  show @d
+  finish
+end procedure start_running

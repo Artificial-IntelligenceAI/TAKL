@@ -1,0 +1,13 @@
+Stopped before running: tests/types/bounds_known.takl:2:51, line 2 column 51
+  2 |   let @lives: tiny_whole, at least 0, at most 3 = 5
+                                                        ^
+what: 5 is outside this variable's bounds
+why:  It has to be at least 0 and at most 3.
+
+Stopped before running: tests/types/bounds_known.takl:3:41, line 3 column 41
+  3 |   let @count: small_whole, at least 1 = 0
+                                              ^
+what: 0 is outside this variable's bounds
+why:  It has to be at least 1.
+
+2 mistakes found. Start with the first one: tests/types/bounds_known.takl:2:51, line 2 column 51.

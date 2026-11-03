@@ -601,8 +601,13 @@ impl<'a> Machine<'a> {
                     _ => inner,
                 };
                 if let ExprKind::Maths(MathsOp::DividedBy, left, right) = &unbracketed.kind {
-                    let a = self.eval(left)?;
-                    let b = self.eval(right)?;
+                    let mut a = self.eval(left)?;
+                    let mut b = self.eval(right)?;
+                    // Written numbers take the type the rounded answer goes into, so it rounds to that type's digits.
+                    if let Some(ty) = self.facts.targets.get(&expr.id) {
+                        a = self.make(a, ty, left.span)?;
+                        b = self.make(b, ty, right.span)?;
+                    }
                     let value = self.maths(unbracketed, MathsOp::DividedBy, a, b, true)?;
                     return Ok(value);
                 }

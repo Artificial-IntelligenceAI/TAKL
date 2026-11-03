@@ -1,0 +1,10 @@
+procedure start_running just finishes:
+  let @price: small_decimal = 4.99
+  let @total: small_decimal = 2.50
+  show @price
+  show @total
+  show @total plus 1.5
+  show @total times 2
+  show @total divided by 4
+  finish
+end procedure start_running

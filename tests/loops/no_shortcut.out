@@ -1,0 +1,7 @@
+Stopped before running: tests/loops/no_shortcut.takl:2:13, line 2 column 13
+  2 |   show "Hi" 50x
+                  ^^
+what: `50` doesn't belong here
+why:  TAKL couldn't read the line from this point on.
+
+1 mistake found: tests/loops/no_shortcut.takl:2:13, line 2 column 13.

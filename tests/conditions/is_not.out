@@ -1,0 +1,7 @@
+Stopped before running: tests/conditions/is_not.takl:3:23, line 3 column 23
+  3 |   show "no" if @lives is not 4
+                            ^^^^^^
+fix:  isn't
+why:  TAKL writes "is not" as one word, `isn't`.
+
+1 mistake found: tests/conditions/is_not.takl:3:23, line 3 column 23.

@@ -1,0 +1,7 @@
+Stopped before running: tests/types/fast_is_now.takl:2:27, line 2 column 27
+  2 |   let @b: medium_decimal, fast = 0.5
+                                ^^^^
+fix:  fast_but_inexact
+why:  A fast decimal is never exact, because computers store it in binary. The name says so.
+
+1 mistake found: tests/types/fast_is_now.takl:2:27, line 2 column 27.

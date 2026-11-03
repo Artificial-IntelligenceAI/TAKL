@@ -1,0 +1,26 @@
+Stopped before running: tests/types/unknown_type.takl:2:11, line 2 column 11
+  2 |   let @a: int = 5
+                ^^^
+what: TAKL has no `int`
+why:  TAKL names whole numbers by size: tiny_whole, small_whole, medium_whole, big_whole.
+      Add `, never_negative` for one that's never below zero.
+
+Stopped before running: tests/types/unknown_type.takl:3:11, line 3 column 11
+  3 |   let @b: string = "hi"
+                ^^^^^^
+fix:  text
+why:  Other languages call text a string.
+
+Stopped before running: tests/types/unknown_type.takl:4:11, line 4 column 11
+  4 |   let @c: smal_whole = 5
+                ^^^^^^^^^^
+fix:  small_whole
+why:  There's no type called `smal_whole`.
+
+Stopped before running: tests/types/unknown_type.takl:5:11, line 5 column 11
+  5 |   let @d: i32 = 5
+                ^^^
+fix:  medium_whole
+why:  TAKL names whole numbers by size. Other languages call this an int32.
+
+4 mistakes found. Start with the first one: tests/types/unknown_type.takl:2:11, line 2 column 11.

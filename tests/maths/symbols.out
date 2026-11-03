@@ -1,0 +1,25 @@
+Stopped before running: tests/maths/symbols.takl:3:11, line 3 column 11
+  3 |   show @a + 1
+                ^
+fix:  plus
+why:  TAKL writes maths in words.
+
+Stopped before running: tests/maths/symbols.takl:4:11, line 4 column 11
+  4 |   show @a * 2
+                ^
+fix:  times
+why:  TAKL writes maths in words.
+
+Stopped before running: tests/maths/symbols.takl:5:11, line 5 column 11
+  5 |   show @a / 2
+                ^
+fix:  divided by
+why:  TAKL writes maths in words, and `/` usually means "or".
+
+Stopped before running: tests/maths/symbols.takl:6:11, line 6 column 11
+  6 |   show @a - 1
+                ^
+fix:  minus
+why:  TAKL writes maths in words.
+
+4 mistakes found. Start with the first one: tests/maths/symbols.takl:3:11, line 3 column 11.

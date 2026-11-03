@@ -1,0 +1,7 @@
+3
+0
+Stopped while running: tests/types/bounds.takl:6:12, line 6 column 12
+  6 |   @lives = @lives minus 1
+                 ^^^^^^^^^^^^^^
+what: -1 is outside this variable's bounds
+why:  It has to be at least 0 and at most 3.

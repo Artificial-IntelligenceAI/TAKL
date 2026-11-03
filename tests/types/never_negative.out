@@ -1,0 +1,11 @@
+255
+65535
+0
+Stopped while running: tests/types/never_negative.takl:8:8, line 8 column 8
+  8 |   @a = @a minus 1
+             ^^^^^^^^^^
+what: -1 is too small for a tiny_whole, never_negative
+why:  A tiny_whole, never_negative holds 0 to 255. Other languages call this an uint8.
+because: @a was 0, tests/types/never_negative.takl:6:3, line 6 column 3
+  6 |   @a = @a minus 255
+        ^^^^^^^^^^^^^^^^^

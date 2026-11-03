@@ -1,0 +1,13 @@
+procedure start_running just finishes:
+  let @a: tiny_whole = 127
+  let @b: small_whole = 32767
+  let @c: medium_whole = 2147483647
+  let @d: big_whole = 9223372036854775807
+  let @e: tiny_whole = 0 minus 128
+  show @a
+  show @b
+  show @c
+  show @d
+  show @e
+  finish
+end procedure start_running

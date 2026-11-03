@@ -1,0 +1,7 @@
+Stopped before running: tests/types/approx_exact.takl:2:27, line 2 column 27
+  2 |   let @b: small_decimal = ~0.1
+                                ^^^^
+what: `~` is only for `fast_but_inexact` decimals
+why:  `~0.1` means "the nearest a fast decimal can hold". Exact decimals hold what you write.
+
+1 mistake found: tests/types/approx_exact.takl:2:27, line 2 column 27.

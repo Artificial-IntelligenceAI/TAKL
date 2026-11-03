@@ -947,7 +947,15 @@ impl<'a> Checker<'a> {
                 }
             }
             ExprKind::Round(inner) => {
-                let ty = self.expr(inner, want);
+                // What is rounded is worked out with no type of its own, then rounded to the type it goes into.
+                let ty = self.expr(inner, None);
+                let ty = match want {
+                    Some(want) if ty.is_written() && want.is_number() && !want.is_written() => {
+                        self.facts.targets.insert(expr.id, want.clone());
+                        want.clone()
+                    }
+                    _ => ty,
+                };
                 if matches!(ty, Ty::Fast(_) | Ty::Fraction(_)) {
                     self.error(messages::round_this_not_designed(expr.span, &ty.name()));
                     return Ty::Unknown;

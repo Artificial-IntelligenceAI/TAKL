@@ -1,0 +1,8 @@
+Stopped before running: tests/loops/repeat_brackets.takl:2:10, line 2 column 10
+  2 |   repeat 2 times 2 times:
+               ^^^^^^^^^
+fix:  repeat (2 times 2)
+why:  After `repeat`, one number or one name can stand alone.
+      Anything more goes in brackets.
+
+1 mistake found: tests/loops/repeat_brackets.takl:2:10, line 2 column 10.

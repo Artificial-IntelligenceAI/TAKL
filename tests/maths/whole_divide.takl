@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: small_whole = 7
+  show @a divided by 2
+  finish
+end procedure start_running

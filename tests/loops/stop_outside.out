@@ -1,0 +1,13 @@
+Stopped before running: tests/loops/stop_outside.takl:2:3, line 2 column 3
+  2 |   stop
+        ^^^^
+what: `stop` is outside every loop
+why:  `stop` leaves the loop it's in. To leave a procedure that just finishes, use `finish`.
+
+Stopped before running: tests/loops/stop_outside.takl:3:3, line 3 column 3
+  3 |   finish
+        ^^^^^^
+what: this line never runs: `stop` already left the loop
+why:  Lines after it in the same block are never reached.
+
+2 mistakes found. Start with the first one: tests/loops/stop_outside.takl:2:3, line 2 column 3.

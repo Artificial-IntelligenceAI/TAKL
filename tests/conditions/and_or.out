@@ -1,0 +1,8 @@
+Stopped before running: tests/conditions/and_or.takl:6:43, line 6 column 43
+  6 |   show "b" if @lives is 0 and @score is 0 or @time is 0
+                                                ^^
+what: this mixes `and` with `or` without brackets
+why:  `a and b or c` could mean `(a and b) or c` or `a and (b or c)`.
+      Add brackets to say which one you mean.
+
+1 mistake found: tests/conditions/and_or.takl:6:43, line 6 column 43.

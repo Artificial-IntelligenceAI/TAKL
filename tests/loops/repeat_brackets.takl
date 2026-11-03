@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  repeat 2 times 2 times:
+    show "Four"
+  end repeat
+  finish
+end procedure start_running

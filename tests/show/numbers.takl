@@ -1,0 +1,7 @@
+procedure start_running just finishes:
+  let @x: small_whole = 500
+  let @y: small_decimal = 2.50
+  let @z: small_fraction = 1 over 3
+  show @x, " ", @y, " ", @z
+  finish
+end procedure start_running

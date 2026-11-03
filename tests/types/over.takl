@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @third: small_fraction = 1 over 3
+  show @third
+  show 2 over 7
+  finish
+end procedure start_running

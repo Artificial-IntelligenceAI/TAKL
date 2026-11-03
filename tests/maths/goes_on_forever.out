@@ -1,0 +1,8 @@
+Stopped while running: tests/maths/goes_on_forever.takl:3:8, line 3 column 8
+  3 |   show @a divided by 3
+             ^^^^^^^^^^^^^^^
+what: this goes on forever, so a decimal can't hold it exactly
+why:  Exact decimals never round on their own. Round it with `round (...)`, or use a fraction.
+because: @a was 1.0, tests/maths/goes_on_forever.takl:2:3, line 2 column 3
+  2 |   let @a: small_decimal = 1.0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^

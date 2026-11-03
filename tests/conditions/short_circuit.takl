@@ -1,0 +1,8 @@
+procedure start_running just finishes:
+  let @xs: table of small_whole = [1, 2, 3]
+  let @i: small_whole = 5
+  show "in range" if @i is at most length of @xs and position @i of @xs is 0
+  show "checked" if @i is more than 3 or position @i of @xs is 0
+  show "never" if @i is at most 3 and also position @i of @xs is 0
+  finish
+end procedure start_running

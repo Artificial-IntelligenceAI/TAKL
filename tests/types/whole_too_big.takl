@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: tiny_whole = 128
+  let @b: small_whole = 40000
+  finish
+end procedure start_running

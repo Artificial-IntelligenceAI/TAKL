@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  stop
+  finish
+end procedure start_running

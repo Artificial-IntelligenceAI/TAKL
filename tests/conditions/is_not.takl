@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @lives: tiny_whole = 5
+  show "no" if @lives is not 4
+  finish
+end procedure start_running

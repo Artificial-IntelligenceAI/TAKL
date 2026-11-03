@@ -1,0 +1,7 @@
+Stopped before running: tests/types/exact_bare.takl:2:26, line 2 column 26
+  2 |   let @a: small_decimal, normal = 1.5
+                               ^^^^^^
+what: `normal` isn't a modifier
+why:  A decimal is exact unless it says `fast_but_inexact`, so there's nothing to add.
+
+1 mistake found: tests/types/exact_bare.takl:2:26, line 2 column 26.
