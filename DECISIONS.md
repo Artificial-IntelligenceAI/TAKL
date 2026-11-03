@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `can't_change` and `cant_change` are both read; what autocorrect changes is read as typed (owner: "accept both seems like a good idea", "some autocorrect protection")
+
+Design claude raised that kids will type `cant_change`, and that text pasted from a document or a chat carries a curly
+`’`. The owner: "accept both seems like a good idea, and maybe we should have some autocorrect protection". Design claude
+proposed reading autocorrect's changes as what was meant, with no message: `’` as `'`, `“ ”` as `"`, `—` as `-`, because
+that was autocorrect's doing and not the kid's; a real typo is the next entry. The owner did not object.
+
 ### 2026-11-03 — `let` names a type before its value; `small_whole` is an int16; `show` prints; `#` starts a comment (owner)
 
 The owner's first program:
