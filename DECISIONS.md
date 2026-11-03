@@ -5,6 +5,24 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Decimals and fractions take the whole numbers' sizes: `medium_decimal, fast` is a float64, `small_decimal` exact, `small_fraction` two small_wholes; no 8-bit float (owner: "yes")
+
+| size | `, fast` (a float) | exact | `_fraction`, top and bottom each a |
+|---|---|---|---|
+| tiny | float16 | 7 digits | tiny_whole |
+| small | float32 | 16 digits | small_whole |
+| medium | float64 | 34 digits | medium_whole |
+| big | float128 | about 70 digits | big_whole |
+
+Design claude set out real floats (`0.1 + 0.2` is `0.30000000000000004`) against exact decimals (`0.3`, slower). The
+owner proposed `fast_decimal` and `normal_decimal`, then "we would add sizes too, and also rationales", and then, of
+design claude's `big_normal_decimal`: "Where are the other names, and I mean we could do `big_decimal`, and then `fast` or
+`normal`". So a decimal is named by size as a whole number is, and what kind it is goes after the comma; a rational is a
+`fraction`, a word kids know from school, exact for `1/3`. Design claude kept float128 for the ladder's sake, though most
+CPUs run it in software and it is not fast, the help to say so. Asked about binary8: it is not in IEEE 754; 8-bit floats
+are OCP FP8's two and IEEE P3109's several, about 2 digits, run by no CPU. Design claude recommended leaving it out and
+`tiny_decimal, fast` a float16. The owner: "yes".
+
 ### 2026-11-03 — TAKL takes inspiration from Ruby, and that is all (owner)
 
 Design claude asked what TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons. The owner:
@@ -173,4 +191,6 @@ what a `let` without `can't_change` may do.
 - Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
-- The types that are not whole numbers.
+- Whether a bare `small_decimal` is exact with `, fast` the only word written, or `normal` is written too; design claude proposed bare is exact.
+- What an exact decimal does with `1 / 3`, which it cannot hold.
+- True and false.
