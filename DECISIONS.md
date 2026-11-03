@@ -5,6 +5,27 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The `of` family, `length of`, `sum of`, `biggest of`, `smallest of`, `average of`, beside one in-order `for each` loop; kids can write their own `of` (owner: "yea")
+
+```
+show sum of scores
+
+for each score in scores:
+  show score
+end_of for
+
+for each name and age in ages:
+  show name
+end_of for
+```
+
+Design claude proposed `for each`, one loop in place of Lua's `pairs` and `ipairs`, always in order: 1, 2, 3 for a
+numbered table, the order things were put in for a named one. The owner: "For that, you could just say `sum of`,
+`leghth of`, wait... There could be a whole family". Design claude proposed the five, under the bracket rule
+(`sum of (position 1 of grid)`), and `for each` kept for what no word does, showing each name or moving each enemy;
+asked whether the family looks right and whether kids can write their own, the owner: "yea". Not designed: how a kid's
+own `of` is written.
+
 ### 2026-11-03 — `repeat 50 times:` ... `end_of repeat`; a count from a variable is `repeat lives times:` (owner: "good")
 
 ```
@@ -230,6 +251,8 @@ what a `let` without `can't_change` may do.
 
 ## Open
 
-- Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
+- Holes, as design claude proposed: setting past a table's end refused.
+- How a kid writes their own `something of`.
+- A loop while something holds; `if`.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
