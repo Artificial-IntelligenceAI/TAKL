@@ -93,7 +93,9 @@ pub fn lex_line(line_number: u32, line: &str) -> (Vec<Token>, Vec<LexProblem>) {
             }
             let span = Span::new(line_number, start, end_of(index));
             if !closed {
+                // Text that never closes isn't a value, so the line is read as if it weren't there.
                 problems.push(LexProblem::TextNotClosed(span));
+                continue;
             }
             tokens.push(Token { kind: TokenKind::Text(text), span });
             continue;

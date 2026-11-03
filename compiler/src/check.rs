@@ -281,49 +281,19 @@ impl<'s> Checker<'s> {
         CheckedExpression { kind: CheckedKind::Constant(Constant::TrueOrFalse(false)), ty: Type::Broken, span }
     }
 
-    /// The variables a step reads, each once, in the order they are written, for `because:`.
-    fn variables_in(expression: &CheckedExpression, found: &mut Vec<VariableId>) {
-        let add = |id: VariableId, found: &mut Vec<VariableId>| {
-            if !found.contains(&id) {
+    // trace: decision.errors.layout
+    /// The variables a maths step works on, each once, in the order they are written, for `because:`: its own
+    /// operands that are variables, not variables inside a bracket, a call or `round`, which are steps of their own.
+    fn because_of(&self, operands: &[&CheckedExpression]) -> Vec<VariableId> {
+        let mut found = Vec::new();
+        for operand in operands {
+            if let CheckedKind::Variable(id) = operand.kind
+                && !found.contains(&id)
+                && self.variables[id].ty.is_number()
+            {
                 found.push(id);
             }
-        };
-        match &expression.kind {
-            CheckedKind::Variable(id) => add(*id, found),
-            CheckedKind::Maths { left, right, .. }
-            | CheckedKind::Compare { left, right, .. }
-            | CheckedKind::Logic { left, right, .. } => {
-                Self::variables_in(left, found);
-                Self::variables_in(right, found);
-            }
-            CheckedKind::Remainder { top, bottom, .. } | CheckedKind::RoundedDivide { top, bottom, .. } => {
-                Self::variables_in(top, found);
-                Self::variables_in(bottom, found);
-            }
-            CheckedKind::Not(inner) | CheckedKind::Resize(inner) => Self::variables_in(inner, found),
-            CheckedKind::Family { operand, .. } => Self::variables_in(operand, found),
-            CheckedKind::Index { index, table, .. } => {
-                Self::variables_in(index, found);
-                Self::variables_in(table, found);
-            }
-            CheckedKind::Call(call) => {
-                for argument in &call.arguments {
-                    if let CheckedArgument::Value(value) = argument {
-                        Self::variables_in(value, found);
-                    }
-                }
-            }
-            CheckedKind::Table(items) => items.iter().for_each(|item| Self::variables_in(item, found)),
-            _ => {}
         }
-    }
-
-    fn because_of(&self, expression: &[&CheckedExpression]) -> Vec<VariableId> {
-        let mut found = Vec::new();
-        for part in expression {
-            Self::variables_in(part, &mut found);
-        }
-        found.retain(|id| self.variables[*id].ty.is_number());
         found
     }
 
@@ -586,8 +556,9 @@ impl<'s> Checker<'s> {
                 }
                 Self::broken(span)
             }
-            ExpressionKind::Call { name, name_span, arguments, .. } => {
-                let Some(call) = self.call(name, *name_span, arguments, span) else { return Self::broken(span) };
+            ExpressionKind::Call { name, arguments, .. } => {
+                // A call inside a line is pointed at as a whole, `g(1)`; one on its own line, at its name.
+                let Some(call) = self.call(name, span, arguments, span) else { return Self::broken(span) };
                 match self.signatures[call.procedure].returns.clone() {
                     Some(returns) => CheckedExpression { kind: CheckedKind::Call(call), ty: returns, span },
                     None => {
@@ -723,7 +694,15 @@ impl<'s> Checker<'s> {
             }
             ExpressionKind::Bracketed(inner) => {
                 let mut checked = self.infer(inner);
-                checked.span = span;
+                // A step that stops while running points at the maths inside the brackets; a written value made into
+                // a type points at the brackets too.
+                let runs = matches!(
+                    checked.kind,
+                    CheckedKind::Maths { .. } | CheckedKind::Remainder { .. } | CheckedKind::RoundedDivide { .. }
+                );
+                if !runs {
+                    checked.span = span;
+                }
                 checked
             }
             ExpressionKind::Broken => Self::broken(span),

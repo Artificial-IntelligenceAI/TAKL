@@ -1164,6 +1164,11 @@ impl<'s> Parser<'s> {
                 _ => return left,
             };
             cursor.next();
+            if cursor.done() && self.failures.last().is_some_and(|failure| failure.span == cursor.last_span()) {
+                // A maths symbol at the end of the line is reported once, as the symbol.
+                cursor.broken = true;
+                return left;
+            }
             let right = self.product(cursor);
             let span = left.span.to(right.span);
             left = Expression {
@@ -1232,7 +1237,7 @@ impl<'s> Parser<'s> {
                 && cursor.peek_at(1).is_some_and(|of| of.is_word("of"))
             {
                 cursor.at += 2;
-                let operand = self.unary(cursor);
+                let operand = self.after_of(cursor);
                 let span = start.to(operand.span);
                 return Expression { kind: ExpressionKind::Family { family, operand: Box::new(operand) }, span };
             }
@@ -1262,7 +1267,7 @@ impl<'s> Parser<'s> {
                         self.unreadable(cursor);
                         return Expression::broken(start);
                     }
-                    let table = self.unary(cursor);
+                    let table = self.after_of(cursor);
                     let span = start.to(table.span);
                     return Expression {
                         kind: ExpressionKind::Index { counting, index: Box::new(index), table: Box::new(table) },
@@ -1293,6 +1298,35 @@ impl<'s> Parser<'s> {
             }
         }
         self.primary(cursor)
+    }
+
+    fn at_maths(cursor: &Cursor) -> bool {
+        cursor.peek().is_some_and(|token| {
+            token.is_word("plus")
+                || token.is_word("minus")
+                || token.is_word("times")
+                || (token.is_word("divided") && cursor.peek_at(1).is_some_and(|by| by.is_word("by")))
+                || ['+', '-', '*', '/'].iter().any(|symbol| token.is_symbol(*symbol))
+        })
+    }
+
+    // trace: decision.lists.index_bare
+    /// What follows `of`: one number or one name stands alone, and anything more goes in brackets.
+    fn after_of(&mut self, cursor: &mut Cursor) -> Expression {
+        let start = cursor.at;
+        let operand = self.unary(cursor);
+        if cursor.broken || !Self::at_maths(cursor) {
+            return operand;
+        }
+        cursor.at = start;
+        let before = self.failures.len();
+        let whole = self.sum(cursor);
+        // Only the brackets are reported here; what is inside them is read again once they are added.
+        self.failures.truncate(before);
+        let fix = format!("of ({})", self.text(whole.span));
+        self.fail(messages::needs_brackets(whole.span, "of", fix));
+        // Reported; nothing more is said about what it would have meant.
+        Expression::broken(whole.span)
     }
 
     fn primary(&mut self, cursor: &mut Cursor) -> Expression {
