@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A table's item type with modifiers is bracketed: `table of (tiny_whole, never_negative)`; a modifier outside is the variable's (owner: "yes")
+
+```
+let data: table of (tiny_whole, never_negative) = [72, 105]
+let data: table of (tiny_whole, never_negative), can't_change = [72, 105]
+```
+
+The owner asked whether TAKL needs to tell UTF-8 apart from bytes. Design claude proposed bytes as no type of their own,
+a table of `tiny_whole, never_negative`, met when a kid opens a file or an image, and raised that in
+`table of tiny_whole, never_negative` the modifier could be the items' or the table's. The owner: "How do we make that
+less confusing?" Design claude proposed the index rule again, brackets for what goes together, inside them what each item
+is and outside what the variable is; `table of tiny_whole, never_negative` bare is an error asking
+"did you mean `table of (tiny_whole, never_negative)`?". The owner: "yes".
+
 ### 2026-11-03 — Tables, as Lua's: `table of small_whole` keyed 1, 2, 3, `table of text to small_whole` by name; `[10, 20, 30]` on one line, a block past it (owner: "yes")
 
 ```
@@ -139,6 +153,7 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
+- Text as design claude proposed: always valid UTF-8, counted in letters as seen, so `"👍🏽"` is 1 long; turning it into bytes an explicit step.
 - The name of the text type; `text` is design claude's, used in examples, never chosen.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
