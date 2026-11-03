@@ -5,6 +5,16 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Tests join with `and` and `or`; mixing the two needs brackets (owner: "yes")
+
+```
+if (lives is 0 and score is 0) or time is 0:     # fine
+if lives is 0 and score is 0 or time is 0:       # error: add brackets
+```
+
+Whether `a and b or c` is `(a and b) or c` or `a and (b or c)` is refused rather than remembered, as
+`position i + 1 of xs` is; Easium had left it open. Design claude proposed it; the owner: "yes". Not designed: `not`.
+
 ### 2026-11-03 — `if lives is 0:` ... `else if lives is 1:` ... `else:` ... `end if` (owner: "yup")
 
 ```
