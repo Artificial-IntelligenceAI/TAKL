@@ -8,11 +8,14 @@ pub mod check;
 pub mod checked;
 pub mod failure;
 pub mod interpreter;
+pub mod ir;
+pub mod jit;
 pub mod lexer;
 pub mod lower;
 pub mod messages;
 pub mod numbers;
 pub mod parser;
+pub mod passes;
 pub mod precompute;
 pub mod runtime;
 pub mod source;
@@ -78,6 +81,12 @@ pub fn run_with(name: &str, text: &str, mode: Mode, live: bool) -> Outcome {
     let program = Arc::new(bytecode);
     let mut machine = interpreter::Machine::new(Arc::clone(&program), live);
     machine.tiers = tiering::start(&program, mode);
+    if let Some(tiers) = &machine.tiers
+        && tiers.broken.load(std::sync::atomic::Ordering::Relaxed)
+    {
+        let output = broke(source::Span::new(1, 0, 0), "Cranelift couldn't compile it").render_running(&source);
+        return shown(Outcome { output, exit_code: 1 }, live);
+    }
     let ran = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| machine.run_start()));
     let mut output = String::from_utf8_lossy(&machine.output).to_string();
     let exit_code = match ran {

@@ -99,18 +99,22 @@ impl Machine {
         }
     }
 
+    /// The program, which lives as long as the machine holding it.
+    #[inline(always)]
+    fn code<'a>(&self) -> &'a Program {
+        // SAFETY: `self.program` is never replaced, and the machine keeps it alive while anything runs.
+        unsafe { &*Arc::as_ptr(&self.program) }
+    }
+
     /// Calls a procedure with these arguments, already counted for the callee.
     pub fn call_with(&mut self, procedure: u32, arguments: &[u64]) -> Result<u64, Stopped> {
         let base = self.top;
-        let program = Arc::clone(&self.program);
-        let callee = &program.procedures[procedure as usize];
+        let callee = &self.code().procedures[procedure as usize];
         // SAFETY: the stack is reserved for the deepest calls allowed (see the module's comment).
         unsafe {
             let frame = self.stack.as_mut_ptr().add(base);
-            for register in 0..callee.registers {
-                if callee.kinds[register] == RegisterKind::Heap {
-                    *frame.add(register) = 0;
-                }
+            for register in &callee.heap_registers {
+                *frame.add(*register as usize) = 0;
             }
             for (index, argument) in arguments.iter().enumerate() {
                 *frame.add(index) = *argument;
@@ -120,32 +124,33 @@ impl Machine {
     }
 
     /// Runs a procedure whose arguments are in its frame at `base`, then releases its heap registers.
+    #[inline(always)]
     pub fn enter(&mut self, procedure: u32, base: usize) -> Result<u64, Stopped> {
-        if let Some(tiers) = self.tiers.clone()
-            && let Some(answer) = tiers.call(self, procedure, base)
-        {
-            return answer;
+        if let Some(tiers) = &self.tiers {
+            // SAFETY: the tiers live as long as the machine holding them.
+            let tiers: &crate::tiering::Tiers = unsafe { &*Arc::as_ptr(tiers) };
+            if let Some(answer) = tiers.call(self, procedure, base) {
+                return answer;
+            }
         }
         self.interpret(procedure, base, 0)
     }
 
     /// Interprets a procedure from `start`, its frame at `base`.
     pub fn interpret(&mut self, procedure: u32, base: usize, start: usize) -> Result<u64, Stopped> {
-        let program = Arc::clone(&self.program);
-        let this = &program.procedures[procedure as usize];
+        let this = &self.code().procedures[procedure as usize];
         let saved_top = self.top;
         self.top = base + this.registers;
         let answer = self.run(this, procedure, base, start);
         self.top = saved_top;
         // SAFETY: as in `call_with`.
         let frame = unsafe { self.stack.as_mut_ptr().add(base) };
-        for register in 0..this.registers {
-            if this.kinds[register] == RegisterKind::Heap {
-                // SAFETY: inside the frame; a heap register holds a counted pointer or 0.
-                unsafe {
-                    runtime::release(*frame.add(register));
-                    *frame.add(register) = 0;
-                }
+        for register in &this.heap_registers {
+            // SAFETY: inside the frame; a heap register holds a counted pointer or 0.
+            unsafe {
+                let slot = frame.add(*register as usize);
+                runtime::release(*slot);
+                *slot = 0;
             }
         }
         answer
@@ -161,6 +166,52 @@ impl Machine {
         let code = &procedure.instructions[..];
         // SAFETY: see the module's comment; `verify` checked every register and jump below.
         let frame = unsafe { self.stack.as_mut_ptr().add(base) };
+        let mut pc = start;
+        loop {
+            // SAFETY: `verify` checked that every jump lands inside the code, and the code ends in `Finish`.
+            let instruction = unsafe { *code.get_unchecked(pc) };
+            pc += 1;
+            // SAFETY: `frame` is this procedure's frame, as `execute` needs.
+            if let Some(answer) = unsafe { self.execute(procedure, id, instruction, &mut pc, base, frame) } {
+                return answer;
+            }
+        }
+    }
+
+    /// Runs one instruction of compiled code that has no inline form of its own, its frame at `frame`.
+    ///
+    /// # Safety
+    /// `frame` is the frame of `procedure`, at `base` in the stack, with every number register the instruction
+    /// reads stored in it.
+    pub unsafe fn step(&mut self, id: u32, at: usize, frame: *mut u64) -> Result<(), Stopped> {
+        let procedure = &self.code().procedures[id as usize];
+        let instruction = procedure.instructions[at];
+        let base = (frame as usize - self.stack.as_ptr() as usize) / 8;
+        let saved_top = self.top;
+        self.top = base + procedure.registers;
+        let mut pc = at + 1;
+        let answer = unsafe { self.execute(procedure, id, instruction, &mut pc, base, frame) };
+        self.top = saved_top;
+        match answer {
+            Some(Err(stopped)) => Err(stopped),
+            _ => Ok(()),
+        }
+    }
+
+    /// Runs one instruction; `Some` when the procedure is done or stopped.
+    ///
+    /// # Safety
+    /// `frame` is `procedure`'s frame, checked by `verify`.
+    #[inline(always)]
+    unsafe fn execute(
+        &mut self,
+        procedure: &Procedure,
+        id: u32,
+        instruction: Instruction,
+        pc: &mut usize,
+        base: usize,
+        frame: *mut u64,
+    ) -> Option<Result<u64, Stopped>> {
         macro_rules! reg {
             ($register:expr) => {
                 *frame.add($register as usize)
@@ -174,13 +225,10 @@ impl Machine {
                 *slot = value;
             }};
         }
-        let mut pc = start;
-        loop {
-            // SAFETY: `verify` checked that every jump lands inside the code, and the code ends in `Finish`.
-            let instruction = unsafe { *code.get_unchecked(pc) };
-            pc += 1;
+        {
             unsafe {
-                match instruction {
+                #[allow(clippy::unit_arg)]
+                let _: () = match instruction {
                     Instruction::Load { dest, value } => reg!(dest) = value as u64,
                     Instruction::LoadHeap { dest, constant } => {
                         let value = procedure.heap_constants[constant as usize];
@@ -202,7 +250,7 @@ impl Machine {
                         let (x, y) = (reg!(a), reg!(b));
                         match whole_maths(operator, kind, x, y) {
                             Some(answer) => reg!(dest) = answer,
-                            None => return Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame)),
+                            None => return Some(Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame))),
                         }
                     }
                     Instruction::WholeMathsBy { operator, kind, dest, a, by, failure } => {
@@ -210,14 +258,16 @@ impl Machine {
                         let y = by as i64 as u64;
                         match whole_maths(operator, kind, x, y) {
                             Some(answer) => reg!(dest) = answer,
-                            None => return Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame)),
+                            None => return Some(Err(self.whole_failure(procedure, failure, operator, kind, x, y, frame))),
                         }
                     }
                     Instruction::WholeRemainder { kind, dest, a, b, failure } => {
                         let (x, y) = (runtime::whole_value(kind, reg!(a)), runtime::whole_value(kind, reg!(b)));
-                        match numbers::whole_remainder(&BigInt::from(x), &BigInt::from(y)) {
-                            Ok(answer) => reg!(dest) = whole_bits(&answer),
-                            Err(problem) => return Err(self.stop(procedure, failure, Detail::Problem(problem), frame)),
+                        if x >= 0 && y > 0 {
+                            reg!(dest) = (x % y) as u64;
+                        } else {
+                            let problem = numbers::whole_remainder(&BigInt::from(x), &BigInt::from(y)).err().unwrap_or(Problem::DividesByZero);
+                            return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
                         }
                     }
                     Instruction::WholeRounded { kind, dest, a, b, failure } => {
@@ -226,7 +276,7 @@ impl Machine {
                             .and_then(|answer| WHOLE_KINDS[kind as usize].check_big(&answer));
                         match answer {
                             Ok(answer) => reg!(dest) = answer as u64,
-                            Err(problem) => return Err(self.stop(procedure, failure, Detail::Problem(problem), frame)),
+                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
                         }
                     }
                     Instruction::WholeCompare { operator, unsigned, dest, a, b } => {
@@ -234,12 +284,12 @@ impl Machine {
                     }
                     Instruction::JumpIfWhole { operator, unsigned, a, b, target } => {
                         if whole_compare(operator, unsigned, reg!(a), reg!(b)) {
-                            pc = target as usize;
+                            *pc = target as usize;
                         }
                     }
                     Instruction::JumpIfWholeBy { operator, unsigned, a, by, target } => {
                         if whole_compare(operator, unsigned, reg!(a), by as i64 as u64) {
-                            pc = target as usize;
+                            *pc = target as usize;
                         }
                     }
                     Instruction::CheckWhole { kind, source, failure } => {
@@ -247,7 +297,7 @@ impl Machine {
                         let (smallest, biggest) = WHOLE_LIMITS[kind as usize];
                         if value < smallest || value > biggest {
                             let problem = WHOLE_KINDS[kind as usize].check(value as i128).err().unwrap_or(Problem::TooBig(BigInt::from(value)));
-                            return Err(self.stop(procedure, failure, Detail::Problem(problem), frame));
+                            return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame)));
                         }
                     }
                     Instruction::CheckBounds { source, failure } => {
@@ -255,14 +305,14 @@ impl Machine {
                         if let FailureKind::Bounds { bounds } = &procedure.failures[failure as usize].kind
                             && !bounds.allows(value)
                         {
-                            return Err(self.stop(procedure, failure, Detail::Value(value), frame));
+                            return Some(Err(self.stop(procedure, failure, Detail::Value(value), frame)));
                         }
                     }
                     Instruction::FastMaths { operator, size, dest, a, b, failure } => {
                         let (x, y) = (reg!(a), reg!(b));
                         match fast_maths(operator, size, x, y) {
                             Ok(answer) => reg!(dest) = answer,
-                            Err(problem) => return Err(self.stop(procedure, failure, Detail::Problem(problem), frame)),
+                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
                         }
                     }
                     Instruction::FastCompare { operator, size, dest, a, b } => {
@@ -273,7 +323,7 @@ impl Machine {
                         let ty = &procedure.types[type_id as usize];
                         match heap_maths(operator, ty, reg!(a), reg!(b)) {
                             Ok(answer) => set_heap!(dest, answer),
-                            Err(problem) => return Err(self.stop(procedure, failure, Detail::Problem(problem), frame)),
+                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
                         }
                     }
                     Instruction::HeapRounded { type_id, dest, a, b, failure } => {
@@ -286,7 +336,7 @@ impl Machine {
                         let y = runtime::decimal_of(reg!(b));
                         match x.divided_by_rounded(y, digits) {
                             Ok(answer) => set_heap!(dest, runtime::new_heap(HeapValue::Decimal(answer))),
-                            Err(problem) => return Err(self.stop(procedure, failure, Detail::Problem(problem), frame)),
+                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
                         }
                     }
                     Instruction::HeapCompare { operator, type_id, dest, a, b } => {
@@ -300,25 +350,25 @@ impl Machine {
                         reg!(dest) = compare(operator, order) as u64;
                     }
                     Instruction::Not { dest, source } => reg!(dest) = (reg!(source) == 0) as u64,
-                    Instruction::Jump { target } => pc = target as usize,
+                    Instruction::Jump { target } => *pc = target as usize,
                     Instruction::JumpIfTrue { source, target } => {
                         if reg!(source) != 0 {
-                            pc = target as usize;
+                            *pc = target as usize;
                         }
                     }
                     Instruction::JumpIfFalse { source, target } => {
                         if reg!(source) == 0 {
-                            pc = target as usize;
+                            *pc = target as usize;
                         }
                     }
                     Instruction::LoopBack { target, loop_id } => {
-                        pc = target as usize;
+                        *pc = target as usize;
                         if let Some(tiers) = &self.tiers
                             && tiers.loop_is_hot(id, loop_id)
                         {
                             let tiers = Arc::clone(tiers);
                             if let Some(answer) = tiers.jump_in(self, id, loop_id, base) {
-                                return answer;
+                                return Some(answer);
                             }
                         }
                     }
@@ -326,13 +376,13 @@ impl Machine {
                         let next = reg!(counter) as i64 + 1;
                         reg!(counter) = next as u64;
                         if next < reg!(limit) as i64 {
-                            pc = target as usize;
+                            *pc = target as usize;
                             if let Some(tiers) = &self.tiers
                                 && tiers.loop_is_hot(id, loop_id)
                             {
                                 let tiers = Arc::clone(tiers);
                                 if let Some(answer) = tiers.jump_in(self, id, loop_id, base) {
-                                    return answer;
+                                    return Some(answer);
                                 }
                             }
                         }
@@ -340,7 +390,7 @@ impl Machine {
                     Instruction::CheckCount { source, failure } => {
                         let count = reg!(source) as i64;
                         if count < 0 {
-                            return Err(self.stop(procedure, failure, Detail::Value(count as i128), frame));
+                            return Some(Err(self.stop(procedure, failure, Detail::Value(count as i128), frame)));
                         }
                     }
                     Instruction::ShowPiece { source, type_id, failure } => {
@@ -353,13 +403,16 @@ impl Machine {
                             // trace: decision.types.over
                             let detail = Detail::Fraction(top.clone(), bottom.clone());
                             self.line.clear();
-                            return Err(self.stop(procedure, failure, detail, frame));
+                            return Some(Err(self.stop(procedure, failure, detail, frame)));
                         }
                         self.line.push_str(&runtime::show(ty, bits));
                     }
                     Instruction::ShowEnd => self.show_end(),
                     Instruction::Call { procedure: callee, dest, arguments, failure } => {
-                        let answer = self.call_from(procedure, callee, &procedure.call_arguments[arguments as usize], failure, frame)?;
+                        let answer = match self.call_from(procedure, callee, &procedure.call_arguments[arguments as usize], failure, frame) {
+                            Ok(answer) => answer,
+                            Err(stopped) => return Some(Err(stopped)),
+                        };
                         if procedure.kinds[dest as usize] == RegisterKind::Heap {
                             set_heap!(dest, answer);
                         } else {
@@ -371,10 +424,10 @@ impl Machine {
                         if procedure.kinds[source as usize] == RegisterKind::Heap {
                             runtime::retain(value);
                         }
-                        return Ok(value);
+                        return Some(Ok(value));
                     }
-                    Instruction::Finish => return Ok(0),
-                    Instruction::Fail { failure } => return Err(self.stop(procedure, failure, Detail::Nothing, frame)),
+                    Instruction::Finish => return Some(Ok(0)),
+                    Instruction::Fail { failure } => return Some(Err(self.stop(procedure, failure, Detail::Nothing, frame))),
                     Instruction::NewTable { dest, keyed, item_heap } => set_heap!(dest, runtime::new_table(keyed, item_heap)),
                     Instruction::Push { table, source } | Instruction::Add { table, source } => {
                         let value = reg!(source);
@@ -402,7 +455,7 @@ impl Machine {
                             true
                         });
                         if added != Some(true) {
-                            return Err(self.stop(procedure, failure, Detail::Key(key), frame));
+                            return Some(Err(self.stop(procedure, failure, Detail::Key(key), frame)));
                         }
                     }
                     Instruction::AddAt { table, source, counting, at, failure } => {
@@ -410,7 +463,7 @@ impl Machine {
                         let offset = if counting == Counting::Position { asked - 1 } else { asked };
                         let length = runtime::table_length(reg!(table));
                         if offset < 0 || offset > length as i128 {
-                            return Err(self.stop(procedure, failure, Detail::Place { asked, count: length }, frame));
+                            return Some(Err(self.stop(procedure, failure, Detail::Place { asked, count: length }, frame)));
                         }
                         let value = reg!(source);
                         runtime::change_table(reg!(table), |storage| {
@@ -429,7 +482,7 @@ impl Machine {
                         let storage = runtime::storage(reg!(table));
                         if offset < 0 || offset >= storage.items.len() as i128 {
                             let count = storage.items.len();
-                            return Err(self.stop(procedure, failure, Detail::Place { asked, count }, frame));
+                            return Some(Err(self.stop(procedure, failure, Detail::Place { asked, count }, frame)));
                         }
                         let value = storage.items[offset as usize];
                         if heap {
@@ -459,7 +512,7 @@ impl Machine {
                             Some(letter) => set_heap!(dest, runtime::new_text(letter)),
                             None => {
                                 let count = whole.letters;
-                                return Err(self.stop(procedure, failure, Detail::Place { asked, count }, frame));
+                                return Some(Err(self.stop(procedure, failure, Detail::Place { asked, count }, frame)));
                             }
                         }
                     }
@@ -473,16 +526,17 @@ impl Machine {
                                     reg!(dest) = answer;
                                 }
                             }
-                            Err(problem) => return Err(self.stop(procedure, failure, Detail::Problem(problem), frame)),
+                            Err(problem) => return Some(Err(self.stop(procedure, failure, Detail::Problem(problem), frame))),
                         }
                     }
                     Instruction::TextCompare { operator, dest, a, b } => {
                         let order = runtime::text_of(reg!(a)).text.cmp(&runtime::text_of(reg!(b)).text);
                         reg!(dest) = compare(operator, order) as u64;
                     }
-                }
+                };
             }
         }
+        None
     }
 
     fn show_end(&mut self) {
@@ -503,19 +557,17 @@ impl Machine {
         if self.depth >= MOST_CALLS {
             return Err(self.stop(caller, failure, Detail::Nothing, frame));
         }
-        let program = Arc::clone(&self.program);
-        let called = &program.procedures[callee as usize];
-        if let Some(building) = self.building.clone()
+        let called = &self.code().procedures[callee as usize];
+        if self.building.is_some()
+            && let Some(building) = self.building.clone()
             && let Some(answer) = building.look_up(self, callee, arguments, frame)
         {
             return Ok(answer);
         }
         let base = self.top;
         let callee_frame = self.frame_at(base);
-        for register in 0..called.registers {
-            if called.kinds[register] == RegisterKind::Heap {
-                *callee_frame.add(register) = 0;
-            }
+        for register in &called.heap_registers {
+            *callee_frame.add(*register as usize) = 0;
         }
         for (index, register) in arguments.iter().enumerate() {
             let value = *frame.add(*register as usize);

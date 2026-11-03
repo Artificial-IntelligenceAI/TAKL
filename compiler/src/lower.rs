@@ -1050,10 +1050,12 @@ pub fn lower(program: &CheckedProgram) -> Program {
                 _ => None,
             })
             .collect();
+        let heap_registers = (0..registers).filter(|register| kinds[*register] == RegisterKind::Heap).map(|register| register as Register).collect();
         procedures.push(Procedure {
             name: procedure.name.clone(),
             instructions: lowerer.instructions,
             registers,
+            heap_registers,
             kinds,
             params: procedure.params.len(),
             returns: procedure.returns.clone(),

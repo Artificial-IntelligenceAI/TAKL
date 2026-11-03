@@ -215,6 +215,8 @@ pub struct Procedure {
     pub instructions: Vec<Instruction>,
     pub registers: usize,
     pub kinds: Vec<RegisterKind>,
+    /// Every heap register, emptied when the procedure starts and released when it ends.
+    pub heap_registers: Vec<Register>,
     pub params: usize,
     pub returns: Option<Type>,
     pub heap_constants: Vec<HeapRef>,
