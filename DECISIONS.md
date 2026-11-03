@@ -5,6 +5,21 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `start_running` either `just finishes`, exiting with 0, or `returns tiny_whole, never_negative`, exiting with what it returns; a program stopped by an error exits with 1 (owner: "yes")
+
+`decision.procedures.exit_code`
+
+```
+procedure start_running returns tiny_whole, never_negative:
+  show "Something went wrong"
+  return 1
+end procedure start_running
+```
+
+The owner: "What if they wanna return an `int`?", meaning `start_running`. Design claude proposed the exit code's type
+be `tiny_whole, never_negative`, 0 to 255, which is what Mac and Linux keep of an exit code, so the type is true and the
+range rule catches a 300 the system would chop without a word; any other type is an error saying so. The owner: "yes".
+
 ### 2026-11-03 — A procedure that gives nothing back says `just finishes` where another says `returns small_whole`; leaving both out is an error (owner: "yes")
 
 `decision.procedures.just_finishes`
