@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A line can end in `if`: `show "hi" if lives is 0` (owner)
+
+The owner: "Also, `show \"hi\" if...` is legal". A line runs only when the test after its `if` holds. Design claude
+reads it as any line, `stop if lives is 0` among them. Not designed: `if` as a block.
+
 ### 2026-11-03 — `repeat until lives is 0:` ... `end repeat`, checked before each round; no `while` (owner: "yes")
 
 ```
