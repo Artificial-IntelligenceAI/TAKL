@@ -5,6 +5,25 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A call inside another line is bracketed, `show add_up(x, 2)`; a call standing alone is bare, `add_up x, 2` (owner: "yes")
+
+`decision.procedures.nested_calls`
+
+```
+add_up x, 2
+show add_up(x, 2)
+let total: small_whole = add_up(x, 2)
+show heal(hp)
+```
+
+The owner: "Should it be `show add(x, 2)` instead? So, it wouldn't read weird, and `add` could go bare when not inside
+another". Design claude: it also ends a real ambiguity, `show add x, 2` being `show (add x), 2` or `show (add x, 2)`,
+since `show`'s pieces and a call's arguments are both split by commas; the bracket rule again, looking like maths
+class's f(x). Design claude proposed it for every call inside another line, one argument too, so there is one rule.
+The owner: "yes". The built-in `of` family keeps its own form, `show sum of scores`. Design claude noted that `add` is
+already grammar, `add 40 to scores`, so the example became `add_up`; whether a grammar word may name a procedure is not
+designed.
+
 ### 2026-11-03 — `, fast` is `, fast_but_inexact`: `let speed: medium_decimal, fast_but_inexact = ~2.5` (owner: "yes")
 
 `decision.types.fast_but_inexact`
