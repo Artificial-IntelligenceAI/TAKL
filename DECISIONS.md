@@ -5,7 +5,25 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `finish` leaves a procedure that gives nothing back, in place of `return nothing`; `return` always carries a value (owner: "yup")
+
+`decision.procedures.finish`
+
+```
+procedure start_running:
+  show "Hello, World!"
+  finish
+end procedure start_running
+```
+
+The owner: "`return nothing` kinda looks like `show` doesn't happen, because `return nothing`": it mixes giving back
+with doing. Design claude proposed `finish`, which says only that the procedure is done, leaving `return x` one meaning.
+It is required where `return nothing` was, and the three errors guarding it hold for `finish`. With it, `nothing` is no
+longer a TAKL word. The owner: "yup". This replaces `return nothing` in the entries below.
+
 ### 2026-11-03 — Three errors guard `return nothing`: a line after it never runs, it at the end of a loop asks "did you mean `stop`?", and a procedure that `returns` a value must give one (owner: "yes")
+
+`return nothing` is `finish` since the same day: the entry "`finish` leaves a procedure" above.
 
 `decision.errors.return_nothing`
 
@@ -21,6 +39,8 @@ says `returns small_whole` ("you said this gives back a small_whole, so return o
 The owner wrote `return nothing;`; asked whether the `;` was meant, the owner: "no". A line ends at the end of the line.
 
 ### 2026-11-03 — A procedure that gives nothing back ends with `return nothing`, `start_running` too (owner: "yes")
+
+`return nothing` is `finish` since the same day: the entry "`finish` leaves a procedure" above.
 
 `decision.procedures.return_nothing_required`
 
@@ -56,6 +76,8 @@ all, and one word for both lets `let x: text = greet "Sam"` look right. One name
 tables too. The owner: "Are both words accurate?" Yes, `nothing` being grammar only. The owner: "yea".
 
 ### 2026-11-03 — `return nothing` leaves a procedure that gives nothing back; `nothing` is grammar, never a value (owner: "yea")
+
+`return nothing` is `finish` since the same day: the entry "`finish` leaves a procedure" above.
 
 `decision.procedures.return_nothing`
 
