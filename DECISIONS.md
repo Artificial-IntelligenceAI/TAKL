@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — No holes: setting past a table's end is refused, "xs has 3 items, use `add` to put one on the end" (owner: "Yes")
+
+Design claude proposed it against Lua's holes, where a table's length stops being true. The owner, of a quick round:
+"Yes to all, except errors". Not designed: the word for putting an item on the end; `add` is design claude's.
+
 ### 2026-11-03 — `and` and `or` short-circuit; `and also` and `or also` always check both sides (owner: "yes", "good")
 
 ```
@@ -471,7 +476,6 @@ what a `let` without `can't_change` may do.
 
 ## Open
 
-- Holes, as design claude proposed: setting past a table's end refused.
 - `repeat forever:` with `stop` for leaving a loop early (Easium D41).
 - Whether a param is handed a copy unless it says `share`, `reset share scores` at the call; design claude proposed it.
 - How many errors are shown at once; design claude proposed the first only.
