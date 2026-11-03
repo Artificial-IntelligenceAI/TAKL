@@ -5,6 +5,15 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `return nothing` leaves a procedure that gives nothing back; `nothing` is grammar, never a value (owner: "yea")
+
+`decision.procedures.return_nothing`
+
+The owner: "Should it return void? Like `return nothing`?" Design claude: yes, and it says what comes back better than
+a bare `return`. Asked whether the word is accurate, design claude: only if `nothing` is not a value, since
+`let x: text = nothing` would rebuild Ruby's `nil`; so `nothing` appears only after `return`, never stored or handed
+on. The owner: "yea".
+
 ### 2026-11-03 — A program can have `procedure start_running:` ... `end procedure start_running`, where running starts (owner)
 
 `decision.procedures.start_running`
