@@ -5,6 +5,22 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Error messages take Radium's layout, made for kids: `Stopped before running:` or `Stopped while running:`, the place, the code and a `^`, then `what:`, `why:`, `when:`, `because:` (owner: "yes")
+
+The owner had design claude ask Radium's design claude, whose decisions are Radium's D114, D116 to D119, D122 and D123:
+a first line of the kind and the place twice, `file:line:column` for editors (the column in UTF-8 bytes) then
+`line N column M` for people (in grapheme clusters); the code line with a `^` run under exactly the part, counted in
+grapheme clusters; lined-up `what:` (always), `why:` (always), `when:` (the values, where there are some); `fix:` in
+place of `what:` only when there is exactly one fix, code to copy, a list of fixes thrown out as more places to be
+wrong; `because:` links, the earlier steps that led here, each with its place, code and pointer, in the order they
+happened; one layout at compile time and run time, the kind word alone differing; only what is certain is said.
+
+Design claude proposed copying it with three changes for kids: the kind words are `Stopped before running:` and
+`Stopped while running:`; `why:` gives the rule in plain words with no decision number, and bridges to other
+languages ("other languages call this an int16"); "did you mean" is Radium's `fix:`, given only when one near match
+is certain, several near matches getting the facts and no guess. The owner: "yes". Not designed: how many errors are
+shown at once.
+
 ### 2026-11-03 — One IR between bytecode and Cranelift, at two strengths: warm code gets few passes and Cranelift's quick mode, very hot code every pass and its speed mode (owner: "yes")
 
 ```
@@ -335,6 +351,8 @@ rewritten in; kids' game loops get hot, so a second tier is not pointless. Both 
 exception: a program that behaves differently once it warms up is a bug no kid can find. The owner: "Yeah, seems good".
 
 ### 2026-11-03 — A real typo stops the program, with a "did you mean" (owner: "stop, obviously")
+
+Narrowed the same day by the error-message entry above: "did you mean" only when one near match is certain.
 
 Design claude proposed that `cant_chang` be answered with "did you mean `can't_change`?" and never guessed and run, since
 a guess teaches that sloppy spelling works. Asked whether that stops the program or only warns, the owner: "stop,
