@@ -5,6 +5,18 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — One IR between bytecode and Cranelift, at two strengths: warm code gets few passes and Cranelift's quick mode, very hot code every pass and its speed mode (owner: "yes")
+
+```
+bytecode → TAKL's IR → Cranelift
+```
+
+The owner: "should there be two IR to feed to Cranelift? A less optimized, and a very optimized?" Design claude
+proposed one IR worked at two strengths: bytecode is poor to optimize over and Cranelift's IR has lost TAKL's types,
+so what knows TAKL, a `+ 1` that cannot overflow, inlining, is done in between; two strengths win back some of what
+LLVM gave in very hot code, and two IRs would write each optimization twice, the drift between tiers again. The owner:
+"yes". Not designed: what warm and very hot are, and which passes each strength runs.
+
 ### 2026-11-03 — The shared form is bytecode: the interpreter runs it, Cranelift compiles from it (owner: "yes")
 
 The owner: "What's the diff between Bytecode and IR?" Design claude: an IR is any form between source and machine code,
