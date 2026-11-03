@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  finish
+  show "never"
+end procedure start_running

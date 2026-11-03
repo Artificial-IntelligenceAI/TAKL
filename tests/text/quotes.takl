@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  show “Curly quotes”
+  show "Straight"
+  finish
+end procedure start_running

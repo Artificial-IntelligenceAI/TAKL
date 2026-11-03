@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @scores: table of small_whole = [10, 20, 30]
+  show sum_of(@scores)
+  finish
+end procedure start_running

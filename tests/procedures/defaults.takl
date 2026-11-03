@@ -1,0 +1,10 @@
+procedure move (@speed: small_whole = 5) just finishes:
+  show "speed ", @speed
+  finish
+end procedure move
+
+procedure start_running just finishes:
+  move
+  move 3
+  finish
+end procedure start_running

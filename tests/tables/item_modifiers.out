@@ -1,0 +1,7 @@
+Stopped before running: tests/tables/item_modifiers.takl:4:34, line 4 column 34
+  4 |   let @bad: table of tiny_whole, never_negative = [1]
+                                       ^^^^^^^^^^^^^^
+fix:  table of (tiny_whole, never_negative)
+why:  Is that modifier the table's or its items'? Brackets say: inside them is what each item is.
+
+1 mistake found: tests/tables/item_modifiers.takl:4:34, line 4 column 34.

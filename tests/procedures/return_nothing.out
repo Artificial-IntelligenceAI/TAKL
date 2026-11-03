@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/return_nothing.takl:2:3, line 2 column 3
+  2 |   return nothing
+        ^^^^^^^^^^^^^^
+fix:  finish
+why:  A procedure that gives nothing back ends with `finish`.
+
+1 mistake found: tests/procedures/return_nothing.takl:2:3, line 2 column 3.

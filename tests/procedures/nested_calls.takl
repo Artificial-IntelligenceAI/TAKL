@@ -1,0 +1,16 @@
+procedure heal (@hp: small_whole) returns small_whole:
+  return @hp plus 10
+end procedure heal
+
+procedure add_up (@a: small_whole | @b: small_whole) just finishes:
+  show @a plus @b
+  finish
+end procedure add_up
+
+procedure start_running just finishes:
+  let @hp: small_whole = 50
+  show heal(@hp)
+  show heal @hp
+  add_up(1, 2)
+  finish
+end procedure start_running

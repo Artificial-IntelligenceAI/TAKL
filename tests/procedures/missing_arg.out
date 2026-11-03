@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/missing_arg.takl:7:3, line 7 column 3
+  7 |   move
+        ^^^^
+what: `move` needs its param number 1
+why:  Every param without a default has to be given something.
+
+1 mistake found: tests/procedures/missing_arg.takl:7:3, line 7 column 3.

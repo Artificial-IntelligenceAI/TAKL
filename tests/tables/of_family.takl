@@ -1,0 +1,10 @@
+procedure start_running just finishes:
+  let @scores: table of small_whole = [10, 20, 30]
+  show sum of @scores
+  show biggest of @scores
+  show smallest of @scores
+  show average of @scores
+  show length of @scores
+  show sum of [1, 2, 3]
+  finish
+end procedure start_running

@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @a: small_whole, cant_change = 1
+  let @b: small_whole, can’t_change = 2
+  show @a plus @b
+  finish
+end procedure start_running

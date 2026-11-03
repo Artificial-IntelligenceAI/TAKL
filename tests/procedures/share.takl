@@ -1,0 +1,20 @@
+procedure reset (@board: table of small_whole, share) just finishes:
+  add 100 to @board
+  finish
+end procedure reset
+
+procedure change_copy (@board: table of small_whole) just finishes:
+  add 100 to @board
+  show sum of @board
+  finish
+end procedure change_copy
+
+procedure start_running just finishes:
+  let @scores: table of small_whole = [1, 2, 3]
+  reset share @scores
+  show sum of @scores
+  let @other: table of small_whole = [1, 2, 3]
+  change_copy @other
+  show sum of @other
+  finish
+end procedure start_running

@@ -1,0 +1,8 @@
+Stopped before running: tests/procedures/share_at_call.takl:8:9, line 8 column 9
+  8 |   reset @other
+              ^^^^^^
+fix:  share @other
+why:  This param says `share`, so the call says `share` too.
+      That way nothing gets changed without a word you can see.
+
+1 mistake found: tests/procedures/share_at_call.takl:8:9, line 8 column 9.

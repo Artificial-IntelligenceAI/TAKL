@@ -1,0 +1,13 @@
+Stopped before running: tests/names/unknown.takl:3:8, line 3 column 8
+  3 |   show @scroe
+             ^^^^^^
+fix:  @score
+why:  There's no `@scroe` here.
+
+Stopped before running: tests/names/unknown.takl:4:8, line 4 column 8
+  4 |   show @nothing_like_it
+             ^^^^^^^^^^^^^^^^
+what: there's no `@nothing_like_it` here
+why:  A variable is made with `let` before it's used.
+
+2 mistakes found. Start with the first one: tests/names/unknown.takl:3:8, line 3 column 8.

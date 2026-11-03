@@ -1,0 +1,17 @@
+procedure add_up (@a: small_whole | @b: small_whole) returns small_whole:
+  return @a plus @b
+end procedure add_up
+
+procedure greet (@name: text | @times: tiny_whole, never_negative) just finishes:
+  repeat @times times:
+    show "Hi, ", @name
+  end repeat
+  finish
+end procedure greet
+
+procedure start_running just finishes:
+  let @a: small_whole = add_up(2, 3)
+  show @a
+  greet "Sam", 3
+  finish
+end procedure start_running

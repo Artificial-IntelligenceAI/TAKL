@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @data: table of (tiny_whole, never_negative) = [72, 105]
+  show sum of @data
+  let @bad: table of tiny_whole, never_negative = [1]
+  finish
+end procedure start_running

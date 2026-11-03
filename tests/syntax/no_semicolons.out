@@ -1,0 +1,7 @@
+Stopped before running: tests/syntax/no_semicolons.takl:2:12, line 2 column 12
+  2 |   show "Hi";
+                 ^
+what: TAKL lines don't end with `;`
+why:  A line ends where the line ends. Take the `;` out.
+
+1 mistake found: tests/syntax/no_semicolons.takl:2:12, line 2 column 12.

@@ -1,0 +1,7 @@
+Stopped before running: tests/syntax/outside.takl:1:1, line 1 column 1
+  1 | show "Hi"
+      ^^^^^^^^^
+what: this line is outside every procedure, so it would never run
+why:  A program runs from `procedure start_running`, and every line lives inside a procedure.
+
+1 mistake found: tests/syntax/outside.takl:1:1, line 1 column 1.

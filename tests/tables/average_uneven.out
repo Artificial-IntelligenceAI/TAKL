@@ -1,0 +1,7 @@
+Stopped while running: tests/tables/average_uneven.takl:3:8, line 3 column 8
+  3 |   show average of @scores
+             ^^^^^^^^^^^^^^^^^^
+what: 3 divided by 2 doesn't come out even, so a whole number can't hold it
+why:  Whole numbers never drop what's left over on their own.
+      Use `round (...)` to round it, a decimal or a fraction to keep it,
+      or `remainder of (...)` for what's left over.

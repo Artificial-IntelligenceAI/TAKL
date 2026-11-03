@@ -1,0 +1,4 @@
+procedure greet just finishes:
+  show "Hi"
+  finish
+end procedure greet

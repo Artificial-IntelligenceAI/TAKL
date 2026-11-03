@@ -1,0 +1,8 @@
+Stopped before running: tests/procedures/just_finishes.takl:1:24, line 1 column 24
+  1 | procedure start_running:
+                             ^
+what: `start_running` needs to say how it ends
+why:  Write `returns` and a type, like `returns small_whole:`,
+      or `just finishes:` if it gives nothing back.
+
+1 mistake found: tests/procedures/just_finishes.takl:1:24, line 1 column 24.

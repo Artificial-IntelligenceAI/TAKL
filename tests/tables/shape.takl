@@ -1,0 +1,18 @@
+procedure start_running just finishes:
+  let @scores: table of small_whole = [10, 20, 30]
+  let @level: table of text to small_whole:
+    "width": 40
+    "height": 20
+  end table @level
+  let @grid: table of table of tiny_whole:
+    [1, 2, 3]
+    [4, 5, 6]
+  end table @grid
+  show length of @scores
+  show length of @level
+  show position 2 of (position 2 of @grid)
+  for each @name and @size in @level:
+    show @name, " is ", @size
+  end for
+  finish
+end procedure start_running

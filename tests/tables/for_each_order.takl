@@ -1,0 +1,9 @@
+procedure start_running just finishes:
+  let @xs: table of small_whole = [3, 1, 2]
+  for each @x in @xs:
+    show @x
+    add 9 to @xs
+  end for
+  show length of @xs
+  finish
+end procedure start_running

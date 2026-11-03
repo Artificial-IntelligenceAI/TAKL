@@ -1,0 +1,7 @@
+Stopped before running: tests/syntax/end_of.takl:4:3, line 4 column 3
+  4 |   end_of repeat
+        ^^^^^^
+fix:  end
+why:  A block ends with `end` and what it closes, like `end if` or `end procedure move`.
+
+1 mistake found: tests/syntax/end_of.takl:4:3, line 4 column 3.

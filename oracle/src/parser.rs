@@ -254,8 +254,26 @@ impl<'a> Parser<'a> {
                 line.span
             }
         };
-        let (name, name_span, params, ending, ending_span) = header.ok()?;
-        Some(Procedure { name, name_span, params, ending, ending_span, body, end_span })
+        match header {
+            Ok((name, name_span, params, ending, ending_span)) => {
+                Some(Procedure { name, name_span, params, ending, ending_span, body, end_span, broken_header: false })
+            }
+            Err(()) => {
+                // Known by name, so calls to it and `start_running` don't give errors of their own.
+                let name_token = line.tokens.get(1)?;
+                let name = word_of(name_token).filter(|word| !is_grammar(word))?.to_string();
+                Some(Procedure {
+                    name,
+                    name_span: name_token.span,
+                    params: Vec::new(),
+                    ending: Ending::JustFinishes,
+                    ending_span: line.span,
+                    body,
+                    end_span,
+                    broken_header: true,
+                })
+            }
+        }
     }
 
     #[allow(clippy::type_complexity)]
@@ -523,11 +541,11 @@ impl<'a> Parser<'a> {
         } else {
             match self.trailing_if(line) {
                 Ok(split) => split,
-                Err(()) => return None,
+                Err(()) => return Some(Stmt { kind: StmtKind::Broken, span: line.span, only_if: None }),
             }
         };
         let span = Span::new(line.span.start, tokens_span(tokens).end.max(line.span.start));
-        let kind = self.statement_kind(line, tokens, span).ok()?;
+        let kind = self.statement_kind(line, tokens, span).unwrap_or(StmtKind::Broken);
         Some(Stmt { kind, span, only_if })
     }
 
@@ -1156,6 +1174,9 @@ impl<'a> Parser<'a> {
         let mut items = Vec::new();
         let mut keyed = Vec::new();
         loop {
+            if cursor.at_end() {
+                return self.fail(messages::square_not_closed(open));
+            }
             let first = self.test(cursor)?;
             if cursor.eat_kind(&TokenKind::Colon) {
                 let value = self.test(cursor)?;

@@ -246,7 +246,7 @@ impl<'a> Machine<'a> {
                 let value = self.let_value(value, &rules, *name_span)?;
                 self.declare(name, value, rules, stmt.span);
             }
-            StmtKind::BrokenLet { .. } => {}
+            StmtKind::BrokenLet { .. } | StmtKind::Broken => {}
             StmtKind::Assign { name, value, .. } => {
                 let rules = self.slot(name).rules.clone();
                 let value = self.let_value(value, &rules, stmt.span)?;

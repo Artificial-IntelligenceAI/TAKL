@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @hp: small_whole = 5
+  show hp
+  let lives: tiny_whole = 3
+  finish
+end procedure start_running

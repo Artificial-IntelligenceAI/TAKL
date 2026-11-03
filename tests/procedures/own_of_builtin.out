@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/own_of_builtin.takl:3:8, line 3 column 8
+  3 |   show sum_of(@scores)
+             ^^^^^^^^^^^^^^^
+fix:  sum of
+why:  TAKL's own `sum of` is two words.
+
+1 mistake found: tests/procedures/own_of_builtin.takl:3:8, line 3 column 8.

@@ -1,0 +1,9 @@
+procedure middle_of (@xs: table of small_whole) returns small_whole:
+  return position 2 of @xs
+end procedure middle_of
+
+procedure start_running just finishes:
+  let @scores: table of small_whole = [10, 20, 30]
+  show middle_of(@scores)
+  finish
+end procedure start_running

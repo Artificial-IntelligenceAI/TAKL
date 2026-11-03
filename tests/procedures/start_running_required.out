@@ -1,0 +1,8 @@
+Stopped before running: tests/procedures/start_running_required.takl:1:1, line 1 column 1
+  1 | procedure greet just finishes:
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+what: this program has no `procedure start_running`
+why:  Every program runs from `procedure start_running just finishes:`.
+      Other languages call this `main`.
+
+1 mistake found: tests/procedures/start_running_required.takl:1:1, line 1 column 1.

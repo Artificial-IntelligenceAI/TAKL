@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  let @scores: table of small_whole = [10, 20,
+  finish
+end procedure start_running

@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/return_in_finishing.takl:2:3, line 2 column 3
+  2 |   return 5
+        ^^^^^^^^
+what: `start_running` just finishes, so it gives nothing back
+why:  `return` always gives back a value. A procedure that just finishes ends with `finish`.
+
+1 mistake found: tests/procedures/return_in_finishing.takl:2:3, line 2 column 3.

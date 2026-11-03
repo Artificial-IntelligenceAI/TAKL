@@ -1,0 +1,13 @@
+Stopped before running: tests/names/at_mark.takl:3:8, line 3 column 8
+  3 |   show hp
+             ^^
+fix:  @hp
+why:  Variables start with `@`.
+
+Stopped before running: tests/names/at_mark.takl:4:7, line 4 column 7
+  4 |   let lives: tiny_whole = 3
+            ^^^^^
+fix:  @lives
+why:  Variables start with `@`.
+
+2 mistakes found. Start with the first one: tests/names/at_mark.takl:3:8, line 3 column 8.

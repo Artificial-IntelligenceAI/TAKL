@@ -1,0 +1,13 @@
+Stopped before running: tests/text/empty.takl:6:20, line 6 column 20
+  6 |   let @bad: text = ""
+                         ^^
+fix:  empty
+why:  Empty text is written `empty`, so it looks like you meant it.
+
+Stopped before running: tests/text/empty.takl:7:38, line 7 column 38
+  7 |   let @worse: table of small_whole = []
+                                           ^^
+fix:  empty
+why:  An empty table is written `empty`, so it looks like you meant it.
+
+2 mistakes found. Start with the first one: tests/text/empty.takl:6:20, line 6 column 20.

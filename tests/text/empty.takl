@@ -1,0 +1,9 @@
+procedure start_running just finishes:
+  let @name: text = empty
+  let @scores: table of small_whole = empty
+  show length of @name
+  show length of @scores
+  let @bad: text = ""
+  let @worse: table of small_whole = []
+  finish
+end procedure start_running

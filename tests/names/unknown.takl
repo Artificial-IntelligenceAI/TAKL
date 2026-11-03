@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @score: small_whole = 5
+  show @scroe
+  show @nothing_like_it
+  finish
+end procedure start_running

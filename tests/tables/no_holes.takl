@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @xs: table of small_whole = [1, 2, 3]
+  add 9 to @xs at position 5
+  finish
+end procedure start_running

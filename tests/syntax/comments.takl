@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  # a whole line of comment
+  show "Hi" # the rest is a comment
+  finish
+end procedure start_running

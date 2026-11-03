@@ -1,0 +1,10 @@
+10
+10
+30
+30
+20
+Stopped while running: tests/tables/index.takl:9:8, line 9 column 8
+  9 |   show position 4 of @xs
+             ^^^^^^^^^^^^^^^^^
+what: there's no position 4: it only has 3 items
+why:  `position` counts from 1, and `offset` counts from 0.

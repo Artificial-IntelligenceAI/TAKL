@@ -1,0 +1,8 @@
+Stopped before running: tests/procedures/exit_code_type.takl:1:25, line 1 column 25
+  1 | procedure start_running returns small_whole:
+                              ^^^^^^^^^^^^^^^^^^^
+what: `start_running` can't return a small_whole
+why:  `start_running` either `just finishes` or `returns tiny_whole, never_negative`:
+      the exit code, 0 to 255, which is what Mac and Linux keep.
+
+1 mistake found: tests/procedures/exit_code_type.takl:1:25, line 1 column 25.

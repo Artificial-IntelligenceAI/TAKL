@@ -1,0 +1,4 @@
+procedure start_running:
+  show "Hello, World!"
+  finish
+end procedure start_running

@@ -1,0 +1,4 @@
+procedure start_running returns tiny_whole, never_negative:
+  show "Something went wrong"
+  return 1
+end procedure start_running

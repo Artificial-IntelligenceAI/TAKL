@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/finish_in_returns.takl:3:3, line 3 column 3
+  3 |   finish
+        ^^^^^^
+what: you said this gives back a small_whole, so return one
+why:  `finish` is for a procedure that `just finishes`. This one ends with `return` and a value.
+
+1 mistake found: tests/procedures/finish_in_returns.takl:3:3, line 3 column 3.

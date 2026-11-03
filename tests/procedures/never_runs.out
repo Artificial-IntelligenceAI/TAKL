@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/never_runs.takl:3:3, line 3 column 3
+  3 |   show "never"
+        ^^^^^^^^^^^^
+what: this line never runs: `finish` already left the procedure
+why:  Lines after it in the same block are never reached.
+
+1 mistake found: tests/procedures/never_runs.takl:3:3, line 3 column 3.

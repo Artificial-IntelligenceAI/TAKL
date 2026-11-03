@@ -1,0 +1,8 @@
+Stopped before running: tests/tables/index_bare.takl:4:17, line 4 column 17
+  4 |   show position @i plus 1 of @xs
+                      ^^^^^^^^^
+fix:  position (@i plus 1)
+why:  After `position`, one number or one name can stand alone.
+      Anything more goes in brackets.
+
+1 mistake found: tests/tables/index_bare.takl:4:17, line 4 column 17.

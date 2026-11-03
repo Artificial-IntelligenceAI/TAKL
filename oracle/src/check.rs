@@ -53,6 +53,8 @@ struct Checker<'a> {
     loops: usize,
     /// Which params of each procedure have a default.
     defaults: HashMap<String, Vec<bool>>,
+    /// Procedures whose first line could not be read.
+    broken: std::collections::HashSet<String>,
 }
 
 /// A value known before running, worked out from written numbers.
@@ -74,6 +76,7 @@ pub fn check(program: &Program, source: &Source) -> Checked {
         procedure_name: String::new(),
         loops: 0,
         defaults: HashMap::new(),
+        broken: std::collections::HashSet::new(),
     };
     checker.procedures(program);
     for procedure in &program.procedures {
@@ -82,15 +85,45 @@ pub fn check(program: &Program, source: &Source) -> Checked {
     Checked { errors: checker.errors, facts: checker.facts }
 }
 
-/// Whether a list of statements always reaches its ending word.
-fn ends_with(body: &[Stmt], finish: bool) -> bool {
-    match body.last() {
-        Some(Stmt { kind: StmtKind::Finish, only_if: None, .. }) => finish,
-        Some(Stmt { kind: StmtKind::Return(_), only_if: None, .. }) => !finish,
-        Some(Stmt { kind: StmtKind::If { branches, otherwise: Some(otherwise) }, only_if: None, .. }) => {
-            branches.iter().all(|(_, body)| ends_with(body, finish)) && ends_with(otherwise, finish)
+#[derive(PartialEq, Eq)]
+enum Reached {
+    /// The block always reaches the right ending word.
+    Yes,
+    /// It doesn't, and nothing has been said about it yet.
+    No,
+    /// Something in the way already has its own error.
+    Said,
+}
+
+/// Whether a list of statements always reaches its ending word: `finish`, or `return` with a value.
+fn reaches_end(body: &[Stmt], finish: bool) -> Reached {
+    for stmt in body {
+        if stmt.only_if.is_some() {
+            continue;
         }
-        _ => false,
+        match &stmt.kind {
+            StmtKind::Finish => return if finish { Reached::Yes } else { Reached::Said },
+            StmtKind::Return(_) => return if finish { Reached::Said } else { Reached::Yes },
+            StmtKind::Broken => return Reached::Said,
+            _ => {}
+        }
+    }
+    match body.last() {
+        Some(Stmt { kind: StmtKind::If { branches, otherwise: Some(otherwise) }, only_if: None, .. }) => {
+            let all: Vec<Reached> = branches
+                .iter()
+                .map(|(_, body)| reaches_end(body, finish))
+                .chain(std::iter::once(reaches_end(otherwise, finish)))
+                .collect();
+            if all.iter().all(|r| *r == Reached::Yes) {
+                Reached::Yes
+            } else if all.contains(&Reached::No) {
+                Reached::No
+            } else {
+                Reached::Said
+            }
+        }
+        _ => Reached::No,
     }
 }
 
@@ -114,6 +147,9 @@ impl<'a> Checker<'a> {
                 continue;
             }
             seen.insert(procedure.name.clone(), procedure.name_span);
+            if procedure.broken_header {
+                self.broken.insert(procedure.name.clone());
+            }
             let mut params = Vec::new();
             for param in &procedure.params {
                 let rules = self.rules(&param.ty, &param.modifiers, Place::Param).unwrap_or(Rules::of(Ty::Unknown));
@@ -135,6 +171,7 @@ impl<'a> Checker<'a> {
                 let span = Span::new(0, self.source.text.find('\n').unwrap_or(self.source.text.len()));
                 self.error(messages::no_start_running(span));
             }
+            Some(start) if start.broken_header => {}
             Some(start) => {
                 if !start.params.is_empty() {
                     let span = start.params[0].span.to(start.params[start.params.len() - 1].span);
@@ -154,6 +191,9 @@ impl<'a> Checker<'a> {
     }
 
     fn procedure(&mut self, procedure: &Procedure) {
+        if procedure.broken_header {
+            return;
+        }
         let Some(facts) = self.facts.procedures.get(&procedure.name).cloned() else { return };
         self.returns = facts.returns.clone();
         self.procedure_name = procedure.name.clone();
@@ -171,7 +211,7 @@ impl<'a> Checker<'a> {
         self.scopes.pop();
         // trace: decision.procedures.return_nothing_required (now `finish`, decision.procedures.finish)
         let finish = facts.returns.is_none();
-        if !ends_with(&procedure.body, finish) {
+        if reaches_end(&procedure.body, finish) == Reached::No {
             if finish {
                 self.error(messages::needs_finish(procedure.end_span, &procedure.name));
             } else if let Some(ty) = &facts.returns {
@@ -504,6 +544,7 @@ impl<'a> Checker<'a> {
             StmtKind::Call { name, name_span, args } => {
                 self.call(name, *name_span, args, stmt.span);
             }
+            StmtKind::Broken => {}
         }
     }
 
@@ -588,6 +629,9 @@ impl<'a> Checker<'a> {
     }
 
     fn call(&mut self, name: &str, name_span: Span, args: &[Arg], span: Span) -> Option<Ty> {
+        if self.broken.contains(name) {
+            return Some(Ty::Unknown);
+        }
         let Some(facts) = self.facts.procedures.get(name).cloned() else {
             let names: Vec<String> = self.facts.procedures.keys().cloned().collect();
             if let Some(word) =

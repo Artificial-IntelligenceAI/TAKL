@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @score: tiny_whole = 120
+  @score = @score plus 100
+  finish
+end procedure start_running

@@ -1,0 +1,19 @@
+Stopped before running: tests/errors/all.takl:2:28, line 2 column 28
+  2 |   let @score: tiny_whole = 300
+                                 ^^^
+what: 300 is too big for a tiny_whole
+why:  A tiny_whole holds -128 to 127. Other languages call this an int8.
+
+Stopped before running: tests/errors/all.takl:3:30, line 3 column 30
+  3 |   let @lives: tiny_whole = 1 + 1
+                                   ^
+fix:  plus
+why:  TAKL writes maths in words.
+
+Stopped before running: tests/errors/all.takl:4:20, line 4 column 20
+  4 |   show @score plus @nothing
+                         ^^^^^^^^
+what: there's no `@nothing` here
+why:  A variable is made with `let` before it's used.
+
+3 mistakes found. Start with the first one: tests/errors/all.takl:2:28, line 2 column 28.

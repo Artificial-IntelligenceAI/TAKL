@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/end_names.takl:3:1, line 3 column 1
+  3 | end procedure begin
+      ^^^^^^^^^^^^^^^^^^^
+fix:  end procedure start_running
+why:  The `end` names the procedure it closes.
+
+1 mistake found: tests/procedures/end_names.takl:3:1, line 3 column 1.

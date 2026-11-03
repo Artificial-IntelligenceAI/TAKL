@@ -1,0 +1,7 @@
+Stopped before running: tests/procedures/finish_ends_loop.takl:4:5, line 4 column 5
+  4 |     finish
+          ^^^^^^
+fix:  stop
+why:  `finish` leaves the whole procedure. `stop` leaves just the loop.
+
+1 mistake found: tests/procedures/finish_ends_loop.takl:4:5, line 4 column 5.

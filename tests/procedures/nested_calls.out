@@ -1,0 +1,13 @@
+Stopped before running: tests/procedures/nested_calls.takl:13:8, line 13 column 8
+  13 |   show heal @hp
+              ^^^^^^^^
+fix:  heal(@hp)
+why:  A call inside another line puts what it passes in brackets.
+
+Stopped before running: tests/procedures/nested_calls.takl:14:3, line 14 column 3
+  14 |   add_up(1, 2)
+         ^^^^^^^^^^^^
+fix:  add_up 1, 2
+why:  A call on its own line has no brackets. Brackets are for a call inside another line.
+
+2 mistakes found. Start with the first one: tests/procedures/nested_calls.takl:13:8, line 13 column 8.

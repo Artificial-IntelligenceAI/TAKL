@@ -1,0 +1,3 @@
+procedure start_running returns small_whole:
+  return 1
+end procedure start_running

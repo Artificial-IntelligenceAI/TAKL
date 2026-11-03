@@ -25,6 +25,8 @@ pub struct Procedure {
     pub ending_span: Span,
     pub body: Vec<Stmt>,
     pub end_span: Span,
+    /// Its first line could not be read; it is known by name only, so nothing more is said about it.
+    pub broken_header: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -170,6 +172,8 @@ pub enum StmtKind {
         name_span: Span,
         args: Vec<Arg>,
     },
+    /// A line that could not be read; its error is already given.
+    Broken,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

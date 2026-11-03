@@ -1,0 +1,11 @@
+procedure start_running just finishes:
+  let @a: table of small_whole = [1, 2, 3]
+  let @b: table of small_whole = @a
+  let @c: table of small_whole = share @a
+  add 4 to @b
+  show length of @a
+  add 5 to @c
+  show length of @a
+  show length of @b
+  finish
+end procedure start_running

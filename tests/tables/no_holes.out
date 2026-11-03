@@ -1,0 +1,5 @@
+Stopped while running: tests/tables/no_holes.takl:3:28, line 3 column 28
+  3 |   add 9 to @xs at position 5
+                                 ^
+what: position 5 would leave a hole: @xs has 3 items
+why:  A table never has holes. Use `add` without `at` to put an item on the end.

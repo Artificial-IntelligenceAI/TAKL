@@ -1,0 +1,3 @@
+procedure start_running just finishes:
+  return nothing
+end procedure start_running

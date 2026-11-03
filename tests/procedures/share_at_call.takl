@@ -1,0 +1,10 @@
+procedure reset (@board: table of small_whole, share) just finishes:
+  add 100 to @board
+  finish
+end procedure reset
+
+procedure start_running just finishes:
+  let @other: table of small_whole = [1, 2, 3]
+  reset @other
+  finish
+end procedure start_running

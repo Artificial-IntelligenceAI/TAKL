@@ -1,0 +1,16 @@
+procedure start_running just finishes:
+  let @scores: table of small_whole = [10, 20, 30]
+  add 40 to @scores
+  add 15 to @scores at position 2
+  add 5 to @scores at offset 0
+  for each @s in @scores:
+    show @s
+  end for
+  let @ages: table of text to small_whole = empty
+  add "sam": 10 to @ages
+  add "ana": 11 to @ages
+  for each @who and @age in @ages:
+    show @who, " ", @age
+  end for
+  finish
+end procedure start_running

@@ -1,0 +1,8 @@
+Stopped while running: tests/errors/layout.takl:3:12, line 3 column 12
+  3 |   @score = @score plus 100
+                 ^^^^^^^^^^^^^^^
+what: 220 is too big for a tiny_whole
+why:  A tiny_whole holds -128 to 127. Other languages call this an int8.
+because: @score was 120, tests/errors/layout.takl:2:3, line 2 column 3
+  2 |   let @score: tiny_whole = 120
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

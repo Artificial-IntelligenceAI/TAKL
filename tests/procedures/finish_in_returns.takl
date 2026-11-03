@@ -1,0 +1,9 @@
+procedure double (@n: small_whole) returns small_whole:
+  show "doubling"
+  finish
+end procedure double
+
+procedure start_running just finishes:
+  show double(2)
+  finish
+end procedure start_running

@@ -1,0 +1,7 @@
+procedure add (@a: small_whole) just finishes:
+  finish
+end procedure add
+
+procedure start_running just finishes:
+  finish
+end procedure start_running

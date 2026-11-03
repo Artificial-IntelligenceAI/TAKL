@@ -1,0 +1,11 @@
+Stopped before running: tests/tables/square_not_closed.takl:2:39, line 2 column 39
+  2 |   let @scores: table of small_whole = [10, 20,
+                                            ^
+what: this `[` is never closed on its line
+why:  A table in `[ ]` stays on one line. For a longer one, make it a block:
+      let @level: table of small_whole:
+        10
+        20
+      end table @level
+
+1 mistake found: tests/tables/square_not_closed.takl:2:39, line 2 column 39.

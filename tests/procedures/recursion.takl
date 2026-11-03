@@ -1,0 +1,11 @@
+procedure fib (@n: big_whole, at least 0, at most 92) returns big_whole:
+  if @n is less than 2:
+    return @n
+  end if
+  return fib(@n minus 1) plus fib(@n minus 2)
+end procedure fib
+
+procedure start_running just finishes:
+  show fib(20)
+  finish
+end procedure start_running
