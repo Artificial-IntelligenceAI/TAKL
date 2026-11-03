@@ -5,6 +5,22 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Bounds on a whole number, as modifiers: `let @lives: tiny_whole, at least 0, at most 3 = 3` (owner: "yea")
+
+`decision.types.bounds`
+
+```
+let @lives: tiny_whole, at least 0, at most 3 = 3
+let @speed: medium_whole, at least 1000, at most 4530 = 1000
+let @count: small_whole, at least 1 = 1
+```
+
+The owner: "Should we add easy number bounds? not real syntax, like this `i32[min: 1000, max: 4530]`". Design claude
+proposed TAKL's own comparison words as modifiers after the comma, either one alone or both, held by the range rule: a
+compile error when the value is known, else a stop at the line. They catch health below 0 or lives past the most where
+it happens, and say what a variable is for. `never_negative` stays its own, since it changes how the number is held and
+doubles its top; bounds only check. The owner: "yea". Not designed: bounds on decimals and fractions.
+
 ### 2026-11-03 — Every variable and param is marked `@`: `let @hp: small_whole = 50`, `heal(@hp)`; procedures and TAKL's words are bare (owner)
 
 `decision.names.at_mark`
