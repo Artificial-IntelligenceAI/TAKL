@@ -5,6 +5,11 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `repeat forever:` ... `end repeat`; `stop`, or `stop if ...`, leaves the innermost loop (owner: "Yes")
+
+As Easium's D41, with TAKL's `end`; `stop if` is the line ending in `if`. Design claude proposed it; the owner:
+"Yes to all, except errors".
+
 ### 2026-11-03 — No holes: setting past a table's end is refused, "xs has 3 items, use `add` to put one on the end" (owner: "Yes")
 
 Design claude proposed it against Lua's holes, where a table's length stops being true. The owner, of a quick round:
@@ -476,7 +481,6 @@ what a `let` without `can't_change` may do.
 
 ## Open
 
-- `repeat forever:` with `stop` for leaving a loop early (Easium D41).
 - Whether a param is handed a copy unless it says `share`, `reset share scores` at the call; design claude proposed it.
 - How many errors are shown at once; design claude proposed the first only.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
