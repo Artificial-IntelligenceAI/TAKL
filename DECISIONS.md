@@ -5,6 +5,17 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The implementation rules: design claude builds the oracle, compiler claude the compiler, in Rust and Cranelift alone, never reading `oracle/src` (owner: "Yes to all, no core limits")
+
+Design claude offered to start a session for the oracle. The owner: "`impl` usually does the harder ones, like the real
+compiler itself. The oracle is usually done by the design session, because they know it best. Let's define the impl
+rules". Design claude drafted nine on CyborgPL's and Radium's: Rust and Cranelift only; compiler claude in its own clone
+on the same `main`, never editing the decisions, the oracle or the tests; reading the oracle's tests and never
+`oracle/src`, lest their bugs agree; nothing undecided guessed, a `NotDesignedYet` error instead; every golden test
+passing on the interpreter and Cranelift at both strengths, matching the oracle byte for byte, before a push; a kid's
+program never crashing TAKL, which says "TAKL broke, not you"; `rustfmt`, `clippy` and comments saying why; the commit
+style; cores. The owner: "Yes to all, no core limits". They are in `IMPLEMENTATION.md`, and `CLAUDE.md` points to it.
+
 ### 2026-11-03 — `add 40 to scores` puts it on the end; `add 40 to scores at position 2` puts it there, the rest moving up (owner: "yes")
 
 ```
