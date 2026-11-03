@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Cranelift now; one IR that both backends read; LLVM later as a second tier (owner: "Yeah, seems good")
+
+The owner proposed tiering Cranelift and LLVM ("fucking insane for a Scratch-ass Ruby fucking language"). Design claude
+recommended building Cranelift alone first, with one IR shaped for two backends so LLVM is added later rather than
+rewritten in; kids' game loops get hot, so a second tier is not pointless. Both tiers pass one test suite with no
+exception: a program that behaves differently once it warms up is a bug no kid can find. The owner: "Yeah, seems good".
+
 ### 2026-11-03 — A real typo stops the program, with a "did you mean" (owner: "stop, obviously")
 
 Design claude proposed that `cant_chang` be answered with "did you mean `can't_change`?" and never guessed and run, since
