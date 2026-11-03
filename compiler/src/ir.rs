@@ -34,6 +34,8 @@ pub enum Op {
     Load(Register),
     /// `a + by`, which can't overflow (a loop's step below its limit).
     Step1(Value),
+    /// Whole-number maths proven never to fail, so it needs no check.
+    Arith { operator: Maths, unsigned: bool, a: Value, b: Value },
     WholeMaths { operator: Maths, kind: bytecode::WholeKind, a: Value, b: Value, fail: FailPoint },
     WholeRemainder { kind: bytecode::WholeKind, a: Value, b: Value, fail: FailPoint },
     WholeCompare { operator: Compare, unsigned: bool, a: Value, b: Value },
@@ -55,7 +57,10 @@ pub enum Op {
 impl Op {
     /// Uses no memory and can't stop the program, so it can go if nothing uses it.
     pub fn is_pure(&self) -> bool {
-        matches!(self, Op::Constant(_) | Op::Load(_) | Op::Step1(_) | Op::WholeCompare { .. } | Op::FastCompare { .. } | Op::Not(_))
+        matches!(
+            self,
+            Op::Constant(_) | Op::Load(_) | Op::Step1(_) | Op::Arith { .. } | Op::WholeCompare { .. } | Op::FastCompare { .. } | Op::Not(_)
+        )
     }
 
     pub fn operands(&self) -> Vec<Value> {
@@ -69,7 +74,7 @@ impl Op {
                 found.push(*b);
                 fail_values(fail, &mut found);
             }
-            Op::WholeCompare { a, b, .. } | Op::FastCompare { a, b, .. } => {
+            Op::WholeCompare { a, b, .. } | Op::FastCompare { a, b, .. } | Op::Arith { a, b, .. } => {
                 found.push(*a);
                 found.push(*b);
             }
@@ -101,7 +106,7 @@ impl Op {
                 *b = map(*b);
                 map_fail(fail, map);
             }
-            Op::WholeCompare { a, b, .. } | Op::FastCompare { a, b, .. } => {
+            Op::WholeCompare { a, b, .. } | Op::FastCompare { a, b, .. } | Op::Arith { a, b, .. } => {
                 *a = map(*a);
                 *b = map(*b);
             }

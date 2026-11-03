@@ -477,6 +477,16 @@ impl<'a, 'b> Lowering<'a, 'b> {
                 let value = self.value(*value);
                 self.builder.ins().iadd_imm(value, 1)
             }
+            Op::Arith { operator, unsigned, a, b } => {
+                let (x, y) = (self.value(*a), self.value(*b));
+                match (operator, unsigned) {
+                    (Maths::Plus, _) => self.builder.ins().iadd(x, y),
+                    (Maths::Minus, _) => self.builder.ins().isub(x, y),
+                    (Maths::Times, _) => self.builder.ins().imul(x, y),
+                    (Maths::DividedBy, false) => self.builder.ins().sdiv(x, y),
+                    (Maths::DividedBy, true) => self.builder.ins().udiv(x, y),
+                }
+            }
             Op::WholeMaths { operator, kind, a, b, fail } => {
                 let (x, y) = (self.value(*a), self.value(*b));
                 self.whole_maths(*operator, *kind, x, y, fail)
@@ -620,6 +630,29 @@ impl<'a, 'b> Lowering<'a, 'b> {
     }
 }
 
+fn reverse_postorder(function: &ir::Function) -> Vec<usize> {
+    let mut seen = vec![false; function.blocks.len()];
+    let mut order = Vec::new();
+    // An explicit stack of (block, next successor to visit).
+    let mut stack = vec![(0usize, 0usize)];
+    seen[0] = true;
+    while let Some((block, next)) = stack.pop() {
+        let successors = function.blocks[block].end.successors();
+        if next < successors.len() {
+            stack.push((block, next + 1));
+            let target = successors[next] as usize;
+            if !seen[target] {
+                seen[target] = true;
+                stack.push((target, 0));
+            }
+        } else {
+            order.push(block);
+        }
+    }
+    order.reverse();
+    order
+}
+
 /// Compiles a procedure's IR at a strength, giving back the address of its code.
 pub fn compile(program: &Program, function: &ir::Function, strength: Strength, entries: *const AtomicUsize) -> Result<usize, String> {
     let mut flags = settings::builder();
@@ -680,7 +713,9 @@ pub fn compile(program: &Program, function: &ir::Function, strength: Strength, e
     let entry = lowering.blocks[0];
     lowering.machine = lowering.builder.block_params(entry)[0];
     lowering.frame = lowering.builder.block_params(entry)[1];
-    for (index, block) in function.blocks.iter().enumerate() {
+    // In reverse postorder, so every value is made before a block it dominates uses it.
+    for index in reverse_postorder(function) {
+        let block = &function.blocks[index];
         let made = lowering.blocks[index];
         lowering.builder.switch_to_block(made);
         for instr in &block.instrs {
