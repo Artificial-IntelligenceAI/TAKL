@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — TAKL is Tankun's Ambioustious Kids Language, misspelt on purpose (owner)
+
+`decision.house.name`
+
+The owner's first words on the project: "TAKL: Tankun's Ambioustious Kids Language (yes, that mispelling makes it more
+kid)". "Ambioustious" is written so wherever the full name appears, and never corrected.
+
 ### 2026-11-03 — `start_running` either `just finishes`, exiting with 0, or `returns tiny_whole, never_negative`, exiting with what it returns; a program stopped by an error exits with 1 (owner: "yes")
 
 `decision.procedures.exit_code`
