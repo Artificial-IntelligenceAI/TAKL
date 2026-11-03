@@ -5,6 +5,29 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Tables, as Lua's: `table of small_whole` keyed 1, 2, 3, `table of text to small_whole` by name; `[10, 20, 30]` on one line, a block past it (owner: "yes")
+
+```
+let scores: table of small_whole = [10, 20, 30]
+sum [1, 2, 3]
+
+let level: table of text to small_whole:
+  "width": 40
+  "height": 20
+end_of table level
+
+let grid: table of table of tiny_whole:
+  [1, 2, 3]
+  [4, 5, 6]
+end_of table grid
+```
+
+The owner proposed "Lua-style tables, but improved", then asked why `[]` when "you can't really misread `10, 20, 30` as a
+kid". Design claude answered that bare commas clash with a call's arguments (`sum 10, 20, 30`), tables in tables and
+the empty table. The owner proposed blocks, "like how a procedure" is. Design claude proposed both forms: brackets that
+never go past the end of their line (past it is an error saying to make it a block) and a block of one item a line with
+no commas, the two making the same table. The owner: "yes".
+
 ### 2026-11-03 — `return a + b` gives a procedure's value back; the last line is never returned on its own (owner)
 
 Design claude proposed a word you can see over Ruby's returning the last line, offering `give_back` or `return`. The
@@ -115,6 +138,8 @@ what a `let` without `can't_change` may do.
 
 ## Open
 
+- Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
+- The name of the text type; `text` is design claude's, used in examples, never chosen.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
 - The types that are not whole numbers.
