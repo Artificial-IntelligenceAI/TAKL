@@ -55,6 +55,10 @@ pub struct Machine {
     pub tiers: Option<Arc<crate::tiering::Tiers>>,
     /// While a table of answers is being built, the procedure whose calls look in it.
     pub building: Option<Arc<crate::precompute::Building>>,
+    /// The deepest calls have gone, for a table's entries.
+    pub deepest: u64,
+    /// Loop rounds and calls left before a run is given up, while building a table.
+    pub budget: u64,
 }
 
 pub fn compare(operator: Compare, order: std::cmp::Ordering) -> bool {
@@ -76,6 +80,8 @@ impl Machine {
             live,
             tiers: None,
             building: None,
+            deepest: 0,
+            budget: u64::MAX,
         }
     }
 
@@ -363,6 +369,10 @@ impl Machine {
                     }
                     Instruction::LoopBack { target, loop_id } => {
                         *pc = target as usize;
+                        self.budget -= 1;
+                        if self.budget == 0 {
+                            return Some(Err(Stopped));
+                        }
                         if let Some(tiers) = &self.tiers
                             && tiers.loop_is_hot(id, loop_id)
                         {
@@ -377,6 +387,10 @@ impl Machine {
                         reg!(counter) = next as u64;
                         if next < reg!(limit) as i64 {
                             *pc = target as usize;
+                            self.budget -= 1;
+                            if self.budget == 0 {
+                                return Some(Err(Stopped));
+                            }
                             if let Some(tiers) = &self.tiers
                                 && tiers.loop_is_hot(id, loop_id)
                             {
@@ -557,6 +571,10 @@ impl Machine {
         if self.depth >= MOST_CALLS {
             return Err(self.stop(caller, failure, Detail::Nothing, frame));
         }
+        self.budget -= 1;
+        if self.budget == 0 {
+            return Err(Stopped);
+        }
         let called = &self.code().procedures[callee as usize];
         if self.building.is_some()
             && let Some(building) = self.building.clone()
@@ -577,6 +595,7 @@ impl Machine {
             *callee_frame.add(index) = value;
         }
         self.depth += 1;
+        self.deepest = self.deepest.max(self.depth);
         let answer = self.enter(callee, base);
         self.depth -= 1;
         answer

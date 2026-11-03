@@ -168,6 +168,9 @@ struct Lowering<'a, 'b> {
     /// The procedure's loop counters, for `Promote`.
     rounds: *const std::sync::atomic::AtomicU32,
     hot: u32,
+    tables: *const AtomicUsize,
+    shapes: Vec<Option<crate::precompute::Shape>>,
+    strength: Strength,
     self_reference: Option<clir::FuncRef>,
     helper_signatures: HashMap<usize, clir::SigRef>,
     compiled_signature: clir::SigRef,
@@ -436,6 +439,54 @@ impl<'a, 'b> Lowering<'a, 'b> {
     }
 
     fn call(&mut self, callee: u32, arguments: &[clir::Value], fail: &FailPoint) -> clir::Value {
+        // trace: decision.compiler.precompute
+        // At the speed strength, a call to a procedure with a table looks there first.
+        let shape = if self.strength == Strength::Speed { self.shapes.get(callee as usize).cloned().flatten() } else { None };
+        let Some(shape) = shape else { return self.real_call(callee, arguments, fail) };
+        let after = self.builder.create_block();
+        self.builder.append_block_param(after, types::I64);
+        let real = self.builder.create_block();
+        // SAFETY: `tables` lives as long as the program's tiers.
+        let slot = unsafe { self.tables.add(callee as usize) } as i64;
+        let slot = self.builder.ins().iconst(self.pointer, slot);
+        let table = self.builder.ins().load(self.pointer, MemFlagsData::trusted(), slot, 0);
+        let mut next = self.builder.create_block();
+        self.builder.ins().brif(table, next, &[], real, &[]);
+        self.builder.switch_to_block(next);
+        let mut index = self.constant(0);
+        for ((argument, low), count) in arguments.iter().zip(&shape.lows).zip(&shape.counts) {
+            let offset = self.builder.ins().iadd_imm(*argument, low.wrapping_neg());
+            let outside = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThanOrEqual, offset, *count as i64);
+            next = self.builder.create_block();
+            self.builder.ins().brif(outside, real, &[], next, &[]);
+            self.builder.switch_to_block(next);
+            let scaled = self.builder.ins().imul_imm(index, *count as i64);
+            index = self.builder.ins().iadd(scaled, offset);
+        }
+        let bytes = self.builder.ins().imul_imm(index, 16);
+        let entry = self.builder.ins().iadd(table, bytes);
+        let meta = self.builder.ins().load(types::I64, MemFlagsData::trusted(), entry, 8);
+        let has_answer = self.builder.ins().icmp_imm(IntCC::SignedLessThan, meta, 0);
+        next = self.builder.create_block();
+        self.builder.ins().brif(has_answer, next, &[], real, &[]);
+        self.builder.switch_to_block(next);
+        let deep = self.builder.ins().band_imm(meta, 0xffff_ffff);
+        let depth = self.builder.ins().load(types::I64, MemFlagsData::trusted(), self.machine, 0);
+        let deepest = self.builder.ins().iadd(depth, deep);
+        let too_deep = self.builder.ins().icmp_imm(IntCC::UnsignedGreaterThan, deepest, MOST_CALLS as i64);
+        next = self.builder.create_block();
+        self.builder.ins().brif(too_deep, real, &[], next, &[]);
+        self.builder.switch_to_block(next);
+        let value = self.builder.ins().load(types::I64, MemFlagsData::trusted(), entry, 0);
+        self.builder.ins().jump(after, &[BlockArg::Value(value)]);
+        self.builder.switch_to_block(real);
+        let value = self.real_call(callee, arguments, fail);
+        self.builder.ins().jump(after, &[BlockArg::Value(value)]);
+        self.builder.switch_to_block(after);
+        self.builder.block_params(after)[0]
+    }
+
+    fn real_call(&mut self, callee: u32, arguments: &[clir::Value], fail: &FailPoint) -> clir::Value {
         let depth = self.depth_enter(fail);
         let caller_registers = self.program.procedures[fail.procedure as usize].registers as i64;
         let callee_frame = self.builder.ins().iadd_imm(self.frame, (fail.frame_offset as i64 + caller_registers) * 8);
@@ -700,15 +751,17 @@ fn reverse_postorder(function: &ir::Function) -> Vec<usize> {
     order
 }
 
+/// Where compiled code finds the tiers' tables: compiled code for each procedure, loop counters, tables of answers.
+pub struct Addresses<'a> {
+    pub entries: *const AtomicUsize,
+    pub rounds: *const std::sync::atomic::AtomicU32,
+    pub tables: *const AtomicUsize,
+    pub shapes: &'a [Option<crate::precompute::Shape>],
+    pub hot: u32,
+}
+
 /// Compiles a procedure's IR at a strength, giving back the address of its code.
-pub fn compile(
-    program: &Program,
-    function: &ir::Function,
-    strength: Strength,
-    entries: *const AtomicUsize,
-    rounds: *const std::sync::atomic::AtomicU32,
-    hot: u32,
-) -> Result<usize, String> {
+pub fn compile(program: &Program, function: &ir::Function, strength: Strength, addresses: &Addresses) -> Result<usize, String> {
     let mut flags = settings::builder();
     let opt_level = match strength {
         Strength::Quick => "none",
@@ -744,9 +797,12 @@ pub fn compile(
         machine: clir::Value::from_u32(0),
         frame: clir::Value::from_u32(0),
         pointer,
-        entries,
-        rounds,
-        hot,
+        entries: addresses.entries,
+        rounds: addresses.rounds,
+        hot: addresses.hot,
+        tables: addresses.tables,
+        shapes: addresses.shapes.to_vec(),
+        strength,
         self_reference: None,
         helper_signatures: HashMap::new(),
         compiled_signature: clir::SigRef::from_u32(0),

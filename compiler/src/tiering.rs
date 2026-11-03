@@ -30,6 +30,8 @@ struct Job {
     procedure: u32,
     entry: Entry,
     strength: Strength,
+    /// A table of answers to build, rather than code.
+    table: bool,
 }
 
 pub struct Tiers {
@@ -54,6 +56,12 @@ pub struct Tiers {
     pub broken: AtomicBool,
     pub compiled: AtomicU32,
     pub compile_nanos: AtomicUsize,
+    /// Each procedure's table of answers once built, as a pointer to its first entry; read by compiled code too.
+    pub tables: Vec<AtomicUsize>,
+    /// Which procedures get a table, and its shape.
+    pub shapes: Vec<Option<crate::precompute::Shape>>,
+    tables_asked: Mutex<std::collections::HashSet<u32>>,
+    pub table_nanos: AtomicUsize,
     /// Times the interpreter jumped into a compiled loop.
     pub jumps_in: AtomicU32,
     pub started: std::time::Instant,
@@ -81,6 +89,10 @@ impl Tiers {
             compiled: AtomicU32::new(0),
             compile_nanos: AtomicUsize::new(0),
             jumps_in: AtomicU32::new(0),
+            tables: (0..count).map(|_| AtomicUsize::new(0)).collect(),
+            shapes: (0..count as u32).map(|procedure| crate::precompute::eligible(program, procedure)).collect(),
+            tables_asked: Mutex::new(std::collections::HashSet::new()),
+            table_nanos: AtomicUsize::new(0),
             started: std::time::Instant::now(),
             ready: Mutex::new(Vec::new()),
         }
@@ -95,8 +107,14 @@ impl Tiers {
             Strength::Quick => passes::quick(&mut function),
             Strength::Speed => passes::speed(&self.program, &mut function),
         }
-        let rounds = self.rounds[procedure as usize].as_ptr();
-        match jit::compile(&self.program, &function, strength, self.entries.as_ptr(), rounds, self.hot) {
+        let addresses = jit::Addresses {
+            entries: self.entries.as_ptr(),
+            rounds: self.rounds[procedure as usize].as_ptr(),
+            tables: self.tables.as_ptr(),
+            shapes: &self.shapes,
+            hot: self.hot,
+        };
+        match jit::compile(&self.program, &function, strength, &addresses) {
             Ok(code) => {
                 match entry {
                     Entry::Start => self.entries[procedure as usize].store(code, Ordering::Release),
@@ -123,6 +141,38 @@ impl Tiers {
         self.compile_nanos.fetch_add(started.elapsed().as_nanos() as usize, Ordering::Relaxed);
     }
 
+    // trace: decision.compiler.precompute
+    /// Builds a procedure's table of answers now, and publishes it.
+    fn build_now(&self, procedure: u32) {
+        let Some(shape) = self.shapes[procedure as usize].clone() else { return };
+        let started = std::time::Instant::now();
+        let table = crate::precompute::build(&self.program, procedure, shape);
+        // The table lives as long as the program runs.
+        let entries: &'static [crate::precompute::Entry] = Box::leak(table.entries.into_boxed_slice());
+        self.tables[procedure as usize].store(entries.as_ptr() as usize, Ordering::Release);
+        self.table_nanos.fetch_add(started.elapsed().as_nanos() as usize, Ordering::Relaxed);
+        if let Ok(mut ready) = self.ready.lock() {
+            ready.push((format!("{} table", self.program.procedures[procedure as usize].name), self.started.elapsed()));
+        }
+    }
+
+    fn ask_table(self: &Arc<Self>, procedure: u32) {
+        if self.shapes[procedure as usize].is_none() {
+            return;
+        }
+        {
+            let Ok(mut asked) = self.tables_asked.lock() else { return };
+            if !asked.insert(procedure) {
+                return;
+            }
+        }
+        if self.in_place {
+            self.build_now(procedure);
+            return;
+        }
+        self.send(Job { procedure, entry: Entry::Start, strength: Strength::Speed, table: true });
+    }
+
     /// Asks for an entry to be compiled, on another core unless compiling in place.
     fn ask(self: &Arc<Self>, procedure: u32, entry: Entry, strength: Strength) {
         {
@@ -135,6 +185,10 @@ impl Tiers {
             self.compile_now(procedure, entry, strength);
             return;
         }
+        self.send(Job { procedure, entry, strength, table: false });
+    }
+
+    fn send(self: &Arc<Self>, job: Job) {
         let Ok(mut sender) = self.sender.lock() else { return };
         if sender.is_none() {
             let (send, receive) = channel::<Job>();
@@ -142,7 +196,11 @@ impl Tiers {
             let spawned = std::thread::Builder::new().name("takl compiler".to_string()).spawn(move || {
                 while let Ok(job) = receive.recv() {
                     let Some(tiers) = tiers.upgrade() else { return };
-                    tiers.compile_now(job.procedure, job.entry, job.strength);
+                    if job.table {
+                        tiers.build_now(job.procedure);
+                    } else {
+                        tiers.compile_now(job.procedure, job.entry, job.strength);
+                    }
                 }
             });
             if spawned.is_err() {
@@ -151,13 +209,19 @@ impl Tiers {
             *sender = Some(send);
         }
         if let Some(sender) = sender.as_ref() {
-            let _ = sender.send(Job { procedure, entry, strength });
+            let _ = sender.send(job);
         }
     }
 
     /// Runs compiled code for a procedure when it is ready; counts the call when it isn't.
     #[inline(always)]
     pub fn call(&self, machine: &mut Machine, procedure: u32, base: usize) -> Option<Result<u64, Stopped>> {
+        let table = self.tables[procedure as usize].load(Ordering::Acquire);
+        if table != 0
+            && let Some(value) = self.look_up(table, machine, procedure, base)
+        {
+            return Some(Ok(value));
+        }
         let code = self.entries[procedure as usize].load(Ordering::Acquire);
         if code != 0 {
             if self.tiered {
@@ -169,6 +233,26 @@ impl Tiers {
             self.count_call(procedure);
         }
         None
+    }
+
+    // trace: decision.compiler.precompute
+    /// A call's answer from its table, when it has one and the call wouldn't go too deep.
+    fn look_up(&self, table: usize, machine: &mut Machine, procedure: u32, base: usize) -> Option<u64> {
+        let shape = self.shapes[procedure as usize].as_ref()?;
+        let frame = machine.frame_at(base);
+        // SAFETY: the callee's frame holds its arguments in its first registers.
+        let arguments: Vec<u64> = (0..shape.counts.len()).map(|index| unsafe { *frame.add(index) }).collect();
+        let index = shape.index(&arguments)?;
+        // SAFETY: `table` points at `shape.inputs()` entries, leaked so they live as long as the program.
+        let entry = unsafe { *(table as *const crate::precompute::Entry).add(index) };
+        if entry.meta & crate::precompute::HAS_ANSWER == 0 {
+            return None;
+        }
+        // The caller is at `depth - 1`; the call's run would go `entry depth` deeper.
+        if machine.depth - 1 + (entry.meta & 0xffff_ffff) > crate::interpreter::MOST_CALLS {
+            return None;
+        }
+        Some(entry.value)
     }
 
     #[inline(always)]
@@ -184,6 +268,9 @@ impl Tiers {
         if let Some(tiers) = self.me() {
             let strength = if calls >= self.hot { Strength::Speed } else { Strength::Quick };
             tiers.ask(procedure, Entry::Start, strength);
+            if strength == Strength::Speed {
+                tiers.ask_table(procedure);
+            }
         }
     }
 
@@ -243,9 +330,10 @@ impl Tiers {
     /// What the tiers did, for `TAKL_STATS`.
     pub fn report(&self) -> String {
         let mut out = format!(
-            "{} compiled, {:.2} ms compiling {}, {} jumps into compiled loops, ran {:.2} ms\n",
+            "{} compiled, {:.2} ms compiling and {:.2} ms building tables {}, {} jumps into compiled loops, ran {:.2} ms\n",
             self.compiled.load(Ordering::Relaxed),
             self.compile_nanos.load(Ordering::Relaxed) as f64 / 1e6,
+            self.table_nanos.load(Ordering::Relaxed) as f64 / 1e6,
             if self.in_place { "in place" } else { "on another core" },
             self.jumps_in.load(Ordering::Relaxed),
             self.started.elapsed().as_secs_f64() * 1e3,
@@ -288,7 +376,12 @@ pub fn start_with(program: &Arc<Program>, mode: crate::Mode, in_place: bool) -> 
     let tiers = Arc::new(Tiers::new(program, strength.is_none(), in_place, thresholds));
     ME.with(|me| *me.borrow_mut() = Some(Arc::downgrade(&tiers)));
     if let Some(strength) = strength {
-        // Forced: everything compiled before it runs.
+        // Forced: everything compiled before it runs, and at the speed strength every table built.
+        if strength == Strength::Speed {
+            for procedure in 0..program.procedures.len() as u32 {
+                tiers.build_now(procedure);
+            }
+        }
         for procedure in 0..program.procedures.len() as u32 {
             tiers.compile_now(procedure, Entry::Start, strength);
         }
