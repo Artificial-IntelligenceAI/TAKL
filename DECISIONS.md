@@ -5,6 +5,21 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `if lives is 0:` ... `else if lives is 1:` ... `else:` ... `end if` (owner: "yup")
+
+```
+if lives is 0:
+  show "Game over"
+else if lives is 1:
+  show "Last life!"
+else:
+  show "Keep going"
+end if
+```
+
+In `procedure`'s shape. Easium's `else_if` would be glued grammar, so under TAKL's rule it is `else if`, two grammar
+words as `at least` is. Design claude proposed it; the owner: "yup".
+
 ### 2026-11-03 — `lives is more than 5`, `less than 5`, `at least 5`, `at most 5` (owner: "yes")
 
 Design claude proposed `above`, `below`, `5 or more` and `5 or less`, worried that `or` would also join tests. The
@@ -22,7 +37,7 @@ Design claude proposed it as the only form; the owner: "yea".
 ### 2026-11-03 — A line can end in `if`: `show "hi" if lives is 0` (owner)
 
 The owner: "Also, `show \"hi\" if...` is legal". A line runs only when the test after its `if` holds. Design claude
-reads it as any line, `stop if lives is 0` among them. Not designed: `if` as a block.
+reads it as any line, `stop if lives is 0` among them. `if` as a block: the entry above.
 
 ### 2026-11-03 — `repeat until lives is 0:` ... `end repeat`, checked before each round; no `while` (owner: "yes")
 
