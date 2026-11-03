@@ -5,6 +5,20 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A procedure that gives nothing back ends with `return nothing`, `start_running` too (owner: "yes")
+
+`decision.procedures.return_nothing_required`
+
+```
+procedure start_running:
+  show "Hello, World!"
+  return nothing
+end procedure start_running
+```
+
+The owner, of Hello World: "where's `return nothing;`?" Asked whether it is required at the end of every such
+procedure, the owner: "yes". Leaving it out is a compile error naming it.
+
 ### 2026-11-03 — `start_running` is required: every program runs from `procedure start_running:` (owner: "required")
 
 `decision.procedures.start_running_required`
