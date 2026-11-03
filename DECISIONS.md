@@ -30,6 +30,12 @@ beside TAKL's own. The owner: "I genuinely had a better time reading this versio
 later can still clash with a kid's procedure name, rarely; the error says so. The mark also ends any clash between a
 variable and a grammar word.
 
+The owner then tried `^`, "since it doesn't really have normal meaning": it is "to the power of" on calculators, in
+Excel and on Google, it is the error layout's pointer under code, and it is on a phone's second symbols page. Then
+`$`, which the owner saw clashes with money, common in kids' programs. Of Zig's and Swift's `@` for built-ins and
+attributes, the owner: "Just hope they don't move on to Zig or Swift"; the help says that in TAKL `@` marks your
+variables and that some languages use it for built-in things instead. `@` clashes least inside TAKL. The owner: "yes".
+
 ### 2026-11-03 — A grammar word never names a procedure: `procedure add` is refused, so `add 40 to scores` always means the built-in (owner: "yea")
 
 `decision.names.no_grammar_names`
