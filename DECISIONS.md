@@ -5,11 +5,16 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A fraction is written `1 over 3`, and `show` prints it so: `1 over 3` (owner: "yes")
+
+With `/` answered "did you mean", `over` is one word and how a fraction is read aloud; what `show` prints can be typed
+back in. Design claude proposed it; the owner: "yes". Not designed: whether `2 over 4` is shown as `1 over 2`.
+
 ### 2026-11-03 — `show` prints every number too: `show x` prints `500` (owner)
 
 The owner's first program shows a `small_whole`. Asked whether `show` prints whole numbers, the owner: "can also print
-all numbers": wholes, decimals of both kinds and fractions. A whole number prints as its digits. Not designed: how a
-decimal or a fraction is written out.
+all numbers": wholes, decimals of both kinds and fractions. A whole number prints as its digits, a fraction as `1 over 3` (the entry above).
+Not designed: how a decimal is written out.
 
 ### 2026-11-03 — `show` prints its pieces one after another, commas between them: `show "Hello, ", name` (owner)
 
