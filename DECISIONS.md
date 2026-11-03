@@ -5,6 +5,18 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A block ends with `end` and what it closes: `end procedure move`, `end repeat`, `end for`, `end table level`; `end_of` is gone (owner: "yes")
+
+```
+procedure move (speed: small_whole):
+  show speed
+end procedure move
+```
+
+Under the rule that a grammar word is one word, `end_of` was the one exception, and `end of` would be read as the `of`
+family. Design claude proposed dropping the `of`: `end` is one grammar word, never mistaken for `sum of`, and still names
+what it closes, at the cost of a little English. The owner: "yes". It replaces `end_of` in every entry below.
+
 ### 2026-11-03 — A name is glued with `_`; a grammar word stands alone: `small_whole`, `middle_of`, but `sum of scores` (owner: "yes")
 
 Names are what is declared, used or looked up: types, modifiers, variables, procedures, `small_whole`, `true_or_false`,
@@ -27,6 +39,8 @@ family keeps its bare `of`, `sum of scores`. `sum_of scores` and `middle of scor
 This replaces "kids can write their own `of`" in the `of` family entry below.
 
 ### 2026-11-03 — `end_of` stays one word, so it is never read as the `of` family (owner: "keep")
+
+Replaced the same day by `end`, the entry above.
 
 Shown a kid's own `procedure middle of (...)`, the owner: "Wait, if that one uses a bare `of`, why not the `end`?" Design
 claude: `end of procedure middle` would read as the `of` family, `end of scores` looking like the last item, and a kid
