@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `return a + b` gives a procedure's value back; the last line is never returned on its own (owner)
+
+Design claude proposed a word you can see over Ruby's returning the last line, offering `give_back` or `return`. The
+owner: "Just `return` with no `s`? I mean, above already says `returns`". It pairs with `returns` in the first line and is
+the word other languages use.
+
 ### 2026-11-03 — `procedure add (a: small_whole | b: small_whole) returns small_whole:` ... `end_of procedure add`; called as `add 1, 2` (owner: "yes")
 
 ```
