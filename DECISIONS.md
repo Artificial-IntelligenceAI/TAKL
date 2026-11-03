@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `, never_negative` after a whole number's type makes it unsigned: `small_whole, never_negative` is a uint16, 0 to 65535 (owner)
+
+The owner proposed `let score: small_whole, never_negative`. Asked whether it doubles the top end or only refuses
+negatives, the owner: "It's `uint`, without saying `unsigned_small_whole`, and I think stacking it to `small_whole` is too
+long". So it is a true unsigned number, written as a word after the comma as `can't_change` is, and never as a longer type
+name.
+
 ### 2026-11-03 — A `let` can change unless it says `can't_change`; `score = score + 10` changes it (owner: "yes")
 
 Design claude proposed that a `let` without `can't_change` can change, written `score = score + 10`, since the owner's
@@ -64,6 +71,6 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Whether a parameter is written exactly as a `let` is (`n: small_whole`); design claude proposed it, the owner has not said.
-- The types that are not whole numbers, and whether unsigned whole numbers exist.
+- The types that are not whole numbers.
 - What a number too big for its type does.
 - What TAKL takes from Ruby beyond `show` without brackets, `#` comments and no semicolons.
