@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A real typo stops the program, with a "did you mean" (owner: "stop, obviously")
+
+Design claude proposed that `cant_chang` be answered with "did you mean `can't_change`?" and never guessed and run, since
+a guess teaches that sloppy spelling works. Asked whether that stops the program or only warns, the owner: "stop,
+obviously".
+
 ### 2026-11-03 — `can't_change` and `cant_change` are both read; what autocorrect changes is read as typed (owner: "accept both seems like a good idea", "some autocorrect protection")
 
 Design claude raised that kids will type `cant_change`, and that text pasted from a document or a chat carries a curly
