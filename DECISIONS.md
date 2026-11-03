@@ -5,6 +5,14 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — Text is always valid UTF-8, counted in grapheme clusters, letters as a kid sees them: `"👍🏽"` is 1 long (owner: "yes")
+
+Design claude proposed that a position into text and its length count letters as seen, never bytes or code points, which
+are reached only by an explicit step. The owner: "So, we would normally do grapheme clusters?" Design claude: yes, at two
+costs, `position 1000 of name` walking the text from its start, and Unicode's segmentation tables shipped with the
+compiler and updated with each Unicode version (CyborgPL generates the same tables from unicode.org). Asked whether the
+speed is fine, the owner: "yes". The words for code points and for turning text into bytes are not designed.
+
 ### 2026-11-03 — A table's item type with modifiers is bracketed: `table of (tiny_whole, never_negative)`; a modifier outside is the variable's (owner: "yes")
 
 ```
@@ -153,7 +161,6 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
-- Text as design claude proposed: always valid UTF-8, counted in letters as seen, so `"👍🏽"` is 1 long; turning it into bytes an explicit step.
 - The name of the text type; `text` is design claude's, used in examples, never chosen.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
