@@ -5,6 +5,13 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `start_running` is required: every program runs from `procedure start_running:` (owner: "required")
+
+`decision.procedures.start_running_required`
+
+Asked whether a program may also begin at its first line, the owner: "required". A program with no `start_running` is a
+compile error naming it.
+
 ### 2026-11-03 — Empty text and an empty table are written `empty`; `""` and `[]` are answered "did you mean `empty`" (owner: "yea")
 
 `decision.values.empty`
@@ -40,8 +47,7 @@ end procedure start_running
 
 The owner asked whether TAKL should have `fn main`, then: "if we have it. What would it be called?" Design claude
 proposed `start`, other languages' `main` named in help. The owner wrote `start_running`, which pairs with the errors'
-`Stopped before running:` and `Stopped while running:`; a name, so glued. It gives nothing back. Not designed: whether
-it is required, or a program may also begin at its first line.
+`Stopped before running:` and `Stopped while running:`; a name, so glued. It gives nothing back. Required: the entry above.
 
 ### 2026-11-03 — The compiler is built with its optimizations from the start, not added after a plain first version (owner)
 
