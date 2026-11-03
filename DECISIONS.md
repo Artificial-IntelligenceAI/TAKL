@@ -5,6 +5,19 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — A name is glued with `_`; a grammar word stands alone: `small_whole`, `middle_of`, but `sum of scores` (owner: "yes")
+
+Names are what is declared, used or looked up: types, modifiers, variables, procedures, `small_whole`, `true_or_false`,
+`can't_change`, `never_negative`, `first_name`, `middle_of`. Grammar words are TAKL's own fixed words, each one word:
+`let`, `show`, `of`, `in`, `for`, `each`, `repeat`, `times`, `position`, `offset`, `procedure`, `returns`, `return`,
+`end`. A kid asks: did someone name this, or is it part of TAKL's sentence? Only TAKL's built-ins take grammar, so
+`sum of scores` keeps a bare `of` and a kid's `middle_of` glues it.
+
+The owner had design claude ask Easium's design claude, whose rule (Easium D5, D25, D34) is that one thing never holds a
+space and words join when neither can be swapped for another; under it `small_whole` was unclear, `small` swapping with
+`tiny`. The owner: "Then, we need a clearer rule". Design claude proposed this one, with `end_of` its one exception; the
+owner: "Then, why is it not `end of`?", and the exception went (the entry above). The owner: "yes".
+
 ### 2026-11-03 — A kid's own `of` is only a name, `procedure middle_of (xs: table of small_whole)`, called `middle_of scores`; a bare `of` is the built-in family's alone (owner)
 
 Design claude proposed `procedure middle of (...)`. The owner: "Is that a space in a fn name?" Design claude offered any
