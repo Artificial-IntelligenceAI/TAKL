@@ -5,6 +5,17 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `, fast` is `, fast_but_inexact`: `let speed: medium_decimal, fast_but_inexact = ~2.5` (owner: "yes")
+
+`decision.types.fast_but_inexact`
+
+The owner: "Should we make it `fast_but_weird`? Or `fast_but_abnormal`?", the name warning that something is off.
+Design claude: weird says nothing of how, and abnormal sounds broken; proposed `fast_but_rounded`. The owner: "Is it
+really rounded?" Yes, each result rounded to the nearest the float holds, but in binary, so `0.1 plus 0.2` shows more
+digits, not fewer, the opposite of a kid's "rounded". What is both true and readable is that it is not exact, the
+straight opposite of the bare default; the help says "inexact because computers store these in binary". A modifier,
+so glued. The owner: "yes". It replaces `, fast` in every entry below.
+
 ### 2026-11-03 — TAKL is Tankun's Ambioustious Kids Language, misspelt on purpose (owner)
 
 `decision.house.name`
