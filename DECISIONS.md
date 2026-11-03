@@ -5,12 +5,17 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — `remainder of (7 divided by 2)` is 1, in the `of` family (owner: "yes")
+
+Read as maths class says it, "the remainder of 7 divided by 2"; the division is bracketed by the bracket rule. Design
+claude proposed it; the owner: "yes".
+
 ### 2026-11-03 — `7 divided by 2` on whole numbers is an error unless it divides evenly or is rounded on purpose; a `remainder` word for what is left (owner: "yup")
 
 Design claude set out three: 3 with the rest dropped, as C and Java do, 7 ÷ 2 not being 3; an error; 3.5, a whole number
 turning into a decimal under the types. Design claude proposed the error, as `1 / 3` is for an exact decimal:
 `round (7 divided by 2)`, or the answer kept in a decimal or a fraction; and `remainder`, which kids learn in maths
-class, for what is left over. The owner: "yup". Not designed: how `remainder` is written.
+class, for what is left over. The owner: "yup". How `remainder` is written: the entry above.
 
 ### 2026-11-03 — `times` and `divided by` go before `plus` and `minus`, as in maths class; brackets when unsure (owner)
 
