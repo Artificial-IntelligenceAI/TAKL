@@ -5,6 +5,12 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-03 — The type of true and false is `true_or_false`: `let done: true_or_false = false` (owner)
+
+Design claude proposed `yes_or_no`, keeping `true` and `false` as the values since they carry over everywhere, with an
+error still able to say "other languages call this a boolean". The owner wrote `let done: true_or_false = false`: the
+name says the very values it holds.
+
 ### 2026-11-03 — An exact decimal never rounds on its own: `1 / 3` is an error, `round (1 / 3)` rounds on purpose, as in CyborgPL (owner: "copy")
 
 ```
@@ -210,4 +216,3 @@ what a `let` without `can't_change` may do.
 - Lua's warts fixed, as design claude proposed: setting past a table's end refused (no holes), one loop in order instead of `pairs` and `ipairs`.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".
 - Whether `= value` on a param is its default, so `move` alone means `move 5`; design claude proposed it.
-- True and false.
