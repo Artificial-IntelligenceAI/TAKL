@@ -81,6 +81,10 @@ struct Parser<'a> {
     line: usize,
     errors: Vec<Diagnostic>,
     next_id: ExprId,
+    /// The blocks open around the line being read, innermost last, by the word that ends them.
+    open: Vec<&'static str>,
+    /// A block just read never ended, so the lines after it were swallowed; its parent gets a `Broken` line.
+    unclosed: bool,
 }
 
 /// A cursor over one line's tokens.
@@ -190,7 +194,7 @@ fn tokens_span(tokens: &[Token]) -> Span {
 
 pub fn parse(source: &Source) -> (Program, Vec<Diagnostic>) {
     let (lines, errors) = lex(source);
-    let mut parser = Parser { source, lines, line: 0, errors, next_id: 0 };
+    let mut parser = Parser { source, lines, line: 0, errors, next_id: 0, open: Vec::new(), unclosed: false };
     let mut procedures = Vec::new();
     while parser.line < parser.lines.len() {
         let line = parser.lines[parser.line].clone();
@@ -233,9 +237,12 @@ impl<'a> Parser<'a> {
         let line = self.lines[self.line].clone();
         self.line += 1;
         let header = self.procedure_header(&line);
+        self.open.push("procedure");
         let (body, end) = self.block(line.span);
+        self.open.pop();
         let end_span = match end {
             Some(end_line) => {
+                self.line += 1;
                 let end_tokens = &end_line.tokens;
                 let closes_procedure = end_tokens.get(1).is_some_and(|token| token.is_word("procedure"));
                 if !closes_procedure {
@@ -488,7 +495,6 @@ impl<'a> Parser<'a> {
             };
             let first = &line.tokens[0];
             if first.is_word("end") {
-                self.line += 1;
                 return (body, Some(line));
             }
             if first.is_word("else") {
@@ -501,36 +507,59 @@ impl<'a> Parser<'a> {
             if first.is_word("end_of") {
                 // trace: decision.blocks.end
                 self.errors.push(messages::end_of_is_end(first.span));
-                self.line += 1;
                 return (body, Some(line));
             }
             self.line += 1;
             if let Some(stmt) = self.statement(&line) {
                 body.push(stmt);
             }
+            if self.unclosed {
+                body.push(Stmt { kind: StmtKind::Broken, span: line.span, only_if: None });
+                self.unclosed = false;
+            }
         }
     }
 
     /// A block that must close with `end <what>`.
-    fn closed_block(&mut self, opener: &Line, what: &str) -> Vec<Stmt> {
-        let (body, end) = self.block(opener.span);
-        self.check_end(opener, end, what);
+    fn closed_block(&mut self, opener: &Line, what: &'static str) -> Vec<Stmt> {
+        self.open.push(what);
+        let (mut body, end) = self.block(opener.span);
+        self.open.pop();
+        if !self.check_end(opener, end, what) {
+            // The lines after a block that never ended were read into it, so its own ending can't be judged.
+            body.push(Stmt { kind: StmtKind::Broken, span: opener.span, only_if: None });
+        }
         body
     }
 
-    fn check_end(&mut self, opener: &Line, end: Option<Line>, what: &str) {
-        match end {
-            Some(end_line) => {
-                let written = end_line.tokens.get(1).and_then(word_of);
-                if end_line.tokens[0].is_word("end_of") {
-                    return;
-                }
-                if written != Some(what) || end_line.tokens.len() != 2 {
-                    self.errors.push(messages::wrong_end(end_line.span, &format!("end {}", what)));
-                }
-            }
-            None => self.errors.push(messages::no_end(opener.span, &format!("end {}", what))),
+    /// Checks the `end` line a block stopped at and reads past it when it is this block's.
+    /// Returns false when the block never ended: its `end` is missing, and an outer block's `end` was reached.
+    fn check_end(&mut self, opener: &Line, end: Option<Line>, what: &str) -> bool {
+        let Some(end_line) = end else {
+            self.errors.push(messages::no_end(opener.span, &format!("end {}", what)));
+            self.unclosed = true;
+            return false;
+        };
+        if end_line.tokens[0].is_word("end_of") {
+            self.line += 1;
+            return true;
         }
+        let written = end_line.tokens.get(1).and_then(word_of);
+        if written == Some(what) {
+            if end_line.tokens.len() != 2 {
+                self.errors.push(messages::wrong_end(end_line.span, &format!("end {}", what)));
+            }
+            self.line += 1;
+            return true;
+        }
+        if written.is_some_and(|written| self.open.contains(&written)) {
+            self.errors.push(messages::no_end(opener.span, &format!("end {}", what)));
+            self.unclosed = true;
+            return false;
+        }
+        self.errors.push(messages::wrong_end(end_line.span, &format!("end {}", what)));
+        self.line += 1;
+        true
     }
 
     fn statement(&mut self, line: &Line) -> Option<Stmt> {
@@ -771,6 +800,23 @@ impl<'a> Parser<'a> {
 
     /// trace: decision.conditions.if
     fn if_statement(&mut self, line: &Line) -> Parsed<StmtKind> {
+        self.open.push("if");
+        let result = self.if_branches(line);
+        self.open.pop();
+        let (branches, otherwise, end) = result;
+        self.open_check_if(line, end);
+        if branches.is_empty() {
+            return Err(());
+        }
+        Ok(StmtKind::If { branches, otherwise })
+    }
+
+    fn open_check_if(&mut self, line: &Line, end: Option<Line>) {
+        self.check_end(line, end, "if");
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn if_branches(&mut self, line: &Line) -> (Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>, Option<Line>) {
         let test = self.block_header_test(line, 1);
         let (body, mut end) = self.block(line.span);
         let mut branches = Vec::new();
@@ -801,11 +847,7 @@ impl<'a> Parser<'a> {
                 break;
             }
         }
-        self.check_end(line, end, "if");
-        if branches.is_empty() {
-            return Err(());
-        }
-        Ok(StmtKind::If { branches, otherwise })
+        (branches, otherwise, end)
     }
 
     /// The test in a block's first line, between `skip` words and the closing `:`.

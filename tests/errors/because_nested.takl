@@ -1,0 +1,5 @@
+procedure start_running just finishes:
+  let @a: tiny_whole = 100
+  show (@a plus 1) plus 100
+  finish
+end procedure start_running

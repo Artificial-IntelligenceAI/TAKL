@@ -1,0 +1,4 @@
+procedure start_running just finishes:
+  let @a: tiny_decimal, fast_but_inexact = ~65520
+  finish
+end procedure start_running

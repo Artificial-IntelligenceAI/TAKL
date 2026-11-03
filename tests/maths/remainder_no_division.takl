@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @a: small_whole = 1
+  show remainder of @a
+  show remainder of (@a plus 1)
+  finish
+end procedure start_running

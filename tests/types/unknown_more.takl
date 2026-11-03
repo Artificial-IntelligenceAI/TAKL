@@ -1,0 +1,8 @@
+procedure start_running just finishes:
+  let @a: u8 = 1
+  let @b: float = 1.5
+  let @c: bool = true
+  let @d: uint16 = 1
+  let @e: long = 1
+  finish
+end procedure start_running

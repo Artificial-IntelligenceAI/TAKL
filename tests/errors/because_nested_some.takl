@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @a: tiny_whole = 100
+  let @b: tiny_whole = 1
+  show (0 minus @b) times @a times 2
+  finish
+end procedure start_running

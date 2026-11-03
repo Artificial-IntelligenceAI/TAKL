@@ -1,0 +1,7 @@
+Stopped before running: tests/blocks/no_end.takl:1:1, line 1 column 1
+  1 | procedure start_running just finishes:
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+what: this block never ends: `end procedure start_running` is missing
+why:  Every block ends with `end` and what it closes.
+
+1 mistake found: tests/blocks/no_end.takl:1:1, line 1 column 1.

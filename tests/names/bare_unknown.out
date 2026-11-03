@@ -1,0 +1,7 @@
+Stopped before running: tests/names/bare_unknown.takl:2:8, line 2 column 8
+  2 |   show foo
+             ^^^
+what: there's no `foo`
+why:  Variables start with `@`. Procedures are made with `procedure`.
+
+1 mistake found: tests/names/bare_unknown.takl:2:8, line 2 column 8.

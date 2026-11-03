@@ -163,8 +163,8 @@ pub fn lex(source: &Source) -> (Vec<Line>, Vec<Diagnostic>) {
                     i += 1;
                 }
                 if !closed {
+                    // Kept as text, so the rest of the line is read without a second error.
                     errors.push(messages::text_not_closed(Span::new(offset, end_of(i))));
-                    continue;
                 }
                 if let Some(at) = backslash {
                     errors.push(messages::backslash_in_text(Span::new(at, at + 1)));

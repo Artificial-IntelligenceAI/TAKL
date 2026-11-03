@@ -1,0 +1,7 @@
+Stopped before running: tests/syntax/bracket_not_closed.takl:2:8, line 2 column 8
+  2 |   show (1 plus 2
+             ^
+what: this `(` is never closed
+why:  Every `(` needs a `)` on the same line.
+
+1 mistake found: tests/syntax/bracket_not_closed.takl:2:8, line 2 column 8.

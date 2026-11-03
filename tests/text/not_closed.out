@@ -1,0 +1,7 @@
+Stopped before running: tests/text/not_closed.takl:2:8, line 2 column 8
+  2 |   show "Hi
+             ^^^
+what: this text has no closing `"`
+why:  Text starts with `"` and ends with `"` on the same line.
+
+1 mistake found: tests/text/not_closed.takl:2:8, line 2 column 8.

@@ -1,0 +1,7 @@
+Stopped before running: tests/blocks/wrong_end.takl:4:3, line 4 column 3
+  4 |   end repeat
+        ^^^^^^^^^^
+fix:  end if
+why:  Each block ends by naming what it closes.
+
+1 mistake found: tests/blocks/wrong_end.takl:4:3, line 4 column 3.

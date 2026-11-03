@@ -127,7 +127,7 @@ impl<'a> Machine<'a> {
             (Value::Fraction { size: None, top, bottom }, Ty::Fraction(size)) => {
                 if !numbers::fraction_fits(&top, &bottom, *size) {
                     let written = format!("{} over {}", top, bottom);
-                    return Err(messages::fraction_too_big(span, &written, &ty.name(), *size));
+                    return Err(messages::fraction_too_big(span, &written, &ty.name(), *size, Stage::WhileRunning));
                 }
                 Ok(Value::Fraction { size: Some(*size), top, bottom })
             }
@@ -138,8 +138,14 @@ impl<'a> Machine<'a> {
     fn fast_from(&self, text: &str, size: Size, span: Span, ty: &Ty) -> Run<Value> {
         match Fast::parse(text, size) {
             Ok((fast, true)) => Ok(Value::Fast(fast)),
-            Ok((_, false)) => Err(messages::fast_cant_hold(span, text, &Fast::nearest_shown(text, size), &ty.name())),
-            Err(_) => Err(messages::fast_too_big(span, text, &ty.name())),
+            Ok((_, false)) => Err(messages::fast_cant_hold(
+                span,
+                text,
+                &Fast::nearest_shown(text, size),
+                &ty.name(),
+                Stage::WhileRunning,
+            )),
+            Err(_) => Err(messages::fast_too_big(span, text, &ty.name(), Stage::WhileRunning)),
         }
     }
 
@@ -492,7 +498,9 @@ impl<'a> Machine<'a> {
                 };
                 match Fast::parse(written, *size) {
                     Ok((fast, _)) => Ok(Value::Fast(fast)),
-                    Err(_) => Err(messages::fast_too_big(expr.span, written, &Ty::Fast(*size).name())),
+                    Err(_) => {
+                        Err(messages::fast_too_big(expr.span, written, &Ty::Fast(*size).name(), Stage::WhileRunning))
+                    }
                 }
             }
             ExprKind::Fraction(top, bottom) => {
@@ -721,21 +729,22 @@ impl<'a> Machine<'a> {
     }
 
     /// Adds where each variable in a step got its value, oldest first.
+    /// Adds where each variable in the failing step got its value, oldest first, nested ones included.
+    /// trace: decision.errors.layout (`because:`, the earlier steps that led here)
     fn because(&self, expr: &Expr, mut error: Diagnostic) -> Diagnostic {
-        let (left, right) = match &expr.kind {
-            ExprKind::Maths(_, left, right) | ExprKind::Remainder(left, right) => (left, right),
-            _ => return error,
-        };
+        let mut names = Vec::new();
+        variables_in(expr, &mut names);
         let mut sets: Vec<(u64, Span, String)> = Vec::new();
-        for side in [left, right] {
-            if let ExprKind::Variable(name) = &side.kind
-                && let Some(slot) = self.find(name)
-            {
-                let fact = format!("{} was {}", name, self.shown(&slot.value, slot.set_at).unwrap_or_default());
-                if !sets.iter().any(|(_, span, _)| *span == slot.set_at) {
-                    sets.push((slot.set_step, slot.set_at, fact));
-                }
+        for name in names {
+            let Some(slot) = self.find(&name) else { continue };
+            if sets.iter().any(|(_, span, _)| *span == slot.set_at) {
+                continue;
             }
+            let fact = match (&slot.value, self.shown(&slot.value, slot.set_at)) {
+                (Value::Table(_), _) | (_, Err(_)) => format!("{} was last set here", name),
+                (_, Ok(shown)) => format!("{} was {}", name, shown),
+            };
+            sets.push((slot.set_step, slot.set_at, fact));
         }
         sets.sort_by_key(|(step, ..)| *step);
         for (_, span, fact) in sets {
@@ -799,6 +808,47 @@ impl<'a> Machine<'a> {
                 })
             }
         }
+    }
+}
+
+/// Every variable named in an expression, in the order they are written, each once.
+fn variables_in(expr: &Expr, names: &mut Vec<String>) {
+    let visit = |inner: &Expr, names: &mut Vec<String>| variables_in(inner, names);
+    match &expr.kind {
+        ExprKind::Variable(name) => {
+            if !names.contains(name) {
+                names.push(name.clone());
+            }
+        }
+        ExprKind::Brackets(inner) | ExprKind::Not(inner) | ExprKind::Round(inner) | ExprKind::Of(_, inner) => {
+            visit(inner, names)
+        }
+        ExprKind::Maths(_, left, right)
+        | ExprKind::Compare(_, left, right)
+        | ExprKind::Logic(_, left, right)
+        | ExprKind::Remainder(left, right)
+        | ExprKind::Index(_, left, right) => {
+            visit(left, names);
+            visit(right, names);
+        }
+        ExprKind::Table(items) => items.iter().for_each(|item| visit(item, names)),
+        ExprKind::KeyedTable(pairs) => pairs.iter().for_each(|(key, value)| {
+            visit(key, names);
+            visit(value, names);
+        }),
+        ExprKind::Call(_, args) => {
+            for arg in args {
+                match arg {
+                    Arg::Value(value) => visit(value, names),
+                    Arg::Share(name, _) => {
+                        if !names.contains(name) {
+                            names.push(name.clone());
+                        }
+                    }
+                }
+            }
+        }
+        _ => {}
     }
 }
 

@@ -387,7 +387,7 @@ pub fn grammar_word_as_name(span: Span, word: &str) -> Diagnostic {
     what(
         span,
         format!("`{}` is one of TAKL's own words, so it can't be a name", word),
-        "Pick another name, like `add_up`.",
+        format!("Each of TAKL's words keeps one meaning. Pick another name, like `{}_it`.", word),
     )
 }
 
@@ -607,6 +607,20 @@ pub fn unknown_type(span: Span, name: &str) -> Diagnostic {
             Some(("medium_whole", "TAKL names whole numbers by size. Other languages call this an int32."))
         }
         "int64" | "i64" => Some(("big_whole", "TAKL names whole numbers by size. Other languages call this an int64.")),
+        "uint8" | "u8" => {
+            Some(("tiny_whole, never_negative", "TAKL names whole numbers by size. Other languages call this a uint8."))
+        }
+        "uint16" | "u16" => Some((
+            "small_whole, never_negative",
+            "TAKL names whole numbers by size. Other languages call this a uint16.",
+        )),
+        "uint32" | "u32" => Some((
+            "medium_whole, never_negative",
+            "TAKL names whole numbers by size. Other languages call this a uint32.",
+        )),
+        "uint64" | "u64" => {
+            Some(("big_whole, never_negative", "TAKL names whole numbers by size. Other languages call this a uint64."))
+        }
         _ => None,
     };
     if let Some((fixed, why)) = certain {
@@ -1040,9 +1054,10 @@ pub fn decimal_trouble(span: Span, trouble: Trouble, ty: &str, stage: Stage) -> 
     }
 }
 
-pub fn fast_cant_hold(span: Span, written: &str, nearest: &str, ty: &str) -> Diagnostic {
+pub fn fast_cant_hold(span: Span, written: &str, nearest: &str, ty: &str, stage: Stage) -> Diagnostic {
     // trace: decision.types.approx
-    what(
+    at(
+        stage,
         span,
         format!("a {} can't hold {} exactly", ty, written),
         format!(
@@ -1052,12 +1067,13 @@ pub fn fast_cant_hold(span: Span, written: &str, nearest: &str, ty: &str) -> Dia
     )
 }
 
-pub fn fast_too_big(span: Span, written: &str, ty: &str) -> Diagnostic {
-    what(span, format!("{} is too big for a {}", written, ty), "Use a bigger decimal.")
+pub fn fast_too_big(span: Span, written: &str, ty: &str, stage: Stage) -> Diagnostic {
+    at(stage, span, format!("{} is too big for a {}", written, ty), "Use a bigger decimal.")
 }
 
-pub fn fraction_too_big(span: Span, written: &str, ty: &str, size: Size) -> Diagnostic {
-    what(
+pub fn fraction_too_big(span: Span, written: &str, ty: &str, size: Size, stage: Stage) -> Diagnostic {
+    at(
+        stage,
         span,
         format!("{} is too big for a {}", written, ty),
         format!("The top and the bottom of a {} are each a {}_whole.", ty, size.word()),

@@ -1,0 +1,8 @@
+Stopped while running: tests/errors/because_nested.takl:3:8, line 3 column 8
+  3 |   show (@a plus 1) plus 100
+             ^^^^^^^^^^^^^^^^^^^^
+what: 201 is too big for a tiny_whole
+why:  A tiny_whole holds -128 to 127. Other languages call this an int8.
+because: @a was 100, tests/errors/because_nested.takl:2:3, line 2 column 3
+  2 |   let @a: tiny_whole = 100
+        ^^^^^^^^^^^^^^^^^^^^^^^^

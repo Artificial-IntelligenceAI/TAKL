@@ -1,0 +1,13 @@
+Stopped before running: tests/maths/remainder_no_division.takl:3:21, line 3 column 21
+  3 |   show remainder of @a
+                          ^^
+what: `remainder of` needs a division in brackets, like `remainder of (7 divided by 2)`
+why:  The remainder is what's left over after dividing.
+
+Stopped before running: tests/maths/remainder_no_division.takl:4:21, line 4 column 21
+  4 |   show remainder of (@a plus 1)
+                          ^^^^^^^^^^^
+what: `remainder of` needs a division in brackets, like `remainder of (7 divided by 2)`
+why:  The remainder is what's left over after dividing.
+
+2 mistakes found. Start with the first one: tests/maths/remainder_no_division.takl:3:21, line 3 column 21.

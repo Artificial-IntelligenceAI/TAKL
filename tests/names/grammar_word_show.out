@@ -1,0 +1,7 @@
+Stopped before running: tests/names/grammar_word_show.takl:1:11, line 1 column 11
+  1 | procedure show (@a: small_whole) just finishes:
+                ^^^^
+what: `show` is one of TAKL's own words, so it can't be a name
+why:  Each of TAKL's words keeps one meaning. Pick another name, like `show_it`.
+
+1 mistake found: tests/names/grammar_word_show.takl:1:11, line 1 column 11.

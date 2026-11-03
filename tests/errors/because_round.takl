@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  let @a: tiny_whole = 100
+  let @b: tiny_whole = 1
+  show round (@a divided by @b) plus 100
+  finish
+end procedure start_running

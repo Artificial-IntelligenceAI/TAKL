@@ -1,0 +1,33 @@
+Stopped before running: tests/types/unknown_more.takl:2:11, line 2 column 11
+  2 |   let @a: u8 = 1
+                ^^
+fix:  tiny_whole, never_negative
+why:  TAKL names whole numbers by size. Other languages call this a uint8.
+
+Stopped before running: tests/types/unknown_more.takl:3:11, line 3 column 11
+  3 |   let @b: float = 1.5
+                ^^^^^
+what: TAKL has no `float`
+why:  TAKL's decimals have sizes: tiny_decimal, small_decimal, medium_decimal, big_decimal.
+      They're exact. Add `, fast_but_inexact` for what other languages call a float.
+
+Stopped before running: tests/types/unknown_more.takl:4:11, line 4 column 11
+  4 |   let @c: bool = true
+                ^^^^
+fix:  true_or_false
+why:  Other languages call this a boolean.
+
+Stopped before running: tests/types/unknown_more.takl:5:11, line 5 column 11
+  5 |   let @d: uint16 = 1
+                ^^^^^^
+fix:  small_whole, never_negative
+why:  TAKL names whole numbers by size. Other languages call this a uint16.
+
+Stopped before running: tests/types/unknown_more.takl:6:11, line 6 column 11
+  6 |   let @e: long = 1
+                ^^^^
+what: TAKL has no `long`
+why:  TAKL names whole numbers by size: tiny_whole, small_whole, medium_whole, big_whole.
+      Add `, never_negative` for one that's never below zero.
+
+5 mistakes found. Start with the first one: tests/types/unknown_more.takl:2:11, line 2 column 11.

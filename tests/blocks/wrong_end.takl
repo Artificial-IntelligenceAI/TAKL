@@ -1,0 +1,6 @@
+procedure start_running just finishes:
+  if 1 is 1:
+    show "x"
+  end repeat
+  finish
+end procedure start_running

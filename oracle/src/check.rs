@@ -802,16 +802,17 @@ impl<'a> Checker<'a> {
                             &written,
                             &Fast::nearest_shown(&value, *size),
                             &want.name(),
+                            Stage::BeforeRunning,
                         ))
                     }
-                    Err(_) => Err(messages::fast_too_big(expr.span, &written, &want.name())),
+                    Err(_) => Err(messages::fast_too_big(expr.span, &written, &want.name(), Stage::BeforeRunning)),
                 }
             }
             (Known::Fraction(top, bottom), Ty::Fraction(size)) => {
                 if numbers::fraction_fits(top, bottom, *size) {
                     Ok(())
                 } else {
-                    Err(messages::fraction_too_big(expr.span, &written, &want.name(), *size))
+                    Err(messages::fraction_too_big(expr.span, &written, &want.name(), *size, Stage::BeforeRunning))
                 }
             }
             _ => Ok(()),
@@ -897,9 +898,19 @@ impl<'a> Checker<'a> {
         match &expr.kind {
             ExprKind::Whole(_) => Ty::WrittenWhole,
             ExprKind::Decimal { .. } => Ty::WrittenDecimal,
-            ExprKind::About { .. } => match want {
-                Some(Ty::Fast(_)) => {
-                    // trace: decision.types.approx
+            ExprKind::About { written } => match want {
+                Some(Ty::Fast(size)) => {
+                    // trace: decision.types.approx (a written `~` number too big is known before running)
+                    if Fast::parse(written, *size).is_err() {
+                        let shown = self.text(expr.span);
+                        self.error(messages::fast_too_big(
+                            expr.span,
+                            &shown,
+                            &Ty::Fast(*size).name(),
+                            Stage::BeforeRunning,
+                        ));
+                        return Ty::Unknown;
+                    }
                     let want = want.cloned().unwrap_or(Ty::Unknown);
                     self.facts.targets.insert(expr.id, want.clone());
                     want

@@ -2,6 +2,6 @@ Stopped before running: tests/names/no_grammar_names.takl:1:11, line 1 column 11
   1 | procedure add (@a: small_whole) just finishes:
                 ^^^
 what: `add` is one of TAKL's own words, so it can't be a name
-why:  Pick another name, like `add_up`.
+why:  Each of TAKL's words keeps one meaning. Pick another name, like `add_it`.
 
 1 mistake found: tests/names/no_grammar_names.takl:1:11, line 1 column 11.

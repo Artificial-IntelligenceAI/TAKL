@@ -1,0 +1,7 @@
+Stopped before running: tests/show/nothing.takl:2:3, line 2 column 3
+  2 |   show
+        ^^^^
+what: `show` needs something to show
+why:  Like `show "Hello, World!"`.
+
+1 mistake found: tests/show/nothing.takl:2:3, line 2 column 3.

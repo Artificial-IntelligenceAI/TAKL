@@ -1,0 +1,7 @@
+Stopped before running: tests/maths/round_no_brackets.takl:3:8, line 3 column 8
+  3 |   show round @a
+             ^^^^^
+what: `round` needs what it rounds in brackets, like `round (7 divided by 2)`
+why:  Brackets show exactly what gets rounded.
+
+1 mistake found: tests/maths/round_no_brackets.takl:3:8, line 3 column 8.

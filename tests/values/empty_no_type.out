@@ -1,0 +1,7 @@
+Stopped before running: tests/values/empty_no_type.takl:2:8, line 2 column 8
+  2 |   show empty
+             ^^^^^
+what: `empty` doesn't know what it's empty of here
+why:  `empty` works where the type is known, like `let @name: text = empty`.
+
+1 mistake found: tests/values/empty_no_type.takl:2:8, line 2 column 8.

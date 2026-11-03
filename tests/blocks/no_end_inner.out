@@ -1,0 +1,7 @@
+Stopped before running: tests/blocks/no_end_inner.takl:2:3, line 2 column 3
+  2 |   repeat 2 times:
+        ^^^^^^^^^^^^^^^
+what: this block never ends: `end repeat` is missing
+why:  Every block ends with `end` and what it closes.
+
+1 mistake found: tests/blocks/no_end_inner.takl:2:3, line 2 column 3.
