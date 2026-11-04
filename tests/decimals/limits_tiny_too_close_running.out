@@ -1,0 +1,8 @@
+Stopped while running: tests/decimals/limits_tiny_too_close_running.takl:4:10, line 4 column 10
+  4 |     @a = @a times @a
+               ^^^^^^^^^^^
+what: this is too close to zero for a tiny_decimal to hold exactly
+why:  Exact decimals never round on their own. Round it with `round (...)`, or use a bigger decimal.
+because: @a was 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001, tests/decimals/limits_tiny_too_close_running.takl:4:5, line 4 column 5
+  4 |     @a = @a times @a
+          ^^^^^^^^^^^^^^^^

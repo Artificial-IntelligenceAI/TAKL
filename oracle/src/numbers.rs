@@ -67,8 +67,8 @@ pub fn whole_fits(n: &BigInt, size: Size, never_negative: bool) -> bool {
 
 // ---- exact decimals ---------------------------------------------------------------------------------------------
 
-/// How many digits an exact decimal holds and how far its point may move: IEEE 754's decimal32, decimal64,
-/// decimal128 and decimal256 (the last from the standard's formula for wider formats: 70 digits).
+/// How many digits an exact decimal holds and how far its point may move: IEEE 754's decimal32, decimal64 and
+/// decimal128, and decimal256 from the standard's formula for wider formats (70 digits, biggest power 1,572,864).
 /// trace: decision.types.decimals
 pub fn decimal_digits(size: Size) -> u32 {
     match size {
@@ -134,24 +134,26 @@ impl Exact {
         if coefficient.is_zero() {
             return Ok(Exact { coefficient, exponent: exponent.clamp(low, high) });
         }
-        let ten = BigInt::from(10);
-        while digit_count(&coefficient) > digits && (&coefficient % &ten).is_zero() {
-            coefficient /= &ten;
-            exponent += 1;
+        // Zeros on the end can move into the exponent, or back out of it, without changing the number.
+        let count = digit_count(&coefficient) as i64;
+        let zeros = trailing_zeros(&coefficient) as i64;
+        let over = count - digits as i64;
+        let strip = over.max(low - exponent).max(0).min(zeros);
+        if strip > 0 {
+            coefficient /= ten_to(strip as u64);
+            exponent += strip;
         }
         if digit_count(&coefficient) > digits {
             return Err(Trouble::TooManyDigits);
         }
-        while exponent < low && (&coefficient % &ten).is_zero() {
-            coefficient /= &ten;
-            exponent += 1;
-        }
         if exponent < low {
             return Err(Trouble::TooSmall);
         }
-        while exponent > high && digit_count(&coefficient) < digits {
-            coefficient *= &ten;
-            exponent -= 1;
+        if exponent > high {
+            let room = digits as i64 - digit_count(&coefficient) as i64;
+            let add = room.min(exponent - high);
+            coefficient *= ten_to(add as u64);
+            exponent -= add;
         }
         if exponent > high {
             return Err(Trouble::TooBig);
@@ -279,14 +281,7 @@ fn trailing_zeros(n: &BigInt) -> u32 {
     if n.is_zero() {
         return 0;
     }
-    let ten = BigInt::from(10);
-    let mut n = n.clone();
-    let mut count = 0;
-    while (&n % &ten).is_zero() {
-        n /= &ten;
-        count += 1;
-    }
-    count
+    n.to_string().bytes().rev().take_while(|digit| *digit == b'0').count() as u32
 }
 
 fn reduce(top: BigInt, bottom: BigInt) -> (BigInt, BigInt) {

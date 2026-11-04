@@ -1,0 +1,27 @@
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+Stopped while running: tests/decimals/limits_big_too_big_running.takl:5:30, line 5 column 30
+  5 |     let @next: big_decimal = (position 1 of @xs) times (position 1 of @xs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+what: this is too big for a big_decimal
+why:  There is no bigger decimal than this one.
+because: @xs was last set here, tests/decimals/limits_big_too_big_running.takl:6:5, line 6 column 5
+  6 |     add @next to @xs at position 1
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

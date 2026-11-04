@@ -1101,6 +1101,9 @@ what a `let` without `can't_change` may do.
     the loop doesn't make the loop longer.
   - A run-time error's `because:` names where each variable in the failing step last got its value.
   - Every code line in one error shares a gutter width, so a `because:` on line 6 under an error on line 10 lines up.
+  - Exact decimals' limits are IEEE 754's: decimal32, decimal64, decimal128 and, by the standard's formula, decimal256.
+    The biggest are 1 followed by 96, 384, 6144 and 1,572,864 zeros; the closest to zero, 1 at 101, 398, 6176 and
+    1,572,932 places. Past either is a stop, written or while running; a zero with any number of places is fine.
   - A broken bound on a param points at that argument. All of a call's arguments are worked out, left to right, before
     any is held to its param's bounds.
   - `length of` is a number with no size, like a written one, worked out at run time: `(length of @t) plus 0.5` is `3.5`,

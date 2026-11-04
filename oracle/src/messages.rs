@@ -1027,6 +1027,19 @@ pub fn negative_repeat_not_designed(span: Span, count: &str) -> Diagnostic {
     not_designed(Stage::WhileRunning, span, format!("repeating {} times", count))
 }
 
+/// What to try when a number doesn't fit: there is nothing bigger than a big decimal, so it isn't offered.
+fn bigger_decimal(ty: &str) -> &'static str {
+    if ty.starts_with("big_") { "There is no bigger decimal than this one." } else { "Use a bigger decimal." }
+}
+
+fn round_or_bigger(ty: &str) -> &'static str {
+    if ty.starts_with("big_") {
+        "Exact decimals never round on their own. Round it with `round (...)`."
+    } else {
+        "Exact decimals never round on their own. Round it with `round (...)`, or use a bigger decimal."
+    }
+}
+
 pub fn decimal_trouble(span: Span, trouble: Trouble, ty: &str, stage: Stage) -> Diagnostic {
     // trace: decision.decimals.rounding
     match trouble {
@@ -1036,19 +1049,13 @@ pub fn decimal_trouble(span: Span, trouble: Trouble, ty: &str, stage: Stage) -> 
             "this goes on forever, so a decimal can't hold it exactly",
             "Exact decimals never round on their own. Round it with `round (...)`, or use a fraction.",
         ),
-        Trouble::TooManyDigits => at(
-            stage,
-            span,
-            format!("this has more digits than a {} holds", ty),
-            "Exact decimals never round on their own. Round it with `round (...)`, or use a bigger decimal.",
-        ),
-        Trouble::TooBig => at(stage, span, format!("this is too big for a {}", ty), "Use a bigger decimal."),
-        Trouble::TooSmall => at(
-            stage,
-            span,
-            format!("this is too close to zero for a {} to hold exactly", ty),
-            "Exact decimals never round on their own. Round it with `round (...)`, or use a bigger decimal.",
-        ),
+        Trouble::TooManyDigits => {
+            at(stage, span, format!("this has more digits than a {} holds", ty), round_or_bigger(ty))
+        }
+        Trouble::TooBig => at(stage, span, format!("this is too big for a {}", ty), bigger_decimal(ty)),
+        Trouble::TooSmall => {
+            at(stage, span, format!("this is too close to zero for a {} to hold exactly", ty), round_or_bigger(ty))
+        }
         Trouble::DividedByZero => divided_by_zero(span, stage),
         Trouble::Halfway => round_halfway_not_designed(span, stage),
     }
@@ -1068,7 +1075,7 @@ pub fn fast_cant_hold(span: Span, written: &str, nearest: &str, ty: &str, stage:
 }
 
 pub fn fast_too_big(span: Span, written: &str, ty: &str, stage: Stage) -> Diagnostic {
-    at(stage, span, format!("{} is too big for a {}", written, ty), "Use a bigger decimal.")
+    at(stage, span, format!("{} is too big for a {}", written, ty), bigger_decimal(ty))
 }
 
 pub fn fraction_too_big(span: Span, written: &str, ty: &str, size: Size, stage: Stage) -> Diagnostic {

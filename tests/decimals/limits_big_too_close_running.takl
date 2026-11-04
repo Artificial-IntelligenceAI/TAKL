@@ -1,0 +1,11 @@
+procedure start_running just finishes:
+  let @xs: table of big_decimal = [0.001]
+  let @n: small_whole = 0
+  repeat 40 times:
+    let @next: big_decimal = (position 1 of @xs) times (position 1 of @xs)
+    add @next to @xs at position 1
+    @n = @n plus 1
+    show @n
+  end repeat
+  finish
+end procedure start_running

@@ -1,0 +1,8 @@
+Stopped while running: tests/decimals/limits_tiny_too_big_running.takl:4:10, line 4 column 10
+  4 |     @a = @a times @a
+               ^^^^^^^^^^^
+what: this is too big for a tiny_decimal
+why:  Use a bigger decimal.
+because: @a was 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000, tests/decimals/limits_tiny_too_big_running.takl:4:5, line 4 column 5
+  4 |     @a = @a times @a
+          ^^^^^^^^^^^^^^^^
