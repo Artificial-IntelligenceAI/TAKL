@@ -5,6 +5,15 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-04 — A hook loads the implementation rules into every session at startup and after every compaction (owner: "yes")
+
+`decision.house.rules_hook`
+
+`.claude/settings.json` holds a `SessionStart` hook, matching `startup|compact`, that prints `IMPLEMENTATION.md` into the
+session. Design claude raised that `decision.house.read_rules` alone relies on a session noticing it was compacted; the
+owner: "How to even do that?", then "yes". It lives in the repo, so every clone gets it. Seen firing at startup with the
+rules in its output; firing after a compaction has not been seen yet.
+
 ### 2026-11-04 — Every AI reads the implementation rules first, and again after every compaction (owner)
 
 `decision.house.read_rules`
