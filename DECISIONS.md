@@ -11,8 +11,9 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 `.claude/settings.json` holds a `SessionStart` hook, matching `startup|compact`, that prints `IMPLEMENTATION.md` into the
 session. Design claude raised that `decision.house.read_rules` alone relies on a session noticing it was compacted; the
-owner: "How to even do that?", then "yes". It lives in the repo, so every clone gets it. Seen firing at startup with the
-rules in its output; firing after a compaction has not been seen yet.
+owner: "How to even do that?", then "yes". It lives in the repo, so every clone gets it. Tested 2026-11-04 in a Haiku session
+started in this folder, which quoted the rules with no tools at startup and again after the owner ran `/compact`, its
+context showing `SessionStart:compact hook success`. A folder must be trusted first, or sessions there don't start.
 
 ### 2026-11-04 — Every AI reads the implementation rules first, and again after every compaction (owner)
 
