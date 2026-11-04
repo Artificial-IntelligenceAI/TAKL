@@ -9,8 +9,8 @@ use crate::numbers::{Size, Trouble};
 use crate::source::Span;
 use num_bigint::BigInt;
 
-/// What `show` puts after its pieces. Not decided: design claude asked the owner whether `show` ends its line, and
-/// until the answer this is a line ending, kept in this one place so the answer changes one line and the `.out` files.
+/// What `show` puts after its pieces.
+/// trace: decision.show.line_ending
 pub const SHOW_ENDS_WITH: &str = "\n";
 
 fn what(span: Span, what: impl Into<String>, why: impl Into<String>) -> Diagnostic {

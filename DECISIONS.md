@@ -5,6 +5,19 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-04 — `show` ends its line on its own (owner: "yes")
+
+`decision.show.line_ending`
+
+```
+show "Hello"
+show "World"
+```
+
+Prints two lines. Asked by design claude after the oracle needed an answer, the owner: "Like, auto `\n`?" Design claude
+proposed keeping it: it is what a kid expects, `\n` means nothing to them yet, and `show "Hello", "World"` already prints
+two pieces on one line. The owner: "yes". Not designed: a way to print without a line ending.
+
 ### 2026-11-03 — A session reads the current Anthropic prompting guide, in full and itself, before prompting a subagent or another session (owner: "yea")
 
 `decision.house.prompting`
@@ -363,7 +376,7 @@ show "Hello, ", name
 
 Design claude proposed how `show` prints each type. The owner: "There's only this `show` for now". Text prints without
 its quotes; nothing is put between the pieces, so the space is the kid's, inside `"Hello, "`. Numbers: the entry
-above. Not designed: how a table or `true` prints, and whether `show` ends its line.
+above. Not designed: how a table or `true` prints. Its line ending: the entry above.
 
 ### 2026-11-03 — Text is written in double quotes: `show "Hi"` (owner: "yes")
 
@@ -1021,8 +1034,6 @@ what a `let` without `can't_change` may do.
 ## Open
 
 - Found while building the oracle, each a `NotDesignedYet` stop with its own golden test unless marked:
-  - Whether `show` ends its line. The oracle ends it, in one place (`SHOW_ENDS_WITH`), until the owner says; every
-    golden `.out` depends on it.
   - What `\` does inside text.
   - How a number below zero is written (`0 minus 5` works; `-5` and `at least -5` do not).
   - Which way `round` goes exactly halfway, and whether `round` means "nearest" at all (the oracle rounds to the
