@@ -5,6 +5,16 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-04 — A session reads the prompting guides for the specific AI it prompts, and again after every compaction (owner)
+
+`decision.house.prompting_reread`
+
+The owner: "A session should read the prompting guide(s) for that specific AI, before prompting the AI, and read again
+after compaction." It widens `decision.house.prompting`: a guide read before a compaction no longer counts, and when a
+model's page builds on others, as Opus 5.5's does on Opus 5's and the general best practices, those are read too. It
+is rule 11 in `IMPLEMENTATION.md`. The hook loads the rule after a compaction, but the guides themselves are still the
+session's to read.
+
 ### 2026-11-04 — A hook loads the implementation rules into every session at startup and after every compaction (owner: "yes")
 
 `decision.house.rules_hook`
