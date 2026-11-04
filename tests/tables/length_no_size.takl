@@ -1,0 +1,9 @@
+procedure start_running just finishes:
+  let @t: table of tiny_whole = [1, 2, 3]
+  show (length of @t) plus 0.5
+  let @a: small_whole = length of @t
+  let @b: small_decimal = length of @t
+  let @c: small_decimal, fast_but_inexact = length of @t
+  show @a, " ", @b, " ", @c
+  finish
+end procedure start_running

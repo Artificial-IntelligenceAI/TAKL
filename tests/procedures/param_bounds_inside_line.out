@@ -1,0 +1,5 @@
+Stopped while running: tests/procedures/param_bounds_inside_line.takl:7:17, line 7 column 17
+  7 |   show twice(1, @n)
+                      ^^
+what: 9 is outside this variable's bounds
+why:  It has to be at most 5.

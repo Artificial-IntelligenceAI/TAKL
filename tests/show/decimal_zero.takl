@@ -1,0 +1,9 @@
+procedure start_running just finishes:
+  let @a: small_decimal = 0
+  show @a divided by 0.5
+  show 0 divided by 0.5
+  let @b: small_decimal = 0.00
+  show @b
+  show @b times 2
+  finish
+end procedure start_running

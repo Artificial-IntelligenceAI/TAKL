@@ -1,0 +1,13 @@
+procedure start_running just finishes:
+  let @a: tiny_whole = 100
+  show 1
+  show 2
+  show 3
+  show 4
+  show 5
+  show 6
+  show 7
+  show 8
+  @a = @a plus 100
+  finish
+end procedure start_running

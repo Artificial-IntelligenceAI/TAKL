@@ -58,7 +58,8 @@ pub fn run(program: &Program, facts: &Facts, output: &mut String) -> Run<u8> {
 }
 
 enum Passed {
-    Value(Value),
+    /// A value, and the argument it came from, which is what a broken bound points at.
+    Value(Value, Span),
     Shared(Value),
 }
 
@@ -173,7 +174,8 @@ impl<'a> Machine<'a> {
             let value = match args.next() {
                 // trace: decision.procedures.share
                 Some(Passed::Shared(value)) => value,
-                Some(Passed::Value(value)) => match self.fit(value, rules, span) {
+                // trace: decision.errors.layout (the `^` goes under exactly the part: the argument, not the call)
+                Some(Passed::Value(value, at)) => match self.fit(value, rules, at) {
                     Ok(value) => value,
                     Err(error) => {
                         self.frames.pop();
@@ -208,7 +210,7 @@ impl<'a> Machine<'a> {
         let mut passed = Vec::new();
         for arg in args {
             passed.push(match arg {
-                Arg::Value(expr) => Passed::Value(self.eval(expr)?.copy()),
+                Arg::Value(expr) => Passed::Value(self.eval(expr)?.copy(), expr.span),
                 Arg::Share(name, _) => Passed::Shared(self.slot(name).value.clone()),
             });
         }

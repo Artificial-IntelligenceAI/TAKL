@@ -251,7 +251,10 @@ impl Exact {
     pub fn to_text(&self) -> String {
         let negative = self.coefficient.is_negative();
         let digits = self.coefficient.abs().to_string();
-        let body = if self.exponent >= 0 {
+        let body = if self.coefficient.is_zero() && self.exponent >= 0 {
+            // Zero is one digit, however far its point has moved.
+            digits
+        } else if self.exponent >= 0 {
             format!("{}{}", digits, "0".repeat(self.exponent as usize))
         } else {
             let places = (-self.exponent) as usize;

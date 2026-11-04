@@ -1,0 +1,5 @@
+Stopped while running: tests/procedures/param_bounds_own_line.takl:8:8, line 8 column 8
+  8 |   move @n, 1
+             ^^
+what: 9 is outside this variable's bounds
+why:  It has to be at most 5.

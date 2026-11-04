@@ -1,0 +1,16 @@
+1
+2
+3
+4
+5
+6
+7
+8
+Stopped while running: tests/errors/gutter.takl:11:8, line 11 column 8
+  11 |   @a = @a plus 100
+              ^^^^^^^^^^^
+what: 200 is too big for a tiny_whole
+why:  A tiny_whole holds -128 to 127. Other languages call this an int8.
+because: @a was 100, tests/errors/gutter.takl:2:3, line 2 column 3
+   2 |   let @a: tiny_whole = 100
+         ^^^^^^^^^^^^^^^^^^^^^^^^

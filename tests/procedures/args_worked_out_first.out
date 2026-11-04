@@ -1,0 +1,8 @@
+Stopped while running: tests/procedures/args_worked_out_first.takl:9:12, line 9 column 12
+  9 |   move @n, @big plus 100
+                 ^^^^^^^^^^^^^
+what: 200 is too big for a tiny_whole
+why:  A tiny_whole holds -128 to 127. Other languages call this an int8.
+because: @big was 100, tests/procedures/args_worked_out_first.takl:8:3, line 8 column 3
+  8 |   let @big: tiny_whole = 100
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,5 @@
+Stopped while running: tests/tables/length_too_big.takl:6:24, line 6 column 24
+  6 |   let @a: tiny_whole = length of @t
+                             ^^^^^^^^^^^^
+what: 200 is too big for a tiny_whole
+why:  A tiny_whole holds -128 to 127. Other languages call this an int8.

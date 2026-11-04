@@ -1,0 +1,9 @@
+procedure twice (@a: tiny_whole | @b: tiny_whole, at most 5) returns tiny_whole:
+  return @a plus @b
+end procedure twice
+
+procedure start_running just finishes:
+  let @n: tiny_whole = 9
+  show twice(1, @n)
+  finish
+end procedure start_running

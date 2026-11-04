@@ -1090,4 +1090,9 @@ what a `let` without `can't_change` may do.
   - `for each` goes through the table as it was when the loop began, since a table is a value: adding to it inside
     the loop doesn't make the loop longer.
   - A run-time error's `because:` names where each variable in the failing step last got its value.
+  - Every code line in one error shares a gutter width, so a `because:` on line 6 under an error on line 10 lines up.
+  - A broken bound on a param points at that argument. All of a call's arguments are worked out, left to right, before
+    any is held to its param's bounds.
+  - `length of` is a number with no size, like a written one, worked out at run time: `(length of @t) plus 0.5` is `3.5`,
+    and it fits into any number type or stops there, with no `because:` since no maths step failed.
 - How `otherwise` is written and what it handles; the owner: "`otherwise` won't be design rn".

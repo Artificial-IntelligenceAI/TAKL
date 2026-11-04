@@ -1,0 +1,8 @@
+procedure start_running just finishes:
+  let @t: table of tiny_whole = empty
+  repeat 200 times:
+    add 1 to @t
+  end repeat
+  let @a: tiny_whole = length of @t
+  finish
+end procedure start_running

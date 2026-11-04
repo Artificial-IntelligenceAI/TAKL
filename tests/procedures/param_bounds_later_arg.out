@@ -1,0 +1,5 @@
+Stopped while running: tests/procedures/param_bounds_later_arg.takl:9:12, line 9 column 12
+  9 |   move @n, @big
+                 ^^^^
+what: 100 is outside this variable's bounds
+why:  It has to be at most 5.

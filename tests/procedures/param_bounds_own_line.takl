@@ -1,0 +1,10 @@
+procedure move (@speed: tiny_whole, at most 5 | @height: tiny_whole, at most 5) just finishes:
+  show @speed
+  finish
+end procedure move
+
+procedure start_running just finishes:
+  let @n: tiny_whole = 9
+  move @n, 1
+  finish
+end procedure start_running
