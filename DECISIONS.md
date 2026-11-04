@@ -5,6 +5,16 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-04 — TAKL's bar: a kid writes a small command-line game or school project alone, and gets unstuck from the error messages (owner)
+
+`decision.house.goal`
+
+The owner: "Honestly? What should be TAKL's goal?" Design claude proposed a kid's first real language, one they never
+have to unlearn, tested by a 10-year-old writing a small game alone. The owner: "A game??? You know how big that is for a
+kid to make from Scratch?" Design claude narrowed it to a kid's own small idea, a times-table quiz or a tip calculator,
+of about 20 lines. The owner: "So, like a CLI game? That's pretty school project stuff, and I think it's fine." Input is
+what this still needs most; graphics can wait.
+
 ### 2026-11-04 — A session reads the prompting guides for the specific AI it prompts, and again after every compaction (owner)
 
 `decision.house.prompting_reread`
@@ -1080,7 +1090,7 @@ what a `let` without `can't_change` may do.
     into another; joining text with `plus`; whether one text or true_or_false is more than another; whether two
     tables are the same.
   - Params on `start_running`; procedures calling each other 10,000 deep.
-  - Input: `ask_number` and anything that reads what a kid types (no test: nothing to write it with).
+  - Input: `ask_number` and anything that reads what a kid types (no test: nothing to write it with). Needed first for `decision.house.goal`.
 - Chosen by design claude while building the oracle, for the owner to confirm or change:
   - Every error message's wording, all in `oracle/src/messages.rs`; one error ends with "1 mistake found: <place>."
   - A compile error exits with 1, as a run-time one does.
