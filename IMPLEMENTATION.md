@@ -1,8 +1,8 @@
 # TAKL — Implementation rules
 
 The rules for the code that implements TAKL: the oracle and the compiler. `DECISIONS.md` records each decision with the
-owner's words; this file collects the rules, so new code can be checked against them. Any AI reads this file in full
-before contributing code. When a rule changes, `DECISIONS.md` gets a new entry and this file is updated to match.
+owner's words; this file collects the rules, so new code can be checked against them. **Every AI reads this file in full first, before anything else, and again after every
+compaction.** When a rule changes, `DECISIONS.md` gets a new entry and this file is updated to match.
 
 ## Sessions
 

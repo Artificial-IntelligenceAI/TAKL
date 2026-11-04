@@ -5,8 +5,8 @@ that teaches types before params.
 
 - `DECISIONS.md`: every design decision, with the owner's words, newest first; open questions at the bottom. Nothing
   is decided until the owner says so.
-- `IMPLEMENTATION.md`: the rules for the oracle and the compiler, and which session does what. Read it in full before
-  contributing code.
+- `IMPLEMENTATION.md`: the rules for the oracle and the compiler, and which session does what. Every AI reads it in full first, and again
+  after every compaction.
 
 ## Git
 

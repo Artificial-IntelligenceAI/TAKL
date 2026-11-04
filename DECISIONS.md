@@ -5,6 +5,14 @@ Nothing here is final until the owner says so; open questions live at the bottom
 
 ## Decided
 
+### 2026-11-04 — Every AI reads the implementation rules first, and again after every compaction (owner)
+
+`decision.house.read_rules`
+
+The owner: "Every AI should read impl rules first, and read again when compacted". Until now `IMPLEMENTATION.md` asked
+only for a read before contributing code, and only compiler claude's prompt mentioned compaction. It holds for every
+session, whatever it is doing, and is said at the top of `IMPLEMENTATION.md` and in `CLAUDE.md`.
+
 ### 2026-11-04 — `show` ends its line on its own (owner: "yes")
 
 `decision.show.line_ending`
